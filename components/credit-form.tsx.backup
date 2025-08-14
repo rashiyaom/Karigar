@@ -1,0 +1,263 @@
+"use client"
+
+import type React from "react"
+
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useLanguage } from "@/components/language-provider"
+import { useEmployees, useCreateCredit } from "@/hooks/use-api"
+import { useToast } from "@/hooks/use-toast"
+import { format } from "date-fns"
+import type { Employee } from "@/lib/types"
+
+interface CreditFormProps {
+  employee?: Employee | null
+  isOpen: boolean
+  onClose: () => void
+}
+
+export function CreditForm({ employee, isOpen, onClose }: CreditFormProps) {
+  const { t } = useLanguage()
+  const { toast } = useToast()
+  const { data: employees = [] } = useEmployees()
+  const createCreditMutation = useCreateCredit()
+
+  const [formData, setFormData] = useState({
+    employeeId: employee?.id || "",
+    amount: 0,
+    dateTaken: "",
+    promiseReturnDate: "",
+  })
+
+  // Set current date on client-side only
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      dateTaken: format(new Date(), "yyyy-MM-dd")
+    }))
+  }, [])
+
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {}
+
+    if (!formData.employeeId) newErrors.employeeId = "Employee is required"
+    if (formData.amount <= 0) newErrors.amount = "Amount must be greater than 0"
+    if (!formData.dateTaken) newErrors.dateTaken = "Date taken is required"
+    if (!formData.promiseReturnDate) newErrors.promiseReturnDate = "Promise return date is required"
+
+    // Check if promise return date is after date taken
+    if (formData.dateTaken && formData.promiseReturnDate) {
+      const dateTaken = new Date(formData.dateTaken)
+      const promiseDate = new Date(formData.promiseReturnDate)
+      if (promiseDate <= dateTaken) {
+        newErrors.promiseReturnDate = "Promise return date must be after date taken"
+      }
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!validateForm()) return
+
+    try {
+      await createCreditMutation.mutateAsync({
+        ...formData,
+        isPaid: false,
+      })
+      toast({
+        title: "Success",
+        description: "Credit record created successfully",
+      })
+      onClose()
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create credit record",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleInputChange = (field: string, value: string | number) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }))
+    }
+  }
+
+  const selectedEmployee = employees.find((emp) => emp.id === formData.employeeId)
+  const isLoading = createCreditMutation.isPending
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Employee Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Employee Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="employeeId">Select Employee *</Label>
+              <Select
+                value={formData.employeeId}
+                onValueChange={(value) => handleInputChange("employeeId", value)}
+                disabled={!!employee} // Disable if employee is pre-selected
+              >
+                <SelectTrigger className={errors.employeeId ? "border-destructive" : ""}>
+                  <SelectValue placeholder="Choose an employee" />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees.map((emp) => (
+                    <SelectItem key={emp.id} value={emp.id}>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage
+                            src={emp.profilePhoto || `/placeholder.svg?height=24&width=24&query=${emp.name}`}
+                          />
+                          <AvatarFallback className="text-xs">
+                            {emp.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <span className="font-medium">{emp.name}</span>
+                          <span className="text-sm text-muted-foreground ml-2">({emp.role})</span>
+                        </div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.employeeId && <p className="text-sm text-destructive">{errors.employeeId}</p>}
+            </div>
+
+            {selectedEmployee && (
+              <Card className="bg-muted/50">
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-4">
+                    <Avatar>
+                      <AvatarImage
+                        src={
+                          selectedEmployee.profilePhoto ||
+                          `/placeholder.svg?height=40&width=40&query=${selectedEmployee.name || "/placeholder.svg"}`
+                        }
+                      />
+                      <AvatarFallback>
+                        {selectedEmployee.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-medium">{selectedEmployee.name}</h3>
+                      <p className="text-sm text-muted-foreground">{selectedEmployee.role}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Base Salary: ${selectedEmployee.salary.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Credit Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Credit Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="amount">{t("credits.amount")} *</Label>
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.amount}
+                onChange={(e) => handleInputChange("amount", Number(e.target.value))}
+                className={errors.amount ? "border-destructive" : ""}
+                placeholder="0.00"
+              />
+              {errors.amount && <p className="text-sm text-destructive">{errors.amount}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dateTaken">{t("credits.dateTaken")} *</Label>
+              <Input
+                id="dateTaken"
+                type="date"
+                value={formData.dateTaken}
+                onChange={(e) => handleInputChange("dateTaken", e.target.value)}
+                className={errors.dateTaken ? "border-destructive" : ""}
+              />
+              {errors.dateTaken && <p className="text-sm text-destructive">{errors.dateTaken}</p>}
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="promiseReturnDate">{t("credits.promiseReturnDate")} *</Label>
+              <Input
+                id="promiseReturnDate"
+                type="date"
+                value={formData.promiseReturnDate}
+                onChange={(e) => handleInputChange("promiseReturnDate", e.target.value)}
+                className={errors.promiseReturnDate ? "border-destructive" : ""}
+              />
+              {errors.promiseReturnDate && <p className="text-sm text-destructive">{errors.promiseReturnDate}</p>}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Summary */}
+      {selectedEmployee && formData.amount > 0 && (
+        <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-orange-800 dark:text-orange-200">Credit Summary</h4>
+                <p className="text-sm text-orange-600 dark:text-orange-400">
+                  This amount will be automatically deducted from {selectedEmployee.name}'s salary until paid back.
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-bold text-orange-800 dark:text-orange-200">
+                  ${formData.amount.toLocaleString()}
+                </p>
+                <p className="text-sm text-orange-600 dark:text-orange-400">Credit Amount</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Form Actions */}
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+          {t("common.cancel")}
+        </Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? t("common.loading") : t("credits.add")}
+        </Button>
+      </div>
+    </form>
+  )
+}
