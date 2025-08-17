@@ -1,0 +1,15 @@
+{
+  "extends": [
+    "development"
+  ],
+  "hints": {
+    "compat-api/css": [
+      "default",
+      {
+        "ignore": [
+          "outline-color: color-mix(in srgb, var(--color-ring) 50%, transparent)"
+        ]
+      }
+    ]
+  }
+}

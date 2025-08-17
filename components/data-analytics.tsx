@@ -324,21 +324,25 @@ export function DataAnalytics() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
-                <span className="font-medium">Unpaid Credits</span>
-                <span className="font-bold text-red-600">
-                  ₹{payrollData.summary.totalUnpaidCredits.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
-                <span className="font-medium">Leave Deductions</span>
-                <span className="font-bold text-orange-600">
-                  ₹{payrollData.summary.totalLeaveDeductions.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-gray-100 rounded-lg border-2">
-                <span className="font-semibold">Total Deductions</span>
-                <span className="font-bold text-gray-800">₹{payrollData.summary.totalDeductions.toLocaleString()}</span>
-              </div>
+  <span className="font-medium text-black">Unpaid Credits</span>
+  <span className="font-bold text-red-600">
+    ₹{payrollData.summary.totalUnpaidCredits.toLocaleString()}
+  </span>
+</div>
+
+<div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+  <span className="font-medium text-black">Leave Deductions</span>
+  <span className="font-bold text-orange-600">
+    ₹{payrollData.summary.totalLeaveDeductions.toLocaleString()}
+  </span>
+</div>
+
+<div className="flex justify-between items-center p-3 bg-gray-100 rounded-lg border-2">
+  <span className="font-semibold text-black">Total Deductions</span>
+  <span className="font-bold text-gray-800">
+    ₹{payrollData.summary.totalDeductions.toLocaleString()}
+  </span>
+</div>
             </CardContent>
           </Card>
 
@@ -348,19 +352,25 @@ export function DataAnalytics() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                <span className="font-medium">Total Base Salary</span>
-                <span className="font-bold text-blue-600">₹{payrollData.summary.totalBaseSalary.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
-                <span className="font-medium">Less: Deductions</span>
-                <span className="font-bold text-red-600">-₹{payrollData.summary.totalDeductions.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center p-4 bg-green-100 rounded-lg border-2 border-green-300">
-                <span className="font-semibold text-lg">Net Amount to Pay</span>
-                <span className="font-bold text-green-700 text-xl">
-                  ₹{payrollData.summary.totalNetSalary.toLocaleString()}
-                </span>
-              </div>
+  <span className="font-medium text-black">Total Base Salary</span>
+  <span className="font-bold text-blue-600">
+    ₹{payrollData.summary.totalBaseSalary.toLocaleString()}
+  </span>
+</div>
+
+<div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+  <span className="font-medium text-black">Less: Deductions</span>
+  <span className="font-bold text-red-600">
+    -₹{payrollData.summary.totalDeductions.toLocaleString()}
+  </span>
+</div>
+
+<div className="flex justify-between items-center p-4 bg-green-100 rounded-lg border-2 border-green-300">
+  <span className="font-semibold text-lg text-black">Net Amount to Pay</span>
+  <span className="font-bold text-green-700 text-xl">
+    ₹{payrollData.summary.totalNetSalary.toLocaleString()}
+  </span>
+</div>
             </CardContent>
           </Card>
         </div>

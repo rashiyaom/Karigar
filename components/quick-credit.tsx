@@ -179,36 +179,7 @@ export function QuickCredit() {
           </div>
         </div>
 
-        {/* Summary */}
-        {selectedEmployeeData && amount > 0 && (
-          <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
-            <CardContent className="pt-4">
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-orange-600 dark:text-orange-400">Credit Amount:</span>
-                  <span className="font-medium text-orange-800 dark:text-orange-200">${amount.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-orange-600 dark:text-orange-400">Date Taken:</span>
-                  <span className="font-medium text-orange-800 dark:text-orange-200">
-                    {format(today, "MMM dd, yyyy")}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-orange-600 dark:text-orange-400">Promise Return:</span>
-                  <span className="font-medium text-orange-800 dark:text-orange-200">
-                    {format(promiseDate, "MMM dd, yyyy")}
-                  </span>
-                </div>
-                <div className="pt-2 border-t border-orange-200 dark:border-orange-800">
-                  <p className="text-xs text-orange-600 dark:text-orange-400">
-                    This amount will be automatically deducted from {selectedEmployeeData.name}'s salary.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-2">
