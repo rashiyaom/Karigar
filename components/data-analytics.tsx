@@ -4,17 +4,27 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Download, RefreshCw, Users, CreditCard, Calculator, TrendingUp } from "lucide-react"
+import { ArrowLeft, Download, RefreshCw, Users, CreditCard, Calculator, TrendingUp, FileSpreadsheet, Check } from "lucide-react"
 import { useEmployees, useCredits, useStats } from "@/hooks/use-api"
 import { useLanguage } from "@/components/language-provider"
 import { store } from "@/lib/store"
 import Link from "next/link"
 import { format } from "date-fns"
+import { exportEmployeeToExcel, exportMultipleEmployees } from "@/lib/excel-export"
+import { toast } from "sonner"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 export function DataAnalytics() {
   const [selectedMonth, setSelectedMonth] = useState("")
   const [currentDateTime, setCurrentDateTime] = useState("")
   const [monthOptions, setMonthOptions] = useState<{ value: string; label: string }[]>([])
+  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([])
+  const [isExporting, setIsExporting] = useState(false)
   const { t } = useLanguage()
 
   // Set the current date/time on client-side only
@@ -110,6 +120,169 @@ export function DataAnalytics() {
   const payrollData = calculatePayrollSummary()
   const isLoading = employeesLoading || creditsLoading || statsLoading
 
+  const handleExportSelected = async () => {
+    if (selectedEmployeeIds.length === 0) {
+      toast.error("Please select at least one employee to export")
+      return
+    }
+
+    setIsExporting(true)
+    try {
+      const selectedEmployees = employees.filter(emp => selectedEmployeeIds.includes(emp.id))
+      
+      // Fetch full data for each selected employee
+      const employeeDataPromises = selectedEmployees.map(async (employee) => {
+        const [attendanceRes, creditsRes, tasksRes] = await Promise.all([
+          fetch(`/api/attendance/employee/${employee.id}`).then(r => r.json()),
+          fetch(`/api/credits/employee/${employee.id}`).then(r => r.json()),
+          fetch(`/api/tasks/employee/${employee.id}`).then(r => r.json())
+        ])
+
+        const attendance = attendanceRes.data || []
+        const credits = creditsRes.data || []
+        const tasks = tasksRes.data || []
+
+        // Calculate stats
+        const salaryData = calculateEmployeeSalary(employee)
+        const totalTasks = tasks.length
+        const completedTasks = tasks.filter((t: any) => t.isCompleted).length
+        const pendingTasks = totalTasks - completedTasks
+        const overdueTasks = tasks.filter((t: any) => !t.isCompleted && new Date(t.deadline) < new Date()).length
+        
+        const totalCredits = credits.length
+        const unpaidCredits = credits.filter((c: any) => !c.isPaid).length
+        const totalCreditAmount = credits.reduce((sum: number, c: any) => sum + c.amount, 0)
+        const unpaidCreditAmount = credits.filter((c: any) => !c.isPaid).reduce((sum: number, c: any) => sum + c.amount, 0)
+        
+        const presentDays = attendance.filter((a: any) => a.status === 'present').length
+        const absentDays = attendance.filter((a: any) => a.status === 'absent').length
+        const halfDays = attendance.filter((a: any) => a.status === 'half-day').length
+        const totalDays = attendance.length
+        const attendancePercentage = totalDays > 0 ? ((presentDays + halfDays * 0.5) / totalDays * 100).toFixed(1) : '0'
+
+        return {
+          employee,
+          attendance,
+          credits,
+          tasks,
+          stats: {
+            totalTasks,
+            completedTasks,
+            pendingTasks,
+            overdueTasks,
+            totalCredits,
+            unpaidCredits,
+            totalCreditAmount,
+            unpaidCreditAmount,
+            presentDays,
+            absentDays,
+            halfDays,
+            attendancePercentage,
+            baseSalary: salaryData.baseSalary,
+            leaveDeduction: salaryData.leaveDeductions,
+            creditDeduction: salaryData.unpaidCredits,
+            netSalary: salaryData.netSalary
+          }
+        }
+      })
+
+      const employeeData = await Promise.all(employeeDataPromises)
+      await exportMultipleEmployees(employeeData)
+      toast.success(`Successfully exported ${selectedEmployeeIds.length} employee(s) to Excel`)
+    } catch (error) {
+      console.error("Export error:", error)
+      toast.error("Failed to export employee data")
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const handleExportAll = async () => {
+    setIsExporting(true)
+    try {
+      // Fetch full data for all employees
+      const employeeDataPromises = employees.map(async (employee) => {
+        const [attendanceRes, creditsRes, tasksRes] = await Promise.all([
+          fetch(`/api/attendance/employee/${employee.id}`).then(r => r.json()),
+          fetch(`/api/credits/employee/${employee.id}`).then(r => r.json()),
+          fetch(`/api/tasks/employee/${employee.id}`).then(r => r.json())
+        ])
+
+        const attendance = attendanceRes.data || []
+        const credits = creditsRes.data || []
+        const tasks = tasksRes.data || []
+
+        // Calculate stats
+        const salaryData = calculateEmployeeSalary(employee)
+        const totalTasks = tasks.length
+        const completedTasks = tasks.filter((t: any) => t.isCompleted).length
+        const pendingTasks = totalTasks - completedTasks
+        const overdueTasks = tasks.filter((t: any) => !t.isCompleted && new Date(t.deadline) < new Date()).length
+        
+        const totalCredits = credits.length
+        const unpaidCredits = credits.filter((c: any) => !c.isPaid).length
+        const totalCreditAmount = credits.reduce((sum: number, c: any) => sum + c.amount, 0)
+        const unpaidCreditAmount = credits.filter((c: any) => !c.isPaid).reduce((sum: number, c: any) => sum + c.amount, 0)
+        
+        const presentDays = attendance.filter((a: any) => a.status === 'present').length
+        const absentDays = attendance.filter((a: any) => a.status === 'absent').length
+        const halfDays = attendance.filter((a: any) => a.status === 'half-day').length
+        const totalDays = attendance.length
+        const attendancePercentage = totalDays > 0 ? ((presentDays + halfDays * 0.5) / totalDays * 100).toFixed(1) : '0'
+
+        return {
+          employee,
+          attendance,
+          credits,
+          tasks,
+          stats: {
+            totalTasks,
+            completedTasks,
+            pendingTasks,
+            overdueTasks,
+            totalCredits,
+            unpaidCredits,
+            totalCreditAmount,
+            unpaidCreditAmount,
+            presentDays,
+            absentDays,
+            halfDays,
+            attendancePercentage,
+            baseSalary: salaryData.baseSalary,
+            leaveDeduction: salaryData.leaveDeductions,
+            creditDeduction: salaryData.unpaidCredits,
+            netSalary: salaryData.netSalary
+          }
+        }
+      })
+
+      const employeeData = await Promise.all(employeeDataPromises)
+      await exportMultipleEmployees(employeeData)
+      toast.success(`Successfully exported all ${employees.length} employees to Excel`)
+    } catch (error) {
+      console.error("Export error:", error)
+      toast.error("Failed to export employee data")
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const toggleEmployeeSelection = (employeeId: string) => {
+    setSelectedEmployeeIds(prev => 
+      prev.includes(employeeId) 
+        ? prev.filter(id => id !== employeeId)
+        : [...prev, employeeId]
+    )
+  }
+
+  const selectAllEmployees = () => {
+    if (selectedEmployeeIds.length === employees.length) {
+      setSelectedEmployeeIds([])
+    } else {
+      setSelectedEmployeeIds(employees.map(emp => emp.id))
+    }
+  }
+
   // Don't render until client-side initialization is complete
   if (!currentDateTime || !monthOptions.length) {
     return (
@@ -173,10 +346,101 @@ export function DataAnalytics() {
                 Refresh
               </Button>
 
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="relative"
+                  >
+                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    Export to Excel
+                    {selectedEmployeeIds.length > 0 && (
+                      <span className="ml-2 bg-green-500 text-white text-xs rounded-full px-2 py-0.5">
+                        {selectedEmployeeIds.length}
+                      </span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80" align="end">
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold mb-2">Export Employee Data</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Select employees to export detailed reports
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2 p-2 border-b">
+                        <Checkbox
+                          id="select-all"
+                          checked={selectedEmployeeIds.length === employees.length && employees.length > 0}
+                          onCheckedChange={selectAllEmployees}
+                        />
+                        <label
+                          htmlFor="select-all"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                        >
+                          Select All ({employees.length})
+                        </label>
+                      </div>
+
+                      <div className="max-h-64 overflow-y-auto space-y-1">
+                        {employees.map((employee) => (
+                          <div
+                            key={employee.id}
+                            className="flex items-center space-x-2 p-2 hover:bg-muted rounded-md"
+                          >
+                            <Checkbox
+                              id={`emp-${employee.id}`}
+                              checked={selectedEmployeeIds.includes(employee.id)}
+                              onCheckedChange={() => toggleEmployeeSelection(employee.id)}
+                            />
+                            <label
+                              htmlFor={`emp-${employee.id}`}
+                              className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                            >
+                              <div className="font-medium">{employee.name}</div>
+                              <div className="text-xs text-muted-foreground">{employee.role}</div>
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-2 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportAll}
+                        disabled={isExporting || employees.length === 0}
+                        className="flex-1"
+                      >
+                        {isExporting ? (
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4 mr-2" />
+                        )}
+                        All
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleExportSelected}
+                        disabled={isExporting || selectedEmployeeIds.length === 0}
+                        className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                      >
+                        {isExporting ? (
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Check className="h-4 w-4 mr-2" />
+                        )}
+                        Selected
+                      </Button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </div>

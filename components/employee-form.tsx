@@ -37,6 +37,7 @@ export function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [previewUrl, setPreviewUrl] = useState<string>(employee?.profilePhoto || "")
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -97,6 +98,45 @@ export function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
     }
   }
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Error",
+          description: "Please select an image file",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Error",
+          description: "Image size should be less than 5MB",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Create preview URL
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        setPreviewUrl(base64String)
+        setFormData((prev) => ({ ...prev, profilePhoto: base64String }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removePhoto = () => {
+    setPreviewUrl("")
+    setFormData((prev) => ({ ...prev, profilePhoto: "" }))
+  }
+
   const isLoading = createEmployeeMutation.isPending || updateEmployeeMutation.isPending
 
   return (
@@ -104,26 +144,74 @@ export function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
       {/* Profile Photo Section */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+            <Avatar className="h-24 w-24 border-2">
               <AvatarImage
-                src={formData.profilePhoto || `/placeholder.svg?height=80&width=80&query=${formData.name}`}
+                src={previewUrl || `/placeholder.svg?height=96&width=96&query=${formData.name}`}
               />
-              <AvatarFallback className="text-lg">
+              <AvatarFallback className="text-xl">
                 {formData.name
                   .split(" ")
                   .map((n) => n[0])
-                  .join("")}
+                  .join("") || "?"}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1">
-              <Label htmlFor="profilePhoto">Profile Photo URL</Label>
-              <Input
-                id="profilePhoto"
-                value={formData.profilePhoto}
-                onChange={(e) => handleInputChange("profilePhoto", e.target.value)}
-                placeholder="https://example.com/photo.jpg"
+            <div className="flex-1 space-y-3 w-full">
+              <div>
+                <Label className="text-base font-semibold">Profile Photo</Label>
+                <p className="text-sm text-muted-foreground mt-1">Upload from your computer or paste a URL</p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('photo-upload')?.click()}
+                  className="flex-1"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  Upload Image
+                </Button>
+                {previewUrl && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={removePhoto}
+                    className="flex-1 sm:flex-none"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                      <path d="M3 6h18"/>
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                    </svg>
+                    Remove
+                  </Button>
+                )}
+              </div>
+              <input
+                id="photo-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+                aria-label="Upload profile photo"
               />
+              <div className="space-y-2">
+                <Label htmlFor="profilePhoto" className="text-sm">Or paste image URL</Label>
+                <Input
+                  id="profilePhoto"
+                  value={formData.profilePhoto.startsWith('data:') ? '' : formData.profilePhoto}
+                  onChange={(e) => {
+                    handleInputChange("profilePhoto", e.target.value)
+                    setPreviewUrl(e.target.value)
+                  }}
+                  placeholder="https://example.com/photo.jpg"
+                  className="text-sm"
+                />
+              </div>
             </div>
           </div>
         </CardContent>
