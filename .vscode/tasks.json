@@ -5,6 +5,11 @@
 			"type": "shell",
 			"label": "Run Next.js Frontend",
 			"command": "pnpm dev",
+			"options": {
+				"env": {
+					"NODE_OPTIONS": "--max-old-space-size=4096"
+				}
+			},
 			"group": "build",
 			"isBackground": true,
 			"problemMatcher": [

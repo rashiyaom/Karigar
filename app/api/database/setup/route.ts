@@ -1,14 +1,23 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
+import { mongoStore } from "@/lib/mongo-store"
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
-    // MongoDB connection is handled automatically through mongoStore
-    // This endpoint is now a no-op since MongoDB handles connection pooling
+    // Initialize database with sample data if needed
+    await mongoStore.initializeDatabase()
+    
+    const settings = await mongoStore.getSettings()
+    const stats = await mongoStore.getStats()
+
     return NextResponse.json({
       success: true,
-      data: { 
-        message: "MongoDB is configured and ready",
-        status: "connected"
+      data: {
+        message: "MongoDB initialized successfully and connected",
+        status: "connected",
+        database: "karigar",
+        initialized: true,
+        settings,
+        stats,
       },
     })
   } catch (error) {

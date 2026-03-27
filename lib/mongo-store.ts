@@ -42,6 +42,55 @@ class MongoDBStore {
     await connectToDatabase()
   }
 
+  // Initialize database with sample data to ensure collections exist in Atlas
+  async initializeDatabase(): Promise<void> {
+    await this.ensureConnected()
+
+    try {
+      // Check if employees already exist
+      const existingCount = await EmployeeModel.countDocuments()
+      if (existingCount > 0) {
+        console.log('✓ Database already initialized with', existingCount, 'employees')
+        return
+      }
+
+      // Create sample employee
+      const sampleEmployee = await EmployeeModel.create({
+        name: 'Sample Employee',
+        salary: 50000,
+        joiningDate: new Date().toISOString().split('T')[0],
+        mobile: '9999999999',
+        email: 'sample@karigar.test',
+        role: 'Employee',
+        status: 'active',
+      })
+
+      // Create sample attendance
+      await AttendanceModel.create({
+        employeeId: sampleEmployee._id.toString(),
+        date: new Date().toISOString().split('T')[0],
+        status: 'present',
+      })
+
+      // Create sample settings
+      await SettingsModel.create({
+        organizationName: 'Karigar',
+        leaveDeduction: {
+          type: 'percentage',
+          value: 10,
+        },
+        weekendDays: ['Saturday', 'Sunday'],
+        autoMarkAbsent: true,
+      })
+
+      console.log('✓ Database initialized with sample data')
+      console.log('✓ Collections created in MongoDB Atlas')
+    } catch (error) {
+      console.error('Error initializing database:', error)
+      throw error
+    }
+  }
+
   // ========================
   // Employee Methods
   // ========================
@@ -768,6 +817,51 @@ class MongoDBStore {
       companyAddress: settings.companyAddress,
       companyPhone: settings.companyPhone,
       companyEmail: settings.companyEmail,
+    }
+  }
+
+  // Initialize database with collections (called once on first run)
+  async initializeDatabase(): Promise<void> {
+    if (!this.initialized) {
+      await this.initialize()
+    }
+    
+    try {
+      // Check if employees already exist
+      const employeeCount = await EmployeeModel.countDocuments()
+      
+      if (employeeCount === 0) {
+        console.log('Creating sample data...')
+        
+        // Create sample employees directly
+        const sampleEmployees = [
+          {
+            name: 'Rajesh Kumar',
+            salary: 50000,
+            joiningDate: '2023-01-15',
+            mobile: '9876543210',
+            email: 'rajesh@example.com',
+            role: 'Manager',
+            status: 'active' as const,
+          },
+          {
+            name: 'Priya Sharma',
+            salary: 40000,
+            joiningDate: '2023-02-10',
+            mobile: '9876543211',
+            email: 'priya@example.com',
+            role: 'Developer',
+            status: 'active' as const,
+          },
+        ]
+        
+        await EmployeeModel.insertMany(sampleEmployees)
+        console.log('✓ Sample data created successfully')
+      } else {
+        console.log(`✓ Database already initialized with ${employeeCount} employees`)
+      }
+    } catch (error) {
+      console.error('Error initializing database:', error)
     }
   }
 }
