@@ -132,6 +132,46 @@ const HistorySchema = new Schema<IHistory>(
   }
 )
 
+// User Schema
+export interface IUser extends Document {
+  username: string
+  password: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+const UserSchema = new Schema<IUser>(
+  {
+    username: { type: String, required: true, unique: true, lowercase: true, index: true },
+    password: { type: String, required: true },
+  },
+  {
+    timestamps: true,
+    collection: 'users',
+  }
+)
+
+// Session Schema
+export interface ISession extends Document {
+  userId: string
+  token: string
+  expiresAt: Date
+  createdAt: Date
+}
+
+const SessionSchema = new Schema<ISession>(
+  {
+    userId: { type: String, required: true, index: true },
+    token: { type: String, required: true, unique: true, index: true },
+    expiresAt: { type: Date, required: true, index: { expireAfterSeconds: 0 } },
+    createdAt: { type: Date, default: Date.now },
+  },
+  {
+    collection: 'sessions',
+  }
+)
+
+
 // Create models
 export const EmployeeModel = mongoose.models.Employee || mongoose.model<IEmployee>('Employee', EmployeeSchema)
 export const AttendanceModel = mongoose.models.Attendance || mongoose.model<IAttendance>('Attendance', AttendanceSchema)
@@ -139,3 +179,5 @@ export const CreditModel = mongoose.models.Credit || mongoose.model<ICredit>('Cr
 export const TaskModel = mongoose.models.Task || mongoose.model<ITask>('Task', TaskSchema)
 export const SettingsModel = mongoose.models.Settings || mongoose.model<ISettings>('Settings', SettingsSchema)
 export const HistoryModel = mongoose.models.History || mongoose.model<IHistory>('History', HistorySchema)
+export const UserModel = mongoose.models.User || mongoose.model<IUser>('User', UserSchema)
+export const SessionModel = mongoose.models.Session || mongoose.model<ISession>('Session', SessionSchema)

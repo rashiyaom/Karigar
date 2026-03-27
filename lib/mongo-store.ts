@@ -42,55 +42,6 @@ class MongoDBStore {
     await connectToDatabase()
   }
 
-  // Initialize database with sample data to ensure collections exist in Atlas
-  async initializeDatabase(): Promise<void> {
-    await this.ensureConnected()
-
-    try {
-      // Check if employees already exist
-      const existingCount = await EmployeeModel.countDocuments()
-      if (existingCount > 0) {
-        console.log('✓ Database already initialized with', existingCount, 'employees')
-        return
-      }
-
-      // Create sample employee
-      const sampleEmployee = await EmployeeModel.create({
-        name: 'Sample Employee',
-        salary: 50000,
-        joiningDate: new Date().toISOString().split('T')[0],
-        mobile: '9999999999',
-        email: 'sample@karigar.test',
-        role: 'Employee',
-        status: 'active',
-      })
-
-      // Create sample attendance
-      await AttendanceModel.create({
-        employeeId: sampleEmployee._id.toString(),
-        date: new Date().toISOString().split('T')[0],
-        status: 'present',
-      })
-
-      // Create sample settings
-      await SettingsModel.create({
-        organizationName: 'Karigar',
-        leaveDeduction: {
-          type: 'percentage',
-          value: 10,
-        },
-        weekendDays: ['Saturday', 'Sunday'],
-        autoMarkAbsent: true,
-      })
-
-      console.log('✓ Database initialized with sample data')
-      console.log('✓ Collections created in MongoDB Atlas')
-    } catch (error) {
-      console.error('Error initializing database:', error)
-      throw error
-    }
-  }
-
   // ========================
   // Employee Methods
   // ========================
