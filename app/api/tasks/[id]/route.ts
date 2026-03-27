@@ -11,11 +11,21 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const tasks = await mongoStore.getTasksByEmployee(id)
+    const task = await mongoStore.getTask(id)
+
+    if (!task) {
+      return NextResponse.json<ApiResponse>(
+        {
+          success: false,
+          error: "Task not found",
+        },
+        { status: 404 }
+      )
+    }
 
     return NextResponse.json<ApiResponse>({
       success: true,
-      data: tasks,
+      data: task,
     })
   } catch (error) {
     return NextResponse.json<ApiResponse>(

@@ -11,17 +11,22 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    // This endpoint can return a single credit or credits for an employee
-    // For single credit, we'll need to fetch and return it
-    // For employee credits, use GET /api/credits/employee/[employeeId]
-    
-    return NextResponse.json<ApiResponse>(
-      {
-        success: false,
-        error: "Use GET /api/credits/employee/[employeeId] for employee credits",
-      },
-      { status: 400 }
-    )
+    const credit = await mongoStore.getCredit(id)
+
+    if (!credit) {
+      return NextResponse.json<ApiResponse>(
+        {
+          success: false,
+          error: "Credit record not found",
+        },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json<ApiResponse>({
+      success: true,
+      data: credit,
+    })
   } catch (error) {
     return NextResponse.json<ApiResponse>(
       {

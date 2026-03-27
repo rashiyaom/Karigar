@@ -256,6 +256,18 @@ class MongoDBStore {
     return attendance.map((att) => this.formatAttendance(att))
   }
 
+  async getAttendanceById(id: string): Promise<Attendance | null> {
+    await this.ensureConnected()
+
+    try {
+      const attendance = await AttendanceModel.findById(id)
+      return attendance ? this.formatAttendance(attendance) : null
+    } catch (error) {
+      console.error('Failed to fetch attendance by ID:', error)
+      return null
+    }
+  }
+
   async updateAttendance(id: string, updates: Partial<Attendance>): Promise<Attendance | null> {
     await this.ensureConnected()
 
@@ -405,6 +417,18 @@ class MongoDBStore {
     return credits.map((credit) => this.formatCredit(credit))
   }
 
+  async getCredit(id: string): Promise<Credit | null> {
+    await this.ensureConnected()
+
+    try {
+      const credit = await CreditModel.findById(id)
+      return credit ? this.formatCredit(credit) : null
+    } catch (error) {
+      console.error('Failed to fetch credit by ID:', error)
+      return null
+    }
+  }
+
   async updateCredit(id: string, updates: Partial<Credit>): Promise<Credit | null> {
     await this.ensureConnected()
 
@@ -504,7 +528,19 @@ class MongoDBStore {
     await this.ensureConnected()
 
     const tasks = await TaskModel.find().sort({ createdAt: -1 })
-    return tasks.map((task) => this.formatTask(task))
+    return tasks.map((task: any) => this.formatTask(task))
+  }
+
+  async getTask(id: string): Promise<Task | null> {
+    await this.ensureConnected()
+
+    try {
+      const task = await TaskModel.findById(id)
+      return task ? this.formatTask(task) : null
+    } catch (error) {
+      console.error('Failed to fetch task by ID:', error)
+      return null
+    }
   }
 
   async updateTask(id: string, updates: Partial<Task>): Promise<Task | null> {
