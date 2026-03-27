@@ -1,19 +1,25 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { store } from "@/lib/store"
+import { mongoStore } from "@/lib/mongo-store"
 import { employeeSchema } from "@/lib/validation"
 import type { ApiResponse } from "@/lib/types"
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+type Params = Promise<{ id: string }>
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Params }
+) {
   try {
     const { id } = await params
-    const employee = store.getEmployee(id)
+    const employee = await mongoStore.getEmployee(id)
+
     if (!employee) {
       return NextResponse.json<ApiResponse>(
         {
           success: false,
           error: "Employee not found",
         },
-        { status: 404 },
+        { status: 404 }
       )
     }
 
@@ -27,31 +33,35 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         success: false,
         error: "Failed to fetch employee",
       },
-      { status: 500 },
+      { status: 500 }
     )
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Params }
+) {
   try {
     const { id } = await params
     const body = await request.json()
     const validatedData = employeeSchema.partial().parse(body)
 
-    const employee = store.updateEmployee(id, validatedData)
-    if (!employee) {
+    const updated = await mongoStore.updateEmployee(id, validatedData)
+
+    if (!updated) {
       return NextResponse.json<ApiResponse>(
         {
           success: false,
           error: "Employee not found",
         },
-        { status: 404 },
+        { status: 404 }
       )
     }
 
     return NextResponse.json<ApiResponse>({
       success: true,
-      data: employee,
+      data: updated,
     })
   } catch (error) {
     if (error instanceof Error) {
@@ -60,7 +70,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           success: false,
           error: error.message,
         },
-        { status: 400 },
+        { status: 400 }
       )
     }
 
@@ -69,28 +79,32 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         success: false,
         error: "Failed to update employee",
       },
-      { status: 500 },
+      { status: 500 }
     )
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Params }
+) {
   try {
     const { id } = await params
-    const deleted = store.deleteEmployee(id)
-    if (!deleted) {
+    const success = await mongoStore.deleteEmployee(id)
+
+    if (!success) {
       return NextResponse.json<ApiResponse>(
         {
           success: false,
           error: "Employee not found",
         },
-        { status: 404 },
+        { status: 404 }
       )
     }
 
     return NextResponse.json<ApiResponse>({
       success: true,
-      data: { message: "Employee deleted successfully" },
+      data: { id },
     })
   } catch (error) {
     return NextResponse.json<ApiResponse>(
@@ -98,7 +112,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         success: false,
         error: "Failed to delete employee",
       },
-      { status: 500 },
+      { status: 500 }
     )
   }
 }

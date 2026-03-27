@@ -5,6 +5,7 @@ import { LanguageProvider } from "@/components/language-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { QueryProvider } from "@/components/query-provider"
 import { AttendanceAutoReset } from "@/components/attendance-auto-reset"
+import { ErrorBoundary } from "@/components/error-boundary"
 import "./globals.css"
 
 const inter = Inter({
@@ -34,15 +35,17 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${poppins.variable} antialiased`}>
       <body className="font-sans">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <LanguageProvider>
-            <QueryProvider>
-              <AttendanceAutoReset />
-              {children}
-              <Toaster />
-            </QueryProvider>
-          </LanguageProvider>
-        </ThemeProvider>
+        <ErrorBoundary>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <LanguageProvider>
+              <QueryProvider>
+                <AttendanceAutoReset />
+                {children}
+                <Toaster />
+              </QueryProvider>
+            </LanguageProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   )

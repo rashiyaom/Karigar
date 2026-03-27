@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { store } from "@/lib/store"
+import { mongoStore } from "@/lib/mongo-store"
 import { taskSchema } from "@/lib/validation"
 import type { ApiResponse } from "@/lib/types"
 
 export async function GET() {
   try {
-    const tasks = store.getAllTasks()
+    const tasks = await mongoStore.getAllTasks()
     return NextResponse.json<ApiResponse>({
       success: true,
       data: tasks,
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = taskSchema.parse(body)
 
-    const task = store.createTask(validatedData)
+    const task = await mongoStore.createTask(validatedData)
 
     return NextResponse.json<ApiResponse>(
       {

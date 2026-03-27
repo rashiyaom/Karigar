@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { store } from "@/lib/store"
+import { mongoStore } from "@/lib/mongo-store"
 import { employeeSchema } from "@/lib/validation"
 import type { ApiResponse } from "@/lib/types"
 
 export async function GET() {
   try {
-    const employees = store.getAllEmployees()
+    const employees = await mongoStore.getAllEmployees()
     return NextResponse.json<ApiResponse>({
       success: true,
       data: employees,
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = employeeSchema.parse(body)
 
-    const employee = store.createEmployee(validatedData)
+    const employee = await mongoStore.createEmployee(validatedData)
 
     return NextResponse.json<ApiResponse>(
       {

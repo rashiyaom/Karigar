@@ -171,7 +171,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<Language>("en")
 
   useEffect(() => {
-    const savedLanguage = localStorage.getItem("language") as Language
+    // Use sessionStorage for UI preferences (not critical data)
+    const savedLanguage = typeof window !== 'undefined' 
+      ? sessionStorage.getItem("language") as Language 
+      : null
     if (savedLanguage && (savedLanguage === "en" || savedLanguage === "gu")) {
       setLanguage(savedLanguage)
     }
@@ -179,7 +182,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   const handleSetLanguage = (lang: Language) => {
     setLanguage(lang)
-    localStorage.setItem("language", lang)
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem("language", lang)
+    }
   }
 
   const t = (key: string): string => {

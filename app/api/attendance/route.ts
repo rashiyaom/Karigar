@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { store } from "@/lib/store"
+import { mongoStore } from "@/lib/mongo-store"
 import { attendanceSchema } from "@/lib/validation"
 import type { ApiResponse } from "@/lib/types"
 
@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = attendanceSchema.parse(body)
 
-    const attendance = store.createAttendance(validatedData)
+    const attendance = await mongoStore.createAttendance(validatedData)
 
     return NextResponse.json<ApiResponse>(
       {

@@ -1,34 +1,62 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { store } from "@/lib/store"
+import { mongoStore } from "@/lib/mongo-store"
 import { creditSchema } from "@/lib/validation"
 import type { ApiResponse } from "@/lib/types"
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+type Params = Promise<{ id: string }>
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Params }
+) {
+  try {
+    const { id } = await params
+    // This endpoint can return a single credit or credits for an employee
+    // For single credit, we'll need to fetch and return it
+    // For employee credits, use GET /api/credits/employee/[employeeId]
+    
+    return NextResponse.json<ApiResponse>(
+      {
+        success: false,
+        error: "Use GET /api/credits/employee/[employeeId] for employee credits",
+      },
+      { status: 400 }
+    )
+  } catch (error) {
+    return NextResponse.json<ApiResponse>(
+      {
+        success: false,
+        error: "Failed to fetch credit",
+      },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Params }
+) {
   try {
     const { id } = await params
     const body = await request.json()
     const validatedData = creditSchema.partial().parse(body)
 
-    // Debug logging
-    console.log('PUT /api/credits/[id] - Attempting to update credit:', id)
-    console.log('Update data:', validatedData)
-    console.log('Available credit IDs:', store.getAllCredits().map(c => c.id))
-    
-    const credit = store.updateCredit(id, validatedData)
-    if (!credit) {
-      console.log('Credit not found in store for ID:', id)
+    const updated = await mongoStore.updateCredit(id, validatedData)
+
+    if (!updated) {
       return NextResponse.json<ApiResponse>(
         {
           success: false,
           error: "Credit record not found",
         },
-        { status: 404 },
+        { status: 404 }
       )
     }
 
     return NextResponse.json<ApiResponse>({
       success: true,
-      data: credit,
+      data: updated,
     })
   } catch (error) {
     if (error instanceof Error) {
@@ -37,31 +65,35 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           success: false,
           error: error.message,
         },
-        { status: 400 },
+        { status: 400 }
       )
     }
 
     return NextResponse.json<ApiResponse>(
       {
         success: false,
-        error: "Failed to update credit record",
+        error: "Failed to update credit",
       },
-      { status: 500 },
+      { status: 500 }
     )
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Params }
+) {
   try {
     const { id } = await params
-    const deleted = store.deleteCredit(id)
-    if (!deleted) {
+    const success = await mongoStore.deleteCredit(id)
+
+    if (!success) {
       return NextResponse.json<ApiResponse>(
         {
           success: false,
           error: "Credit record not found",
         },
-        { status: 404 },
+        { status: 404 }
       )
     }
 
@@ -73,9 +105,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     return NextResponse.json<ApiResponse>(
       {
         success: false,
-        error: "Failed to delete credit record",
+        error: "Failed to delete credit",
       },
-      { status: 500 },
+      { status: 500 }
     )
   }
 }
