@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { store } from "@/lib/store"
+import { mongoStore } from "@/lib/mongo-store"
 import type { ApiResponse } from "@/lib/types"
 
 export async function DELETE(request: NextRequest) {
@@ -7,7 +7,7 @@ export async function DELETE(request: NextRequest) {
     const url = new URL(request.url)
     const date = url.searchParams.get("date")
     
-    const deletedCount = store.resetDailyAttendance(date || undefined)
+    const deletedCount = await mongoStore.resetDailyAttendance(date || undefined)
 
     return NextResponse.json<ApiResponse>({
       success: true,

@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { store } from "@/lib/store"
+import { mongoStore } from "@/lib/mongo-store"
 import { settingsSchema } from "@/lib/validation"
 import type { ApiResponse } from "@/lib/types"
 
 export async function GET() {
   try {
-    const settings = store.getSettings()
+    const settings = await mongoStore.getSettings()
     return NextResponse.json<ApiResponse>({
       success: true,
       data: settings,
@@ -26,7 +26,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const validatedData = settingsSchema.parse(body)
 
-    const settings = store.updateSettings(validatedData)
+    const settings = await mongoStore.updateSettings(validatedData)
 
     return NextResponse.json<ApiResponse>({
       success: true,

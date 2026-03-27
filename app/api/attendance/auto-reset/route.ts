@@ -1,19 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { store } from "@/lib/store"
+import { mongoStore } from "@/lib/mongo-store"
 import type { ApiResponse } from "@/lib/types"
 
 // This endpoint can be called by a cron job or scheduler to auto-reset attendance
 export async function POST(request: NextRequest) {
   try {
     const today = new Date().toISOString().split('T')[0]
-    const deletedCount = store.resetDailyAttendance(today)
+    const addedCount = await mongoStore.resetDailyAttendance(today)
 
     return NextResponse.json<ApiResponse>({
       success: true,
       data: { 
-        deletedCount,
+        addedCount,
         date: today,
-        message: `Auto-reset attendance for ${deletedCount} records on ${today}`
+        message: `Auto-reset attendance - marked ${addedCount} employees as absent on ${today}`
       },
     })
   } catch (error) {
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const today = new Date().toISOString().split('T')[0]
-    const todayAttendance = store.getAttendanceByDate(today)
+    const todayAttendance = await mongoStore.getAttendanceByDate(today)
 
     return NextResponse.json<ApiResponse>({
       success: true,

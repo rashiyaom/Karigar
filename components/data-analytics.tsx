@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Download, RefreshCw, Users, CreditCard, Calculator, TrendingUp, FileSpreadsheet, Check } from "lucide-react"
 import { useEmployees, useCredits, useStats } from "@/hooks/use-api"
 import { useLanguage } from "@/components/language-provider"
-import { store } from "@/lib/store"
 import Link from "next/link"
 import { format } from "date-fns"
 import { exportEmployeeToExcel, exportMultipleEmployees } from "@/lib/excel-export"
@@ -49,34 +48,18 @@ export function DataAnalytics() {
   const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useStats()
 
   const calculateEmployeeSalary = (employee: any) => {
-    try {
-      const salaryData = store.calculateEmployeeSalaryBreakdown(employee.id)
-      if (salaryData) {
-        return {
-          baseSalary: salaryData.baseSalary,
-          unpaidCredits: salaryData.unpaidCredits,
-          leaveDeductions: salaryData.leaveDeductions,
-          totalDeductions: salaryData.totalDeductions,
-          netSalary: salaryData.netSalary,
-        }
-      } else {
-        return {
-          baseSalary: employee.salary || 0,
-          unpaidCredits: 0,
-          leaveDeductions: 0,
-          totalDeductions: 0,
-          netSalary: employee.salary || 0,
-        }
-      }
-    } catch (error) {
-      console.error("Error calculating salary for employee:", employee.id, error)
-      return {
-        baseSalary: employee.salary || 0,
-        unpaidCredits: 0,
-        leaveDeductions: 0,
-        totalDeductions: 0,
-        netSalary: employee.salary || 0,
-      }
+    // Calculate directly from available data
+    // Unpaid credits calculation
+    const employeeCredits = allCredits.filter((c: any) => c.employeeId === employee.id && !c.isPaid)
+    const unpaidCredits = employeeCredits.reduce((sum: number, c: any) => sum + (c.amount || 0), 0)
+    
+    // For now, return basic calculation (leave deductions would require attendance data)
+    return {
+      baseSalary: employee.salary || 0,
+      unpaidCredits,
+      leaveDeductions: 0, // Would need more complex calculation
+      totalDeductions: unpaidCredits,
+      netSalary: (employee.salary || 0) - unpaidCredits,
     }
   }
 

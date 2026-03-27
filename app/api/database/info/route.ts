@@ -1,26 +1,16 @@
 import { NextResponse } from "next/server"
-import { sqliteStore } from "@/lib/database"
+import { mongoStore } from "@/lib/mongo-store"
 
 export async function GET() {
   try {
-    const path = sqliteStore.getDatabasePath()
-    const stats = sqliteStore.getStats()
-    const employees = sqliteStore.getAllEmployees().length
-    const attendance = sqliteStore.getAllAttendance().length
-    const credits = sqliteStore.getAllCredits().length
-    const tasks = sqliteStore.getAllTasks().length
+    const stats = await mongoStore.getStats()
 
     return NextResponse.json({
       success: true,
       data: {
-        path,
-        stats: {
-          employees,
-          attendance,
-          credits,
-          tasks,
-          ...stats,
-        },
+        database: "MongoDB",
+        status: "connected",
+        stats,
       },
     })
   } catch (error) {

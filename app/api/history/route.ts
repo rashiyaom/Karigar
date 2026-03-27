@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
-import { store } from "@/lib/store"
+import { mongoStore } from "@/lib/mongo-store"
 import type { ApiResponse } from "@/lib/types"
 
 export async function GET() {
   try {
-    const history = store.getHistory()
+    const history = await mongoStore.getHistory()
     return NextResponse.json<ApiResponse>({
       success: true,
       data: history,

@@ -1,16 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     unoptimized: true,
   },
   webpack: (config, { isServer }) => {
-    // Fix for ExcelJS and other libraries that use fs
+    // Fix for libraries that use fs in the browser
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -20,9 +14,6 @@ const nextConfig = {
         crypto: false,
       };
     }
-    
-    // Add external modules that shouldn't be bundled
-    config.externals = [...(config.externals || [])];
     
     return config;
   },
