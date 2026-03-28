@@ -136,6 +136,7 @@ export function Dashboard() {
                 alt="Karigar Logo"
                 width={32}
                 height={32}
+                style={{ width: "auto", height: "32px" }}
                 className="rounded"
               />
               <div>
@@ -147,7 +148,8 @@ export function Dashboard() {
                         src={settings.companyLogoUrl}
                         alt="Company Logo"
                         fill
-                        className="object-contain rounded"
+                        style={{ width: "auto", height: "auto", objectFit: "contain" }}
+                        className="rounded"
                       />
                     </div>
                   )}

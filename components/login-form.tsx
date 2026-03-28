@@ -107,7 +107,7 @@ export function LoginForm() {
                     src="/images/karigar-logo.svg"
                     alt="Karigar Logo"
                     fill
-                    className="object-contain"
+                    style={{ width: "auto", height: "auto", objectFit: "contain" }}
                     priority
                     onError={(e) => {
                       console.error('Logo failed to load:', e)

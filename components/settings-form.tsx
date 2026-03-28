@@ -129,7 +129,7 @@ export function SettingsForm({ onClose }: SettingsFormProps) {
                       src={formData.companyLogoUrl}
                       alt="Company Logo Preview"
                       fill
-                      className="object-contain"
+                      style={{ width: "auto", height: "auto", objectFit: "contain" }}
                       onError={() => {
                         toast({
                           title: "Error",
