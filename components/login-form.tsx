@@ -102,18 +102,22 @@ export function LoginForm() {
             <div className="text-center mb-8">
               {/* Logo - Karigar official logo */}
               <div className="flex justify-center mb-4">
-                <Image
-                  src="/images/karigar-logo.svg"
-                  alt="Karigar Logo"
-                  width={48}
-                  height={48}
-                  priority
-                  className="rounded-lg shadow-lg"
-                />
+                <div className="relative w-16 h-16">
+                  <Image
+                    src="/images/karigar-logo.svg"
+                    alt="Karigar Logo"
+                    fill
+                    className="object-contain"
+                    priority
+                    onError={(e) => {
+                      console.error('Logo failed to load:', e)
+                    }}
+                  />
+                </div>
               </div>
               
-              <h1 className="text-2xl font-bold text-white mb-1">Karigar</h1>
-              <p className="text-sm text-gray-400">Sign in to your workspace</p>
+              <h1 className="text-3xl font-bold text-white mb-1">Karigar</h1>
+              <p className="text-sm text-gray-400">Sign in to your account</p>
             </div>
 
             {/* Error message */}
@@ -211,21 +215,6 @@ export function LoginForm() {
                 )}
               </Button>
             </form>
-
-            {/* Demo credentials - compact */}
-            <div className="mt-6 pt-6 border-t border-gray-800">
-              <p className="text-xs text-gray-500 uppercase tracking-widest mb-3 font-semibold">Demo Credentials</p>
-              <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-3 space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-400">Username:</span>
-                  <code className="text-purple-400 font-mono bg-gray-950 px-2 py-1 rounded border border-gray-800">omkar</code>
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-400">Password:</span>
-                  <code className="text-purple-400 font-mono bg-gray-950 px-2 py-1 rounded border border-gray-800">omkar@123</code>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
