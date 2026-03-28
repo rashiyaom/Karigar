@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { logoutUser, getAuthToken, clearAuthCookie } from '@/lib/auth'
 import { clearCsrfToken } from '@/lib/csrf'
+import { logUserLogout } from '@/lib/security-events'
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,6 +14,9 @@ export async function POST(request: NextRequest) {
     // Clear both auth and CSRF tokens
     await clearAuthCookie()
     await clearCsrfToken()
+
+    // Log the logout event
+    await logUserLogout(request)
 
     return NextResponse.json(
       { success: true, message: 'Logged out successfully' },

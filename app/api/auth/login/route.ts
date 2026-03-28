@@ -3,6 +3,12 @@ import { loginUser, setAuthCookie, regenerateSession } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { setCsrfToken } from '@/lib/csrf'
 import { sanitizeString, hasDangerousPatterns } from '@/lib/input-sanitizer'
+import { 
+  logSuccessfulLogin, 
+  logFailedLoginAttempt, 
+  logInjectionAttempt,
+  logRateLimitExceeded 
+} from '@/lib/security-events'
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +18,9 @@ export async function POST(request: NextRequest) {
 
     // Check rate limit (5 attempts per 15 minutes)
     if (!checkRateLimit(rateLimitKey, 5, 15 * 60 * 1000)) {
+      // Log rate limit exceeded
+      await logRateLimitExceeded(rateLimitKey, request)
+      
       return NextResponse.json(
         { error: 'Too many login attempts. Please try again later.' },
         { status: 429 }
@@ -37,8 +46,9 @@ export async function POST(request: NextRequest) {
 
     // Check for dangerous patterns (NoSQL injection attempts)
     if (hasDangerousPatterns(username) || hasDangerousPatterns(password)) {
-      // Log potential attack, but return generic error
-      console.warn(`Potential injection attack detected from IP: ${ip}`)
+      // Log potential attack
+      await logInjectionAttempt(username, JSON.stringify({ username, password }), request)
+      
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
@@ -52,6 +62,9 @@ export async function POST(request: NextRequest) {
     const result = await loginUser(sanitizedUsername, sanitizedPassword)
 
     if (!result) {
+      // Log failed login attempt
+      await logFailedLoginAttempt(username, request)
+      
       // Return generic error message to prevent username enumeration
       return NextResponse.json(
         { error: 'Invalid credentials' },
@@ -67,6 +80,9 @@ export async function POST(request: NextRequest) {
 
     // Generate and set CSRF token
     const csrfToken = await setCsrfToken()
+
+    // Log successful login
+    await logSuccessfulLogin(result.user.username, request)
 
     return NextResponse.json(
       {
