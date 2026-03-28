@@ -46,6 +46,7 @@ export interface Task {
 
 export interface Settings {
   organizationName: string
+  companyLogoUrl?: string
   leaveDeduction: {
     type: "percentage" | "fixed"
     value: number

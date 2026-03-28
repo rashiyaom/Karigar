@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import Image from "next/image"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -26,6 +27,8 @@ export function SettingsForm({ onClose }: SettingsFormProps) {
 
   const [formData, setFormData] = useState({
     organizationName: settings?.organizationName || "",
+    companyLogoUrl: settings?.companyLogoUrl || "",
+    companyLogoFile: null as File | null,
     leaveDeductionType: settings?.leaveDeduction.type || "percentage",
     leaveDeductionValue: settings?.leaveDeduction.value || 10,
     workingHoursStart: settings?.workingHours?.start || "09:00",
@@ -45,6 +48,7 @@ export function SettingsForm({ onClose }: SettingsFormProps) {
     try {
       await updateSettingsMutation.mutateAsync({
         organizationName: formData.organizationName,
+        companyLogoUrl: formData.companyLogoUrl,
         leaveDeduction: {
           type: formData.leaveDeductionType as "percentage" | "fixed",
           value: formData.leaveDeductionValue,
@@ -101,6 +105,43 @@ export function SettingsForm({ onClose }: SettingsFormProps) {
               onChange={(e) => setFormData((prev) => ({ ...prev, organizationName: e.target.value }))}
               placeholder="Enter organization name"
             />
+          </div>
+
+          <div className="space-y-3">
+            <Label>Company Logo</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="companyLogoUrl" className="text-sm">Logo URL</Label>
+                <Input
+                  id="companyLogoUrl"
+                  type="url"
+                  value={formData.companyLogoUrl}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, companyLogoUrl: e.target.value }))}
+                  placeholder="https://example.com/logo.png"
+                />
+                <p className="text-xs text-muted-foreground">Enter the URL of your company logo</p>
+              </div>
+              
+              {formData.companyLogoUrl && (
+                <div className="flex items-center justify-center border rounded-lg p-4 bg-muted/50">
+                  <div className="relative h-20 w-20">
+                    <Image
+                      src={formData.companyLogoUrl}
+                      alt="Company Logo Preview"
+                      fill
+                      className="object-contain"
+                      onError={() => {
+                        toast({
+                          title: "Error",
+                          description: "Failed to load image from URL",
+                          variant: "destructive",
+                        })
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

@@ -139,10 +139,22 @@ export function Dashboard() {
                 className="rounded"
               />
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">
-                  {settings?.organizationName || "My Company"}
-                </h1>
-                <p className="text-sm text-muted-foreground">{t("dashboard.title")}</p>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl sm:text-2xl font-bold text-foreground">Karigar</h1>
+                  {settings?.companyLogoUrl && (
+                    <div className="relative h-8 w-8">
+                      <Image
+                        src={settings.companyLogoUrl}
+                        alt="Company Logo"
+                        fill
+                        className="object-contain rounded"
+                      />
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {settings?.organizationName || "My Company"} • {t("dashboard.title")}
+                </p>
               </div>
             </div>
 
