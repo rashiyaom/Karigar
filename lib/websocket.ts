@@ -24,6 +24,7 @@ export function useWebSocket() {
 
   const connect = () => {
     console.log("Using polling fallback for real-time updates")
+    setIsConnected(true) // Mark as connected for polling mode
     startPolling()
     return
 
