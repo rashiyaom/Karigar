@@ -4,10 +4,33 @@ import { employeeSchema } from "@/lib/validation"
 import { getCurrentUser } from "@/lib/auth"
 import { verifyCsrfMiddleware, csrfErrorResponse } from "@/lib/csrf-middleware"
 import { checkRequestSize, requestSizeErrorResponse } from "@/lib/request-size-limit"
+import { checkApiRateLimit, getApiRateLimitStatus } from "@/lib/api-rate-limit"
+import { sanitizeObjectKeys, hasDangerousPatterns } from "@/lib/input-sanitizer"
 import type { ApiResponse } from "@/lib/types"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Get client IP for rate limiting
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const rateLimitKey = `api:${ip}`
+
+    // Check API rate limit
+    if (!checkApiRateLimit(rateLimitKey)) {
+      const status = getApiRateLimitStatus(rateLimitKey)
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': Math.ceil((status.resetTime - Date.now()) / 1000).toString(),
+            'X-RateLimit-Limit': '100',
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': status.resetTime.toString(),
+          },
+        }
+      )
+    }
+
     // Verify authentication
     const user = await getCurrentUser()
     if (!user) {
@@ -18,10 +41,19 @@ export async function GET() {
     }
 
     const employees = await mongoStore.getAllEmployees()
-    return NextResponse.json<ApiResponse>({
+    const status = getApiRateLimitStatus(rateLimitKey)
+    
+    const response = NextResponse.json<ApiResponse>({
       success: true,
       data: employees,
     })
+    
+    // Add rate limit headers
+    response.headers.set('X-RateLimit-Limit', '100')
+    response.headers.set('X-RateLimit-Remaining', status.remaining.toString())
+    response.headers.set('X-RateLimit-Reset', status.resetTime.toString())
+    
+    return response
   } catch (error) {
     return NextResponse.json<ApiResponse>(
       {
@@ -35,6 +67,27 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    // Get client IP for rate limiting
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const rateLimitKey = `api:${ip}`
+
+    // Check API rate limit
+    if (!checkApiRateLimit(rateLimitKey)) {
+      const status = getApiRateLimitStatus(rateLimitKey)
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': Math.ceil((status.resetTime - Date.now()) / 1000).toString(),
+            'X-RateLimit-Limit': '100',
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': status.resetTime.toString(),
+          },
+        }
+      )
+    }
+
     // Check request size
     const isValidSize = await checkRequestSize(request)
     if (!isValidSize) {
@@ -57,17 +110,40 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const validatedData = employeeSchema.parse(body)
+    
+    // Check for dangerous patterns in request
+    if (hasDangerousPatterns(JSON.stringify(body))) {
+      return NextResponse.json<ApiResponse>(
+        {
+          success: false,
+          error: "Invalid input detected",
+        },
+        { status: 400 },
+      )
+    }
+
+    // Sanitize object keys to prevent NoSQL injection
+    const sanitizedBody = sanitizeObjectKeys(body)
+    
+    const validatedData = employeeSchema.parse(sanitizedBody)
 
     const employee = await mongoStore.createEmployee(validatedData)
+    const status = getApiRateLimitStatus(rateLimitKey)
 
-    return NextResponse.json<ApiResponse>(
+    const response = NextResponse.json<ApiResponse>(
       {
         success: true,
         data: employee,
       },
       { status: 201 },
     )
+    
+    // Add rate limit headers
+    response.headers.set('X-RateLimit-Limit', '100')
+    response.headers.set('X-RateLimit-Remaining', status.remaining.toString())
+    response.headers.set('X-RateLimit-Reset', status.resetTime.toString())
+
+    return response
   } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json<ApiResponse>(

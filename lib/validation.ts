@@ -1,5 +1,9 @@
 import { z } from "zod"
 
+// NOTE: Input sanitization should be applied in API endpoints
+// See lib/input-sanitizer.ts for sanitizeObjectKeys(), sanitizeString(), etc.
+// This ensures both Zod validation AND injection prevention
+
 // Maximum field lengths to prevent database bloat and XSS
 const MAX_STRING_LENGTH = 500
 const MAX_EMAIL_LENGTH = 254

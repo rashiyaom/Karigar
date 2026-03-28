@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { loginUser, setAuthCookie, regenerateSession } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { setCsrfToken } from '@/lib/csrf'
+import { sanitizeString, hasDangerousPatterns } from '@/lib/input-sanitizer'
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,7 +35,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const result = await loginUser(username, password)
+    // Check for dangerous patterns (NoSQL injection attempts)
+    if (hasDangerousPatterns(username) || hasDangerousPatterns(password)) {
+      // Log potential attack, but return generic error
+      console.warn(`Potential injection attack detected from IP: ${ip}`)
+      return NextResponse.json(
+        { error: 'Invalid credentials' },
+        { status: 401 }
+      )
+    }
+
+    // Sanitize input
+    const sanitizedUsername = sanitizeString(username)
+    const sanitizedPassword = sanitizeString(password)
+
+    const result = await loginUser(sanitizedUsername, sanitizedPassword)
 
     if (!result) {
       // Return generic error message to prevent username enumeration
