@@ -157,3 +157,34 @@ export async function getAuthToken(): Promise<string | null> {
     return null
   }
 }
+
+// Regenerate session on login (prevent session fixation attacks)
+export async function regenerateSession(oldToken: string): Promise<string> {
+  try {
+    await connectToDatabase()
+
+    // Delete old session
+    if (oldToken) {
+      await SessionModel.deleteOne({ token: oldToken })
+    }
+
+    // Create new session with fresh token
+    const newToken = generateToken()
+    const expiresAt = new Date(Date.now() + SESSION_DURATION)
+
+    await SessionModel.create({
+      token: newToken,
+      user: {
+        username: DEMO_USERNAME,
+        id: 'demo-user',
+      },
+      createdAt: new Date(),
+      expiresAt,
+    })
+
+    return newToken
+  } catch (error) {
+    console.error('Session regeneration error:', error)
+    throw error
+  }
+}

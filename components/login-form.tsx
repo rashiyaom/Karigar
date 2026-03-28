@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,7 +13,22 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [csrfToken, setCsrfToken] = useState<string | null>(null)
   const router = useRouter()
+
+  // Get CSRF token from cookies on component mount
+  useEffect(() => {
+    const getCsrfTokenFromCookie = async () => {
+      try {
+        // The CSRF token is set as an HTTP-only cookie by the server
+        // We'll get it from the login response, not directly from cookies
+        setCsrfToken('') // Initialize empty, will be set after login
+      } catch (err) {
+        console.error('Failed to setup CSRF protection')
+      }
+    }
+    getCsrfTokenFromCookie()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,13 +40,26 @@ export function LoginForm() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(csrfToken && { 'x-csrf-token': csrfToken }),
         },
         body: JSON.stringify({ username, password }),
+        credentials: 'include', // Include cookies in request
       })
 
       if (!response.ok) {
         const data = await response.json()
         throw new Error(data.error || 'Login failed')
+      }
+
+      const data = await response.json()
+      
+      // Store CSRF token for future requests
+      if (data.csrfToken) {
+        setCsrfToken(data.csrfToken)
+        // Store in sessionStorage for use in other forms
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.setItem('csrf-token', data.csrfToken)
+        }
       }
 
       // Redirect to dashboard

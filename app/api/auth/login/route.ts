@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { loginUser, setAuthCookie } from '@/lib/auth'
+import { loginUser, setAuthCookie, regenerateSession } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { setCsrfToken } from '@/lib/csrf'
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,13 +44,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Set the auth cookie
-    await setAuthCookie(result.token)
+    // Regenerate session to prevent session fixation attacks
+    const newToken = await regenerateSession(result.token)
+
+    // Set the new auth cookie
+    await setAuthCookie(newToken)
+
+    // Generate and set CSRF token
+    const csrfToken = await setCsrfToken()
 
     return NextResponse.json(
       {
         success: true,
         user: result.user,
+        csrfToken, // Send to client to be included in subsequent requests
       },
       { status: 200 }
     )
