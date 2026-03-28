@@ -1,8 +1,18 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { mongoStore } from "@/lib/mongo-store"
+import { getCurrentUser } from "@/lib/auth"
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    // Check authentication - only allow authenticated users to access admin endpoints
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Admin access required' },
+        { status: 401 }
+      )
+    }
+
     // Initialize database with sample data if needed
     await mongoStore.initializeDatabase()
     

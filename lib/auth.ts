@@ -2,11 +2,17 @@ import { cookies } from 'next/headers'
 import { UserModel, SessionModel } from './mongodb-models'
 import { connectToDatabase } from './mongodb'
 import crypto from 'crypto'
+import bcrypt from 'bcrypt'
 
-const HARDCODED_USERNAME = 'omkar'
-const HARDCODED_PASSWORD = 'omkar@123'
-const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000 // 30 days in milliseconds
+// Get credentials from environment variables
+const DEMO_USERNAME = process.env.DEMO_USERNAME || 'omkar'
+const DEMO_PASSWORD_HASH = process.env.DEMO_PASSWORD_HASH as string
+const SESSION_DURATION = (parseInt(process.env.SESSION_EXPIRY_HOURS || '24') * 60 * 60 * 1000) // Default 24 hours
 const COOKIE_NAME = 'auth-token'
+
+if (!DEMO_PASSWORD_HASH) {
+  throw new Error('DEMO_PASSWORD_HASH environment variable is not set')
+}
 
 export interface AuthUser {
   id: string
@@ -18,23 +24,29 @@ export function generateToken(): string {
   return crypto.randomBytes(32).toString('hex')
 }
 
-// Login user
+// Login user with bcrypt password verification
 export async function loginUser(username: string, password: string): Promise<{ token: string; user: AuthUser } | null> {
   try {
     await connectToDatabase()
 
-    // Validate hardcoded credentials
-    if (username !== HARDCODED_USERNAME || password !== HARDCODED_PASSWORD) {
+    // Validate credentials against environment configuration
+    if (username !== DEMO_USERNAME) {
+      return null
+    }
+
+    // Use bcrypt for timing-safe password comparison
+    const passwordMatch = await bcrypt.compare(password, DEMO_PASSWORD_HASH)
+    if (!passwordMatch) {
       return null
     }
 
     // Find or create user in database
-    let user = await UserModel.findOne({ username: HARDCODED_USERNAME.toLowerCase() })
+    let user = await UserModel.findOne({ username: DEMO_USERNAME.toLowerCase() })
 
     if (!user) {
       user = await UserModel.create({
-        username: HARDCODED_USERNAME.toLowerCase(),
-        password: HARDCODED_PASSWORD, // In production, hash this with bcrypt
+        username: DEMO_USERNAME.toLowerCase(),
+        password: DEMO_PASSWORD_HASH, // Store hashed password
       })
     }
 
@@ -117,13 +129,13 @@ export async function logoutUser(token: string): Promise<void> {
   }
 }
 
-// Set auth cookie
+// Set auth cookie with secure flags
 export async function setAuthCookie(token: string): Promise<void> {
   const cookieStore = await cookies()
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'strict',
     maxAge: SESSION_DURATION / 1000, // Convert to seconds
     path: '/',
   })

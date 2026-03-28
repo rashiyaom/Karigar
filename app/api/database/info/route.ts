@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server"
 import { mongoStore } from "@/lib/mongo-store"
+import { getCurrentUser } from "@/lib/auth"
 import mongoose from "mongoose"
 
 export async function GET() {
   try {
+    // Check authentication - only allow authenticated users
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Admin access required' },
+        { status: 401 }
+      )
+    }
     const readyStates: Record<number, string> = {
       0: "disconnected",
       1: "connected",
