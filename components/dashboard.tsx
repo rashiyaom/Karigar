@@ -143,15 +143,13 @@ export function Dashboard() {
                 <div className="flex items-center gap-2">
                   <h1 className="text-xl sm:text-2xl font-bold text-foreground">Karigar</h1>
                   {settings?.companyLogoUrl && (
-                    <div className="relative h-8 w-8">
-                      <Image
-                        src={settings.companyLogoUrl}
-                        alt="Company Logo"
-                        fill
-                        style={{ width: "auto", height: "auto", objectFit: "contain" }}
-                        className="rounded"
-                      />
-                    </div>
+                    <Image
+                      src={settings.companyLogoUrl}
+                      alt="Company Logo"
+                      width={32}
+                      height={32}
+                      className="rounded"
+                    />
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">

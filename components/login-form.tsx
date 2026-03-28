@@ -102,18 +102,16 @@ export function LoginForm() {
             <div className="text-center mb-8">
               {/* Logo - Karigar official logo */}
               <div className="flex justify-center mb-4">
-                <div className="relative w-16 h-16">
-                  <Image
-                    src="/images/karigar-logo.svg"
-                    alt="Karigar Logo"
-                    fill
-                    style={{ width: "auto", height: "auto", objectFit: "contain" }}
-                    priority
-                    onError={(e) => {
-                      console.error('Logo failed to load:', e)
-                    }}
-                  />
-                </div>
+                <Image
+                  src="/images/karigar-logo.svg"
+                  alt="Karigar Logo"
+                  width={64}
+                  height={64}
+                  priority
+                  onError={(e) => {
+                    console.error('Logo failed to load:', e)
+                  }}
+                />
               </div>
               
               <h1 className="text-3xl font-bold text-white mb-1">Karigar</h1>
