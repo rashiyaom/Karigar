@@ -1,6 +1,7 @@
 "use client"
 
 import { DialogTrigger } from "@/components/ui/dialog"
+import Image from "next/image"
 
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -129,11 +130,20 @@ export function Dashboard() {
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">
-                {settings?.organizationName || "My Company"}
-              </h1>
-              <p className="text-sm text-muted-foreground">{t("dashboard.title")}</p>
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Image
+                src="/images/karigar-logo.svg"
+                alt="Karigar Logo"
+                width={32}
+                height={32}
+                className="rounded"
+              />
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">
+                  {settings?.organizationName || "My Company"}
+                </h1>
+                <p className="text-sm text-muted-foreground">{t("dashboard.title")}</p>
+              </div>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">

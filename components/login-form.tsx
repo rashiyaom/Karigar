@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -99,11 +100,16 @@ export function LoginForm() {
           <div className="p-8">
             {/* Header */}
             <div className="text-center mb-8">
-              {/* Logo icon */}
+              {/* Logo - Karigar official logo */}
               <div className="flex justify-center mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
-                  <span className="text-xl font-bold text-white">K</span>
-                </div>
+                <Image
+                  src="/images/karigar-logo.svg"
+                  alt="Karigar Logo"
+                  width={48}
+                  height={48}
+                  priority
+                  className="rounded-lg shadow-lg"
+                />
               </div>
               
               <h1 className="text-2xl font-bold text-white mb-1">Karigar</h1>

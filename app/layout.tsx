@@ -22,9 +22,12 @@ const poppins = Poppins({
 })
 
 export const metadata = {
-  title: "Employee Management System",
+  title: "Karigar - Employee Management System",
   description: "A comprehensive employee management system with attendance, credits, and task management.",
-    generator: 'v0.app'
+  icons: {
+    icon: "/images/karigar-logo.svg",
+  },
+  generator: 'v0.app'
 }
 
 export default function RootLayout({

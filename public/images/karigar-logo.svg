@@ -1,0 +1,13 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Karigar Logo: Modern K Design -->
+  <rect width="512" height="512" fill="#F5F5F5"/>
+  
+  <!-- Left vertical stroke -->
+  <rect x="109" y="65" width="110" height="350" fill="#000000"/>
+  
+  <!-- Top right diagonal -->
+  <path d="M 350 120 L 480 120 L 220 280 L 350 280 Z" fill="#000000"/>
+  
+  <!-- Bottom right diagonal -->
+  <path d="M 220 280 L 480 280 L 350 400 L 220 400 Z" fill="#000000"/>
+</svg>
