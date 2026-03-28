@@ -107,7 +107,7 @@ export function HistoryTimeline() {
           ) : (
             <div className="space-y-4">
               {history.map((entry, index) => (
-                <div key={entry.id} className="flex gap-4">
+                <div key={`${entry.id}-${entry.timestamp}-${index}`} className="flex gap-4">
                   <div className="flex flex-col items-center">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
                       {getEntityIcon(entry.entity)}
