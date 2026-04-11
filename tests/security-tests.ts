@@ -49,12 +49,10 @@ import { checkRateLimit, getRateLimitStatus } from '@/lib/rate-limit'
 function testLoginRateLimiting() {
   const testKey = 'test-ip-123'
   let allowed = true
-  let attempts = 0
 
   // Attempt 5 logins (should all succeed)
   for (let i = 0; i < 5; i++) {
     allowed = checkRateLimit(testKey, 5, 60000)
-    attempts++
     test(`P1.4.${i + 1}`, allowed, `Rate limit attempt ${i + 1}/5 allowed`)
   }
 
@@ -112,9 +110,6 @@ function testSessionRegeneration() {
   test('P2.7', oldToken !== newToken, 'Session regeneration creates new token')
   test('P2.8', newToken.length === 64, 'New session token has correct format')
 }
-
-// Test 2.4: Request size limiting
-import { checkRequestSize } from '@/lib/request-size-limit'
 
 function testRequestSizeLimit() {
   // Mock NextRequest would need full setup, so test the logic conceptually
@@ -232,9 +227,6 @@ function testApiRateLimiting() {
   test('P3.20', status.remaining === 0, 'API rate limit status accurate')
   test('P3.21', status.isLimited, 'API rate limit status shows isLimited=true')
 }
-
-// Test 3.6: Parameter pollution detection
-import { detectParameterPollution, detectHeaderPollution } from '@/lib/parameter-pollution-detector'
 
 function testParameterPollutionDetection() {
   // Note: These need actual NextRequest objects to test fully

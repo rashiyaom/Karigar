@@ -4,7 +4,7 @@
  * Implements connection reuse, health checks, and auto-reconnection
  */
 
-import { MongoClient, ServerDescription } from 'mongodb'
+import { MongoClient } from 'mongodb'
 
 interface PoolConfig {
   maxPoolSize: number

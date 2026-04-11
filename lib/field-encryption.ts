@@ -8,14 +8,33 @@ import crypto from 'crypto'
 
 // Encryption configuration
 const ALGORITHM = 'aes-256-gcm'
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex')
-const AUTH_TAG_LENGTH = 16
 const IV_LENGTH = 12
+const IS_PRODUCTION = process.env.NODE_ENV === 'production'
+let devRuntimeEncryptionKey: string | null = null
 
 interface EncryptedData {
   encrypted: string
   iv: string
   authTag: string
+}
+
+function getValidatedEncryptionKey(): Buffer {
+  const envKey = process.env.ENCRYPTION_KEY?.trim()
+
+  if (envKey && validateEncryptionKey(envKey)) {
+    return Buffer.from(envKey, 'hex')
+  }
+
+  if (IS_PRODUCTION) {
+    throw new Error('ENCRYPTION_KEY must be set to a valid 64-character hex string in production')
+  }
+
+  if (!devRuntimeEncryptionKey) {
+    devRuntimeEncryptionKey = crypto.randomBytes(32).toString('hex')
+    console.warn('ENCRYPTION_KEY is not set. Using an in-memory development key for this runtime only.')
+  }
+
+  return Buffer.from(devRuntimeEncryptionKey, 'hex')
 }
 
 /**
@@ -26,7 +45,7 @@ export function encryptField(value: string): EncryptedData {
   try {
     if (!value) return { encrypted: '', iv: '', authTag: '' }
 
-    const key = Buffer.from(ENCRYPTION_KEY, 'hex')
+    const key = getValidatedEncryptionKey()
     const iv = crypto.randomBytes(IV_LENGTH)
 
     const cipher = crypto.createCipheriv(ALGORITHM, key, iv)
@@ -54,7 +73,7 @@ export function decryptField(encryptedData: EncryptedData): string {
   try {
     if (!encryptedData.encrypted) return ''
 
-    const key = Buffer.from(ENCRYPTION_KEY, 'hex')
+    const key = getValidatedEncryptionKey()
     const iv = Buffer.from(encryptedData.iv, 'hex')
     const authTag = Buffer.from(encryptedData.authTag, 'hex')
 
@@ -76,10 +95,10 @@ export function decryptField(encryptedData: EncryptedData): string {
  * Should warn if using default random key in production
  */
 export function isEncryptionKeySecure(): boolean {
-  const hasCustomKey = process.env.ENCRYPTION_KEY && process.env.ENCRYPTION_KEY.length >= 64
-  const isProduction = process.env.NODE_ENV === 'production'
+  const key = process.env.ENCRYPTION_KEY?.trim()
+  const hasCustomKey = !!key && validateEncryptionKey(key)
 
-  if (isProduction && !hasCustomKey) {
+  if (IS_PRODUCTION && !hasCustomKey) {
     console.warn(
       'WARNING: Encryption key not properly configured. Set ENCRYPTION_KEY environment variable with a 64+ character hex string.'
     )

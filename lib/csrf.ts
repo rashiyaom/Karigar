@@ -2,7 +2,6 @@ import crypto from 'crypto'
 import { cookies } from 'next/headers'
 
 const CSRF_COOKIE_NAME = 'csrf-token'
-const CSRF_HEADER_NAME = 'x-csrf-token'
 const CSRF_TOKEN_LENGTH = 32
 
 /**
@@ -50,7 +49,7 @@ export async function verifyCsrfToken(token: string): Promise<boolean> {
       Buffer.from(cookieToken),
       Buffer.from(token)
     )
-  } catch (error) {
+  } catch {
     // Timing safe equal throws on length mismatch, return false
     return false
   }

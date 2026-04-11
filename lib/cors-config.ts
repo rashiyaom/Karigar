@@ -110,7 +110,8 @@ export function applyCorsHeaders(
 /**
  * Middleware for applying CORS to all responses
  */
-export function corsMiddleware(request: NextRequest, origin: string | undefined) {
+export function corsMiddleware(request: NextRequest, _origin: string | undefined) {
+  void _origin
   // Handle preflight requests
   if (request.method === 'OPTIONS') {
     return handleCorsPreflightRequest(request)

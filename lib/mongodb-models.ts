@@ -89,6 +89,7 @@ const SettingsSchema = new Schema<ISettings>(
   {
     ownerId: { type: String, unique: true, sparse: true, index: true },
     organizationName: { type: String, default: 'My Company' },
+    companyLogoUrl: String,
     leaveDeduction: {
       type: { type: String, enum: ['percentage', 'fixed'], default: 'percentage' },
       value: { type: Number, default: 10 },
@@ -118,8 +119,8 @@ export interface IHistory extends Document {
   action: string
   entity: string
   entityId: string
-  oldData?: any
-  newData?: any
+  oldData?: unknown
+  newData?: unknown
   description: string
 }
 

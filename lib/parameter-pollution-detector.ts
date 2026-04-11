@@ -11,7 +11,6 @@ export function detectParameterPollution(request: NextRequest): boolean {
 
     // Get all parameter names
     const paramNames = new Set<string>()
-    const seenParams = new Set<string>()
 
     for (const [key] of params) {
       if (paramNames.has(key)) {

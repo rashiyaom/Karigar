@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 
 export interface WebSocketMessage {
   type: "employee_updated" | "attendance_marked" | "credit_added" | "task_updated" | "stats_updated"
-  data: any
+  data: unknown
 }
 
 export function useWebSocket() {
@@ -15,14 +15,14 @@ export function useWebSocket() {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const startPolling = () => {
+  const startPolling = useCallback(() => {
     pollingIntervalRef.current = setInterval(() => {
       queryClient.invalidateQueries({ queryKey: ["stats"] })
       queryClient.invalidateQueries({ queryKey: ["employees"] })
     }, 10000) // Poll every 10 seconds for demo purposes
-  }
+  }, [queryClient])
 
-  const connect = () => {
+  const connect = useCallback(() => {
     console.log("Using polling fallback for real-time updates")
     setIsConnected(true) // Mark as connected for polling mode
     startPolling()
@@ -67,7 +67,7 @@ export function useWebSocket() {
       startPolling()
     }
     */
-  }
+  }, [startPolling])
 
   const handleMessage = (message: WebSocketMessage) => {
     switch (message.type) {
@@ -97,7 +97,7 @@ export function useWebSocket() {
     handleMessage(message)
   }
 
-  const disconnect = () => {
+  const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)
     }
@@ -109,12 +109,12 @@ export function useWebSocket() {
       wsRef.current = null
     }
     setIsConnected(false)
-  }
+  }, [])
 
   useEffect(() => {
     connect()
     return disconnect
-  }, [])
+  }, [connect, disconnect])
 
   return {
     isConnected,

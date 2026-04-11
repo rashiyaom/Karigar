@@ -8,7 +8,7 @@ import crypto from 'crypto'
 export function timingSafeEqual(a: string, b: string): boolean {
   try {
     return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b))
-  } catch (error) {
+  } catch {
     // Length mismatch or invalid input
     return false
   }
@@ -20,7 +20,7 @@ export function timingSafeEqual(a: string, b: string): boolean {
 export function timingSafeBufferEqual(a: Buffer, b: Buffer): boolean {
   try {
     return crypto.timingSafeEqual(a, b)
-  } catch (error) {
+  } catch {
     return false
   }
 }

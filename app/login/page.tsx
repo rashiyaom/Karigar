@@ -3,8 +3,7 @@
 import { FormEvent, Suspense, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ArrowRight, ShieldCheck, Sparkles, Star, Users } from "lucide-react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { ArrowRight, Sparkles, Star } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
@@ -65,51 +64,93 @@ function LoginForm() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#dbeafe_0,#f8fafc_35%,#e2e8f0_100%)] px-4 py-8 dark:bg-[radial-gradient(circle_at_top_left,#0f172a_0,#020617_45%,#111827_100%)] md:py-12">
-      <div className="mx-auto grid w-full max-w-6xl overflow-hidden rounded-3xl border border-border/60 bg-background/85 shadow-2xl backdrop-blur md:grid-cols-2">
-        <section className="relative hidden min-h-[560px] overflow-hidden bg-gradient-to-br from-cyan-600 via-sky-600 to-blue-700 p-8 text-white md:flex md:flex-col md:justify-between">
-          <div className="auth-float absolute -left-20 -top-20 h-56 w-56 rounded-full bg-white/20 blur-3xl" />
-          <div className="auth-float absolute -bottom-16 right-0 h-56 w-56 rounded-full bg-emerald-300/20 blur-3xl" style={{ animationDelay: "0.6s" }} />
-          <div className="auth-enter-fade relative space-y-4">
-            <p className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider">
-              <Sparkles className="h-3 w-3" /> Karigar Workspace
-            </p>
-            <h1 className="auth-enter-up text-4xl font-semibold leading-tight" style={{ animationDelay: "90ms" }}>
-              Run attendance, tasks, and payroll in one focused dashboard.
-            </h1>
-            <p className="max-w-md text-sm text-white/90">
-              Your data stays account-scoped, secure, and always available across desktop and mobile.
-            </p>
-            <div className="auth-enter-up inline-flex w-fit items-center gap-3 rounded-2xl border border-white/30 bg-white/10 px-4 py-3" style={{ animationDelay: "170ms" }}>
-              <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/20 font-semibold tracking-wide text-white">KG</div>
-              <div>
-                <p className="text-xs uppercase tracking-wider text-white/75">Brand Mark</p>
-                <p className="flex items-center gap-1 text-sm font-medium">
-                  Karigar OS <Star className="h-3.5 w-3.5" />
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="relative grid gap-3">
-            <div className="auth-enter-up flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 p-3 text-sm" style={{ animationDelay: "230ms" }}>
-              <ShieldCheck className="h-4 w-4" /> Session-protected APIs and isolated records
-            </div>
-            <div className="auth-enter-up flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 p-3 text-sm" style={{ animationDelay: "290ms" }}>
-              <Users className="h-4 w-4" /> Multi-user accounts with role-aware access
-            </div>
-          </div>
-        </section>
+    <main className="relative min-h-screen overflow-hidden bg-[#07090d] text-white">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,104,64,0.22),transparent_40%),radial-gradient(circle_at_75%_68%,rgba(255,104,64,0.12),transparent_34%),linear-gradient(180deg,#07090d_0%,#06080c_58%,#0a0f17_100%)]" />
+      <div className="pointer-events-none absolute left-1/2 top-20 h-[420px] w-[420px] -translate-x-1/2 rounded-full border border-white/10 bg-[radial-gradient(circle,rgba(255,96,54,0.42)_0%,rgba(202,70,33,0.18)_42%,rgba(15,19,27,0.05)_72%,transparent_100%)] blur-[1px] md:h-[540px] md:w-[540px]" />
 
-        <section className="flex min-h-[560px] items-center bg-background/95 p-5 sm:p-8">
-          <Card className="w-full border-border/60 shadow-none sm:shadow-lg">
-            <CardHeader className="space-y-2">
-              <CardTitle className="text-2xl">Welcome Back</CardTitle>
-              <CardDescription>Sign in to continue to your Karigar workspace.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-4" onSubmit={handleSubmit}>
+      <div className="relative mx-auto flex w-full max-w-7xl flex-col px-4 pb-12 pt-6 sm:px-6 lg:px-8">
+        <header className="mb-8 flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 backdrop-blur-xl sm:px-6">
+          <div className="flex items-center gap-2 text-sm font-medium tracking-wide text-white/90">
+            <Star className="h-4 w-4 text-[#ff6a45]" />
+            Karigar Network
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/register"
+              className="rounded-md border border-white/15 bg-white/[0.03] px-3 py-1.5 text-xs text-white/75 transition hover:border-white/25 hover:text-white"
+            >
+              Register
+            </Link>
+            <span className="rounded-md border border-[#ff6a45]/40 bg-[#ff6a45]/15 px-3 py-1.5 text-xs font-medium text-[#ffb39d]">
+              Login
+            </span>
+          </div>
+        </header>
+
+        <section className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
+          <div className="space-y-7">
+            <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
+              <Sparkles className="h-3.5 w-3.5 text-[#ff7f5f]" /> Workforce OS Preview
+            </p>
+
+            <h1 className="max-w-3xl text-balance text-4xl font-semibold leading-[1.1] text-white sm:text-5xl lg:text-6xl">
+              Next level of <span className="text-[#ff6a45]">attendance</span>, <span className="text-[#ff6a45]">tasks</span>, and payroll operations.
+            </h1>
+
+            <p className="max-w-2xl text-base leading-relaxed text-white/65 sm:text-lg">
+              Karigar centralizes employee records, attendance, credits, task workflows, and analytics into one secured workspace for daily operations.
+            </p>
+
+            <div className="grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
+              {[
+                { value: "99.9%", label: "Data uptime" },
+                { value: "1 dashboard", label: "Unified ops" },
+                { value: "Role-aware", label: "Access model" },
+                { value: "Audit-ready", label: "History trail" },
+              ].map((item) => (
+                <div key={item.label} className="rounded-xl border border-white/10 bg-white/[0.02] p-3 backdrop-blur">
+                  <p className="text-lg font-semibold text-[#ff9e85]">{item.value}</p>
+                  <p className="text-xs text-white/60">{item.label}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              {[
+                {
+                  title: "Constant Monitoring",
+                  desc: "Track attendance, tasks, and credits in real time.",
+                },
+                {
+                  title: "AI-based Detection",
+                  desc: "Spot delays, missing actions, and credit risk early.",
+                },
+                {
+                  title: "Automatic Triage",
+                  desc: "Prioritize what requires immediate manager action.",
+                },
+              ].map((card, index) => (
+                <article
+                  key={card.title}
+                  className="group rounded-2xl border border-white/10 bg-[#0c1017]/80 p-4 transition hover:-translate-y-1 hover:border-[#ff6a45]/45 hover:bg-[#0f141d]"
+                  style={{ transitionDelay: `${index * 60}ms` }}
+                >
+                  <div className="mb-3 h-24 rounded-xl border border-white/10 bg-[radial-gradient(circle_at_20%_20%,rgba(255,106,69,0.24),rgba(255,255,255,0.02)_52%,transparent_72%)]" />
+                  <h2 className="text-sm font-semibold text-white/90">{card.title}</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-white/55">{card.desc}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <aside className="relative">
+            <div className="sticky top-6 rounded-2xl border border-white/10 bg-[#070b12]/90 p-5 shadow-[0_24px_80px_-35px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:p-6">
+              <h2 className="text-2xl font-semibold text-white">Welcome Back</h2>
+              <p className="mt-1 text-sm text-white/55">Sign in to continue to your Karigar workspace.</p>
+
+              <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor="username">
+                  <label className="text-sm font-medium text-white/80" htmlFor="username">
                     Username
                   </label>
                   <Input
@@ -119,11 +160,12 @@ function LoginForm() {
                     onChange={(event) => setUsername(event.target.value)}
                     placeholder="Enter your username"
                     required
+                    className="border-white/10 bg-black/35 text-white placeholder:text-white/35 focus-visible:ring-[#ff6a45]/40"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor="password">
+                  <label className="text-sm font-medium text-white/80" htmlFor="password">
                     Password
                   </label>
                   <Input
@@ -134,26 +176,30 @@ function LoginForm() {
                     onChange={(event) => setPassword(event.target.value)}
                     placeholder="Enter your password"
                     required
+                    className="border-white/10 bg-black/35 text-white placeholder:text-white/35 focus-visible:ring-[#ff6a45]/40"
                   />
                 </div>
 
-                {error ? <p className="text-sm text-destructive">{error}</p> : null}
+                {error ? <p className="text-sm text-[#ff8b6e]">{error}</p> : null}
 
-                <Button className="w-full" type="submit" disabled={isSubmitting}>
+                <Button
+                  className="w-full border border-[#ff8a68]/40 bg-gradient-to-r from-[#ff6a45] to-[#ff7f5f] text-white hover:from-[#ff7a58] hover:to-[#ff967a]"
+                  type="submit"
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? "Signing in..." : "Sign In"}
                   {!isSubmitting ? <ArrowRight className="h-4 w-4" /> : null}
                 </Button>
               </form>
-            </CardContent>
-            <CardFooter className="justify-center">
-              <p className="text-sm text-muted-foreground">
+
+              <p className="mt-5 text-center text-sm text-white/55">
                 New account?{" "}
-                <Link className="font-medium text-primary underline-offset-4 hover:underline" href="/register">
+                <Link className="font-medium text-[#ff9f85] transition hover:text-[#ffc2b1]" href="/register">
                   Register here
                 </Link>
               </p>
-            </CardFooter>
-          </Card>
+            </div>
+          </aside>
         </section>
       </div>
     </main>
@@ -162,7 +208,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-gradient-to-b from-slate-100 via-white to-slate-200 px-4 py-12 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />}>
+    <Suspense fallback={<main className="min-h-screen bg-[#07090d]" />}>
       <LoginForm />
     </Suspense>
   )

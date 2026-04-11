@@ -4,20 +4,20 @@
  * Ensures data consistency across multiple collections
  */
 
-import { MongoClient, ClientSession } from 'mongodb'
+import { ClientSession } from 'mongodb'
 import { getMongoClient } from './connection-pool'
 
 interface TransactionOptions {
   maxCommitTimeMS?: number
-  readConcern?: string
-  writeConcern?: string
-  readPreference?: string
+  readConcern?: 'local' | 'available' | 'majority' | 'snapshot' | 'linearizable'
+  writeConcern?: 'majority' | 'w1'
+  readPreference?: 'primary' | 'primaryPreferred' | 'secondary' | 'secondaryPreferred' | 'nearest'
   timeout?: number
 }
 
 interface TransactionResult {
   success: boolean
-  data?: any
+  data?: unknown
   error?: string
   transactionId: string
   duration: number
@@ -75,11 +75,11 @@ export async function executeTransaction<T>(
       },
       {
         maxCommitTimeMS: finalOptions.maxCommitTimeMS,
-        readConcern: { level: finalOptions.readConcern as any },
+        readConcern: finalOptions.readConcern ? { level: finalOptions.readConcern } : undefined,
         writeConcern: {
           w: finalOptions.writeConcern === 'majority' ? 'majority' : 1,
         },
-        readPreference: finalOptions.readPreference as any,
+        readPreference: finalOptions.readPreference,
       }
     )
 
@@ -119,7 +119,7 @@ export async function executeTransaction<T>(
 /**
  * Multi-step transaction with rollback support
  */
-export async function executeMultiStepTransaction<T>(
+export async function executeMultiStepTransaction(
   steps: Array<(session: ClientSession) => Promise<void>>,
   options: TransactionOptions = {}
 ): Promise<TransactionResult> {
@@ -146,11 +146,11 @@ export async function executeMultiStepTransaction<T>(
       },
       {
         maxCommitTimeMS: finalOptions.maxCommitTimeMS,
-        readConcern: { level: finalOptions.readConcern as any },
+        readConcern: finalOptions.readConcern ? { level: finalOptions.readConcern } : undefined,
         writeConcern: {
           w: finalOptions.writeConcern === 'majority' ? 'majority' : 1,
         },
-        readPreference: finalOptions.readPreference as any,
+        readPreference: finalOptions.readPreference,
       }
     )
 

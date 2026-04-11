@@ -1,5 +1,29 @@
 import type { Employee, Attendance, Credit, Task, Settings } from "./types"
 
+type HistoryData = Employee | Attendance | Credit | Task | null
+
+type PersistedAppStore = {
+  employees: Array<[string, Employee]>
+  attendance: Array<[string, Attendance]>
+  credits: Array<[string, Credit]>
+  tasks: Array<[string, Task]>
+  settings: Settings
+  history: Array<{
+    id: string
+    timestamp: string
+    action: string
+    entity: string
+    entityId: string
+    oldData?: HistoryData
+    newData?: HistoryData
+    description: string
+  }>
+}
+
+declare global {
+  var __appStore: PersistedAppStore | undefined
+}
+
 // In-memory storage with HMR persistence
 class InMemoryStore {
   private employees: Map<string, Employee> = new Map()
@@ -20,15 +44,15 @@ class InMemoryStore {
     action: string
     entity: string
     entityId: string
-    oldData?: any
-    newData?: any
+    oldData?: HistoryData
+    newData?: HistoryData
     description: string
   }> = []
 
     constructor() {
     // Restore data from global in development (HMR persistence)
     if (typeof globalThis !== 'undefined' && process.env.NODE_ENV === 'development') {
-      const globalStore = (globalThis as any).__appStore
+      const globalStore = globalThis.__appStore
       if (globalStore) {
         this.employees = new Map(globalStore.employees || [])
         this.attendance = new Map(globalStore.attendance || [])
@@ -94,7 +118,7 @@ class InMemoryStore {
   }  private persistToGlobal() {
     // Save data to global in development (HMR persistence)
     if (typeof globalThis !== 'undefined' && process.env.NODE_ENV === 'development') {
-      (globalThis as any).__appStore = {
+      globalThis.__appStore = {
         employees: Array.from(this.employees.entries()),
         attendance: Array.from(this.attendance.entries()),
         credits: Array.from(this.credits.entries()),
@@ -110,8 +134,8 @@ class InMemoryStore {
     entity: string,
     entityId: string,
     description: string,
-    oldData?: any,
-    newData?: any,
+    oldData?: HistoryData,
+    newData?: HistoryData,
   ) {
     const historyEntry = {
       id: this.generateId(),
@@ -145,30 +169,30 @@ class InMemoryStore {
           if (historyEntry.action === "create") {
             this.employees.delete(historyEntry.entityId)
           } else if (historyEntry.action === "update") {
-            this.employees.set(historyEntry.entityId, historyEntry.oldData)
+            this.employees.set(historyEntry.entityId, historyEntry.oldData as Employee)
           } else if (historyEntry.action === "delete") {
-            this.employees.set(historyEntry.entityId, historyEntry.oldData)
+            this.employees.set(historyEntry.entityId, historyEntry.oldData as Employee)
           }
           break
         case "task":
           if (historyEntry.action === "create") {
             this.tasks.delete(historyEntry.entityId)
           } else if (historyEntry.action === "update") {
-            this.tasks.set(historyEntry.entityId, historyEntry.oldData)
+            this.tasks.set(historyEntry.entityId, historyEntry.oldData as Task)
           }
           break
         case "credit":
           if (historyEntry.action === "create") {
             this.credits.delete(historyEntry.entityId)
           } else if (historyEntry.action === "update") {
-            this.credits.set(historyEntry.entityId, historyEntry.oldData)
+            this.credits.set(historyEntry.entityId, historyEntry.oldData as Credit)
           }
           break
         case "attendance":
           if (historyEntry.action === "create") {
             this.attendance.delete(historyEntry.entityId)
           } else if (historyEntry.action === "update") {
-            this.attendance.set(historyEntry.entityId, historyEntry.oldData)
+            this.attendance.set(historyEntry.entityId, historyEntry.oldData as Attendance)
           }
           break
       }
@@ -176,7 +200,7 @@ class InMemoryStore {
       // Mark this history entry as undone
       historyEntry.description += " (UNDONE)"
       return true
-    } catch (error) {
+    } catch {
       return false
     }
   }

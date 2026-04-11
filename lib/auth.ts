@@ -4,11 +4,10 @@ import { connectToDatabase } from './mongodb'
 import crypto from 'crypto'
 import bcrypt from 'bcrypt'
 
-const MAIN_ADMIN_USERNAME = (process.env.MAIN_ADMIN_USERNAME || process.env.DEMO_USERNAME || 'admin').toLowerCase()
-const MAIN_ADMIN_PASSWORD = process.env.MAIN_ADMIN_PASSWORD || process.env.DEMO_PASSWORD || 'admin@123'
 const MAIN_ADMIN_PASSWORD_HASH = process.env.MAIN_ADMIN_PASSWORD_HASH
 const SESSION_DURATION = (parseInt(process.env.SESSION_EXPIRY_HOURS || '24') * 60 * 60 * 1000) // Default 24 hours
 const COOKIE_NAME = 'auth-token'
+const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 
 export interface AuthUser {
   id: string
@@ -22,7 +21,14 @@ export function generateToken(): string {
 }
 
 async function ensureMainAdminAccount() {
-  const existingAdmin = await UserModel.findOne({ username: MAIN_ADMIN_USERNAME })
+  const configuredUsername = process.env.MAIN_ADMIN_USERNAME || process.env.DEMO_USERNAME || 'admin'
+  const mainAdminUsername = configuredUsername.toLowerCase().trim()
+
+  if (IS_PRODUCTION && !process.env.MAIN_ADMIN_USERNAME) {
+    throw new Error('MAIN_ADMIN_USERNAME must be configured in production')
+  }
+
+  const existingAdmin = await UserModel.findOne({ username: mainAdminUsername })
   if (existingAdmin) {
     if (existingAdmin.role !== 'admin') {
       existingAdmin.role = 'admin'
@@ -31,12 +37,23 @@ async function ensureMainAdminAccount() {
     return existingAdmin
   }
 
+  const configuredPassword = process.env.MAIN_ADMIN_PASSWORD || process.env.DEMO_PASSWORD
+  if (!MAIN_ADMIN_PASSWORD_HASH && !configuredPassword) {
+    throw new Error('Admin password is not configured')
+  }
+  if (IS_PRODUCTION && !MAIN_ADMIN_PASSWORD_HASH && !process.env.MAIN_ADMIN_PASSWORD) {
+    throw new Error('Use MAIN_ADMIN_PASSWORD or MAIN_ADMIN_PASSWORD_HASH in production')
+  }
+  if (IS_PRODUCTION && configuredPassword === 'admin@123') {
+    throw new Error('Default admin password is not allowed in production')
+  }
+
   const passwordHash = MAIN_ADMIN_PASSWORD_HASH
     ? MAIN_ADMIN_PASSWORD_HASH
-    : await bcrypt.hash(MAIN_ADMIN_PASSWORD, 10)
+    : await bcrypt.hash(configuredPassword!, 10)
 
   return UserModel.create({
-    username: MAIN_ADMIN_USERNAME,
+    username: mainAdminUsername,
     password: passwordHash,
     role: 'admin',
   })
@@ -235,7 +252,8 @@ export async function regenerateSession(oldToken: string): Promise<string> {
     // Create new session with fresh token
     const newToken = generateToken()
     const expiresAt = new Date(Date.now() + SESSION_DURATION)
-    const adminUser = await UserModel.findOne({ username: MAIN_ADMIN_USERNAME })
+    const configuredUsername = process.env.MAIN_ADMIN_USERNAME || process.env.DEMO_USERNAME || 'admin'
+    const adminUser = await UserModel.findOne({ username: configuredUsername.toLowerCase().trim() })
 
     if (!adminUser) {
       throw new Error('Failed to find main admin account')

@@ -46,10 +46,31 @@ export const taskSchema = z.object({
 
 export const settingsSchema = z.object({
   organizationName: z.string().min(1, "Organization name is required").max(MAX_STRING_LENGTH, "Organization name is too long").optional(),
+  companyLogoUrl: z.string().url("Invalid company logo URL").max(2000, "Company logo URL is too long").optional(),
   leaveDeduction: z
     .object({
       type: z.enum(["percentage", "fixed"]),
-      value: z.number().min(0, "Deduction value must be positive").max(100, "Deduction value is too large"),
+      value: z.number().min(0, "Deduction value must be positive"),
+    })
+    .optional()
+    .refine((value) => {
+      if (!value) return true
+      if (value.type === "percentage") {
+        return value.value <= 100
+      }
+      return value.value <= 1000000000
+    }, "Deduction value is too large for selected type"),
+  workingHours: z
+    .object({
+      start: z.string().regex(/^\d{2}:\d{2}$/, "Start time must be HH:MM"),
+      end: z.string().regex(/^\d{2}:\d{2}$/, "End time must be HH:MM"),
     })
     .optional(),
+  weekendDays: z.array(z.string().max(20, "Weekend day value is too long")).max(7, "Too many weekend days").optional(),
+  autoMarkAbsent: z.boolean().optional(),
+  emailNotifications: z.boolean().optional(),
+  backupFrequency: z.enum(["hourly", "daily", "weekly", "monthly"]).optional(),
+  companyAddress: z.string().max(MAX_DESCRIPTION_LENGTH, "Company address is too long").optional(),
+  companyPhone: z.string().max(MAX_MOBILE_LENGTH, "Company phone is too long").optional(),
+  companyEmail: z.string().email("Invalid company email").max(MAX_EMAIL_LENGTH, "Company email is too long").optional(),
 })

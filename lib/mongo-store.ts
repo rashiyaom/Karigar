@@ -6,13 +6,15 @@ import {
   TaskModel,
   SettingsModel,
   HistoryModel,
-  IEmployee,
-  IAttendance,
-  ICredit,
-  ITask,
-  ISettings,
 } from './mongodb-models'
 import type { Employee, Attendance, Credit, Task, Settings } from './types'
+
+type HistoryPayload = Record<string, unknown> | null | undefined
+type MongoEntityBase = {
+  _id: { toString(): string }
+  createdAt?: Date
+  updatedAt?: Date
+}
 
 /**
  * MongoDB-backed store for persistent, cross-device data storage
@@ -500,7 +502,7 @@ class MongoDBStore {
     await this.ensureConnected()
 
     const tasks = await TaskModel.find({ ownerId }).sort({ createdAt: -1 })
-    return tasks.map((task: any) => this.formatTask(task))
+    return tasks.map((task) => this.formatTask(task))
   }
 
   async getTask(id: string, ownerId: string): Promise<Task | null> {
@@ -744,8 +746,8 @@ class MongoDBStore {
     entity: string,
     entityId: string,
     description: string,
-    oldData?: any,
-    newData?: any,
+    oldData?: HistoryPayload,
+    newData?: HistoryPayload,
     ownerId?: string
   ) {
     try {
@@ -768,7 +770,18 @@ class MongoDBStore {
   // Utility Methods
   // ========================
 
-  private formatEmployee(emp: any): Employee {
+  private formatEmployee(
+    emp: MongoEntityBase & {
+      name: string
+      salary: number
+      joiningDate: string
+      mobile: string
+      email: string
+      role: string
+      profilePhoto?: string
+      status: Employee['status']
+    }
+  ): Employee {
     return {
       id: emp._id.toString(),
       name: emp.name,
@@ -784,7 +797,13 @@ class MongoDBStore {
     }
   }
 
-  private formatAttendance(att: any): Attendance {
+  private formatAttendance(
+    att: MongoEntityBase & {
+      employeeId: { toString(): string } | string
+      date: string
+      status: Attendance['status']
+    }
+  ): Attendance {
     return {
       id: att._id.toString(),
       employeeId: att.employeeId.toString(),
@@ -795,7 +814,15 @@ class MongoDBStore {
     }
   }
 
-  private formatCredit(credit: any): Credit {
+  private formatCredit(
+    credit: MongoEntityBase & {
+      employeeId: { toString(): string } | string
+      amount: number
+      dateTaken: string
+      promiseReturnDate: string
+      isPaid: boolean
+    }
+  ): Credit {
     return {
       id: credit._id.toString(),
       employeeId: credit.employeeId.toString(),
@@ -808,7 +835,16 @@ class MongoDBStore {
     }
   }
 
-  private formatTask(task: any): Task {
+  private formatTask(
+    task: MongoEntityBase & {
+      employeeId: { toString(): string } | string
+      title: string
+      description: string
+      deadline: string
+      priority: Task['priority']
+      isCompleted: boolean
+    }
+  ): Task {
     return {
       id: task._id.toString(),
       employeeId: task.employeeId.toString(),
@@ -822,7 +858,7 @@ class MongoDBStore {
     }
   }
 
-  private formatSettings(settings: any): Settings {
+  private formatSettings(settings: Settings): Settings {
     return {
       organizationName: settings.organizationName,
       leaveDeduction: settings.leaveDeduction,

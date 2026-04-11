@@ -111,11 +111,13 @@ export function useCreateAttendance() {
 export function useUpdateAttendance() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, employeeId, ...updates }: Partial<Attendance> & { id: string; employeeId: string }) =>
-      apiCall<Attendance>(`/attendance/${id}`, {
+    mutationFn: ({ id, employeeId, ...updates }: Partial<Attendance> & { id: string; employeeId: string }) => {
+      void employeeId
+      return apiCall<Attendance>(`/attendance/${id}`, {
         method: "PUT",
         body: JSON.stringify(updates),
-      }),
+      })
+    },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["attendance", variables.employeeId] })
       queryClient.invalidateQueries({ queryKey: ["stats"] })
@@ -126,7 +128,7 @@ export function useUpdateAttendance() {
 export function useDeleteAttendance() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, employeeId }: { id: string; employeeId: string }) =>
+    mutationFn: ({ id }: { id: string; employeeId: string }) =>
       apiCall(`/attendance/${id}`, {
         method: "DELETE",
       }),
@@ -181,11 +183,13 @@ export function useCreateCredit() {
 export function useUpdateCredit() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, employeeId, ...updates }: Partial<Credit> & { id: string; employeeId: string }) =>
-      apiCall<Credit>(`/credits/${id}`, {
+    mutationFn: ({ id, employeeId, ...updates }: Partial<Credit> & { id: string; employeeId: string }) => {
+      void employeeId
+      return apiCall<Credit>(`/credits/${id}`, {
         method: "PUT",
         body: JSON.stringify(updates),
-      }),
+      })
+    },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["credits"] })
       queryClient.invalidateQueries({ queryKey: ["credits", variables.employeeId] })
@@ -198,7 +202,7 @@ export function useUpdateCredit() {
 export function useDeleteCredit() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, employeeId }: { id: string; employeeId: string }) =>
+    mutationFn: ({ id }: { id: string; employeeId: string }) =>
       apiCall(`/credits/${id}`, {
         method: "DELETE",
       }),
@@ -267,7 +271,7 @@ export function useUpdateTask() {
 export function useDeleteTask() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, employeeId }: { id: string; employeeId: string }) =>
+    mutationFn: ({ id }: { id: string; employeeId: string }) =>
       apiCall(`/tasks/${id}`, {
         method: "DELETE",
       }),

@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { registerUser, setAuthCookie } from '@/lib/auth'
 import { setCsrfToken } from '@/lib/csrf'
-import { sanitizeString, hasDangerousPatterns } from '@/lib/input-sanitizer'
+import { sanitizeObjectKeys, sanitizeString, hasDangerousPatterns } from '@/lib/input-sanitizer'
 import { checkApiRateLimit } from '@/lib/api-rate-limit'
+import { settingsSchema } from '@/lib/validation'
+import { mongoStore } from '@/lib/mongo-store'
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,6 +21,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const rawUsername = typeof body?.username === 'string' ? body.username : ''
     const rawPassword = typeof body?.password === 'string' ? body.password : ''
+    const rawSettings = body?.settings && typeof body.settings === 'object' ? sanitizeObjectKeys(body.settings) : null
 
     if (!rawUsername || !rawPassword) {
       return NextResponse.json(
@@ -50,6 +53,11 @@ export async function POST(request: NextRequest) {
         { success: false, error: 'Unable to create account. Username may already exist.' },
         { status: 409 }
       )
+    }
+
+    if (rawSettings) {
+      const validatedSettings = settingsSchema.parse(rawSettings)
+      await mongoStore.updateSettings(validatedSettings, authResult.user.id)
     }
 
     await setAuthCookie(authResult.token)
