@@ -143,6 +143,8 @@ const HistorySchema = new Schema<IHistory>(
 // User Schema
 export interface IUser extends Document {
   username: string
+  email?: string
+  mobile?: string
   password: string
   role: 'admin' | 'user'
   createdAt: Date
@@ -152,6 +154,8 @@ export interface IUser extends Document {
 const UserSchema = new Schema<IUser>(
   {
     username: { type: String, required: true, unique: true, lowercase: true, index: true },
+    email: { type: String, lowercase: true, trim: true, unique: true, sparse: true, index: true },
+    mobile: { type: String, trim: true, unique: true, sparse: true, index: true },
     password: { type: String, required: true },
     role: { type: String, enum: ['admin', 'user'], default: 'user', index: true },
   },

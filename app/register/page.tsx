@@ -23,6 +23,9 @@ const featureCards = [
   { title: "Automatic triage", desc: "Prioritize actions by urgency without losing context." },
 ]
 
+const questSteps = ["Access", "Company", "Work Rules", "Launch"]
+const stepSubstepCounts = [3, 5, 4, 1]
+
 export default function RegisterPage() {
   const router = useRouter()
   const formPanelRef = useRef<HTMLDivElement | null>(null)
@@ -47,6 +50,8 @@ export default function RegisterPage() {
   const [metricCounts, setMetricCounts] = useState<number[]>(heroMetrics.map(() => 0))
   const [cardTilts, setCardTilts] = useState<Record<number, { rotateX: number; rotateY: number }>>({})
   const [scrollProgress, setScrollProgress] = useState(0)
+  const [currentStep, setCurrentStep] = useState(0)
+  const [currentSubstep, setCurrentSubstep] = useState(0)
 
   const dayOptions = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 
@@ -64,9 +69,43 @@ export default function RegisterPage() {
     leaveDeductionValue > 0,
     Boolean(backupFrequency),
   ]
+  const stepCompletion = [
+    username.trim().length >= 3 && password.length >= 8 && confirmPassword.length > 0 && confirmPassword === password,
+    organizationName.trim().length > 0 && companyEmail.trim().includes("@") && companyPhone.trim().length >= 8,
+    Boolean(workingStart) && Boolean(workingEnd) && weekendDays.length > 0 && leaveDeductionValue > 0 && Boolean(backupFrequency),
+    true,
+  ]
+  const totalSteps = questSteps.length
+  const stageProgress = Math.round((currentStep / (totalSteps - 1)) * 100)
   const completedSignals = completionSignals.filter(Boolean).length
   const formCompletion = Math.round((completedSignals / completionSignals.length) * 100)
-  const setupProgress = Math.round(formCompletion * 0.65 + scrollProgress * 0.35)
+  const setupProgress = Math.round(formCompletion * 0.5 + scrollProgress * 0.25 + stageProgress * 0.25)
+  const questPoints = completedSignals * 25 + currentStep * 40
+  const unlockedBadges = stepCompletion.filter(Boolean).length
+  const isSubstepValid = (() => {
+    if (currentStep === 0) {
+      if (currentSubstep === 0) return username.trim().length >= 3
+      if (currentSubstep === 1) return password.length >= 8
+      return confirmPassword.length > 0 && confirmPassword === password
+    }
+
+    if (currentStep === 1) {
+      if (currentSubstep === 0) return organizationName.trim().length > 0
+      if (currentSubstep === 1) return companyEmail.trim().includes("@")
+      if (currentSubstep === 2) return companyPhone.trim().length >= 8
+      if (currentSubstep === 3) return companyAddress.trim().length > 0
+      return true
+    }
+
+    if (currentStep === 2) {
+      if (currentSubstep === 0) return Boolean(workingStart) && Boolean(workingEnd)
+      if (currentSubstep === 1) return leaveDeductionValue > 0
+      if (currentSubstep === 2) return weekendDays.length > 0
+      return Boolean(backupFrequency)
+    }
+
+    return true
+  })()
 
   useEffect(() => {
     const duration = 1450
@@ -88,6 +127,39 @@ export default function RegisterPage() {
 
     return () => cancelAnimationFrame(frameId)
   }, [])
+
+  useEffect(() => {
+    setCurrentSubstep(0)
+  }, [currentStep])
+
+  useEffect(() => {
+    if (currentStep > 1) return
+    if (!isSubstepValid) return
+    if (currentStep === totalSteps - 1) return
+
+    const timer = window.setTimeout(() => {
+      if (currentSubstep < stepSubstepCounts[currentStep] - 1) {
+        setCurrentSubstep((prev) => prev + 1)
+        return
+      }
+
+      setCurrentStep((prev) => Math.min(prev + 1, totalSteps - 1))
+    }, 420)
+
+    return () => window.clearTimeout(timer)
+  }, [
+    currentStep,
+    currentSubstep,
+    isSubstepValid,
+    totalSteps,
+    username,
+    password,
+    confirmPassword,
+    organizationName,
+    companyEmail,
+    companyPhone,
+    companyAddress,
+  ])
 
   useEffect(() => {
     const updateScrollProgress = () => {
@@ -130,6 +202,34 @@ export default function RegisterPage() {
 
   const handleFeatureMouseLeave = (index: number) => {
     setCardTilts((prev) => ({ ...prev, [index]: { rotateX: 0, rotateY: 0 } }))
+  }
+
+  const handleNextStep = () => {
+    if (!isSubstepValid) {
+      setError("Complete this mini step to continue.")
+      return
+    }
+
+    setError(null)
+    if (currentSubstep < stepSubstepCounts[currentStep] - 1) {
+      setCurrentSubstep((prev) => prev + 1)
+      return
+    }
+
+    setCurrentStep((prev) => Math.min(prev + 1, totalSteps - 1))
+  }
+
+  const handlePreviousStep = () => {
+    setError(null)
+
+    if (currentSubstep > 0) {
+      setCurrentSubstep((prev) => prev - 1)
+      return
+    }
+
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1)
+    }
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -231,7 +331,7 @@ export default function RegisterPage() {
               <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
                 <Sparkles className="h-3.5 w-3.5 text-[#ff8968]" /> Create Workspace
               </p>
-              <span className="rounded-full border border-[#ff6f4a]/40 bg-[#ff6f4a]/10 px-3 py-1 text-xs text-[#ffc3b2]">01 Onboarding</span>
+              <span className="rounded-full border border-[#ff6f4a]/40 bg-[#ff6f4a]/10 px-3 py-1 text-xs text-[#ffc3b2]">0{currentStep + 1} {questSteps[currentStep]}</span>
             </div>
 
             <div className="pointer-events-none relative mx-auto hidden h-56 w-56 lg:block">
@@ -305,245 +405,341 @@ export default function RegisterPage() {
                 <div className="h-2 overflow-hidden rounded-full bg-white/10">
                   <div className="h-full rounded-full bg-gradient-to-r from-[#ff6f4a] to-[#ffae96] transition-all duration-500" style={{ width: `${setupProgress}%` }} />
                 </div>
-                <p className="mt-2 text-[11px] text-white/45">Form completion {formCompletion}% + scroll progress {Math.round(scrollProgress)}%</p>
+                <p className="mt-2 text-[11px] text-white/45">Quest {currentStep + 1}/{totalSteps} • XP {questPoints} • Badges {unlockedBadges}</p>
               </div>
 
               <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
                 <div className="rounded-xl border border-white/10 bg-black/25 p-4">
-                  <h3 className="mb-3 text-sm font-semibold text-white/80">Access Credentials</h3>
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="username" className="text-white/80">Username</Label>
-                      <Input
-                        id="username"
-                        autoComplete="username"
-                        value={username}
-                        onChange={(event) => setUsername(event.target.value)}
-                        placeholder="Choose a username"
-                        required
-                        className="border-white/10 bg-black/35 text-white placeholder:text-white/35"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="password" className="text-white/80">Password</Label>
-                      <Input
-                        id="password"
-                        autoComplete="new-password"
-                        type="password"
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
-                        placeholder="At least 8 characters"
-                        required
-                        className="border-white/10 bg-black/35 text-white placeholder:text-white/35"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword" className="text-white/80">Confirm Password</Label>
-                      <Input
-                        id="confirmPassword"
-                        autoComplete="new-password"
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(event) => setConfirmPassword(event.target.value)}
-                        placeholder="Re-enter your password"
-                        required
-                        className="border-white/10 bg-black/35 text-white placeholder:text-white/35"
-                      />
-                    </div>
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-white/80">Step {currentStep + 1}: {questSteps[currentStep]}</h3>
+                    <span className="rounded-full border border-[#ff6f4a]/40 bg-[#ff6f4a]/15 px-2.5 py-1 text-[11px] text-[#ffd1c4]">{stepCompletion[currentStep] ? "Completed" : "In progress"}</span>
                   </div>
-                </div>
 
-                <div className="rounded-xl border border-white/10 bg-black/25 p-4">
-                  <h3 className="mb-3 text-sm font-semibold text-white/80">Organization Profile</h3>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-2 sm:col-span-2">
-                      <Label htmlFor="organizationName" className="text-white/80">Company Name</Label>
-                      <Input
-                        id="organizationName"
-                        value={organizationName}
-                        onChange={(event) => setOrganizationName(event.target.value)}
-                        placeholder="Enter company name"
-                        required
-                        className="border-white/10 bg-black/35 text-white placeholder:text-white/35"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="companyEmail" className="text-white/80">Company Email</Label>
-                      <Input
-                        id="companyEmail"
-                        type="email"
-                        value={companyEmail}
-                        onChange={(event) => setCompanyEmail(event.target.value)}
-                        placeholder="company@example.com"
-                        className="border-white/10 bg-black/35 text-white placeholder:text-white/35"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="companyPhone" className="text-white/80">Company Phone</Label>
-                      <Input
-                        id="companyPhone"
-                        value={companyPhone}
-                        onChange={(event) => setCompanyPhone(event.target.value)}
-                        placeholder="+91 98765 43210"
-                        className="border-white/10 bg-black/35 text-white placeholder:text-white/35"
-                      />
-                    </div>
-                    <div className="space-y-2 sm:col-span-2">
-                      <Label htmlFor="companyLogoUrl" className="text-white/80">Company Logo URL</Label>
-                      <Input
-                        id="companyLogoUrl"
-                        type="url"
-                        value={companyLogoUrl}
-                        onChange={(event) => setCompanyLogoUrl(event.target.value)}
-                        placeholder="https://example.com/logo.png"
-                        className="border-white/10 bg-black/35 text-white placeholder:text-white/35"
-                      />
-                    </div>
-                    <div className="space-y-2 sm:col-span-2">
-                      <Label htmlFor="companyAddress" className="text-white/80">Company Address</Label>
-                      <Textarea
-                        id="companyAddress"
-                        value={companyAddress}
-                        onChange={(event) => setCompanyAddress(event.target.value)}
-                        placeholder="Enter company address"
-                        rows={3}
-                        className="border-white/10 bg-black/35 text-white placeholder:text-white/35"
-                      />
-                    </div>
+                  <div className="mb-4 flex items-center gap-2">
+                    {Array.from({ length: stepSubstepCounts[currentStep] }).map((_, index) => {
+                      const active = index === currentSubstep
+                      const done = index < currentSubstep
+                      return (
+                        <span
+                          key={`${currentStep}-${index}`}
+                          className={`h-1.5 flex-1 rounded-full transition ${
+                            done
+                              ? "bg-[#ff9b80]"
+                              : active
+                                ? "bg-[#ff6f4a]"
+                                : "bg-white/10"
+                          }`}
+                        />
+                      )
+                    })}
                   </div>
-                </div>
 
-                <div className="rounded-xl border border-white/10 bg-black/25 p-4">
-                  <h3 className="mb-3 text-sm font-semibold text-white/80">Work Rules & Automation</h3>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="workingStart" className="text-white/80">Work Hours Start</Label>
-                      <Input
-                        id="workingStart"
-                        type="time"
-                        value={workingStart}
-                        onChange={(event) => setWorkingStart(event.target.value)}
-                        className="border-white/10 bg-black/35 text-white"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="workingEnd" className="text-white/80">Work Hours End</Label>
-                      <Input
-                        id="workingEnd"
-                        type="time"
-                        value={workingEnd}
-                        onChange={(event) => setWorkingEnd(event.target.value)}
-                        className="border-white/10 bg-black/35 text-white"
-                      />
-                    </div>
+                  <p className="mb-3 text-xs text-white/45">Mini step {currentSubstep + 1} of {stepSubstepCounts[currentStep]} {currentStep <= 1 ? "(auto-advances when valid)" : ""}</p>
 
-                    <div className="space-y-2">
-                      <Label className="text-white/80">Leave Deduction Type</Label>
-                      <Select value={leaveDeductionType} onValueChange={(value: "percentage" | "fixed") => setLeaveDeductionType(value)}>
-                        <SelectTrigger className="border-white/10 bg-black/35 text-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="percentage">Percentage</SelectItem>
-                          <SelectItem value="fixed">Fixed Amount</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  {currentStep === 0 ? (
+                    <div className="space-y-3">
+                      {currentSubstep === 0 ? (
+                        <div className="space-y-2">
+                          <Label htmlFor="username" className="text-white/80">Pick username, mobile, or email</Label>
+                          <Input
+                            id="username"
+                            autoComplete="username"
+                            value={username}
+                            onChange={(event) => setUsername(event.target.value)}
+                            placeholder="Enter username, mobile, or email"
+                            required
+                            className="border-white/10 bg-black/35 text-white placeholder:text-white/35"
+                          />
+                        </div>
+                      ) : null}
 
-                    <div className="space-y-2">
-                      <Label htmlFor="leaveDeductionValue" className="text-white/80">
-                        Leave Deduction Value {leaveDeductionType === "percentage" ? "(%)" : "(₹)"}
-                      </Label>
-                      <Input
-                        id="leaveDeductionValue"
-                        type="number"
-                        min={0}
-                        value={leaveDeductionValue}
-                        onChange={(event) => setLeaveDeductionValue(Number(event.target.value || 0))}
-                        className="border-white/10 bg-black/35 text-white"
-                      />
-                    </div>
+                      {currentSubstep === 1 ? (
+                        <div className="space-y-2">
+                          <Label htmlFor="password" className="text-white/80">Create password</Label>
+                          <Input
+                            id="password"
+                            autoComplete="new-password"
+                            type="password"
+                            value={password}
+                            onChange={(event) => setPassword(event.target.value)}
+                            placeholder="At least 8 characters"
+                            required
+                            className="border-white/10 bg-black/35 text-white placeholder:text-white/35"
+                          />
+                        </div>
+                      ) : null}
 
-                    <div className="space-y-2 sm:col-span-2">
-                      <Label className="text-white/80">Weekend Days</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {dayOptions.map((day) => {
-                          const active = weekendDays.includes(day)
-                          return (
-                            <button
-                              key={day}
-                              type="button"
-                              onClick={() => toggleWeekendDay(day)}
-                              className={`rounded-full border px-3 py-1.5 text-xs capitalize transition ${
-                                active
-                                  ? "border-[#ff6f4a]/60 bg-[#ff6f4a]/20 text-[#ffd1c4]"
-                                  : "border-white/15 bg-white/[0.03] text-white/65 hover:border-white/25"
-                              }`}
-                            >
-                              {day.slice(0, 3)}
-                            </button>
-                          )
-                        })}
+                      {currentSubstep === 2 ? (
+                        <div className="space-y-2">
+                          <Label htmlFor="confirmPassword" className="text-white/80">Confirm password</Label>
+                          <Input
+                            id="confirmPassword"
+                            autoComplete="new-password"
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(event) => setConfirmPassword(event.target.value)}
+                            placeholder="Re-enter your password"
+                            required
+                            className="border-white/10 bg-black/35 text-white placeholder:text-white/35"
+                          />
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {currentStep === 1 ? (
+                    <div className="space-y-3">
+                      {currentSubstep === 0 ? (
+                        <div className="space-y-2">
+                          <Label htmlFor="organizationName" className="text-white/80">Company Name</Label>
+                          <Input
+                            id="organizationName"
+                            value={organizationName}
+                            onChange={(event) => setOrganizationName(event.target.value)}
+                            placeholder="Enter company name"
+                            required
+                            className="border-white/10 bg-black/35 text-white placeholder:text-white/35"
+                          />
+                        </div>
+                      ) : null}
+
+                      {currentSubstep === 1 ? (
+                        <div className="space-y-2">
+                          <Label htmlFor="companyEmail" className="text-white/80">Company Email</Label>
+                          <Input
+                            id="companyEmail"
+                            type="email"
+                            value={companyEmail}
+                            onChange={(event) => setCompanyEmail(event.target.value)}
+                            placeholder="company@example.com"
+                            className="border-white/10 bg-black/35 text-white placeholder:text-white/35"
+                          />
+                        </div>
+                      ) : null}
+
+                      {currentSubstep === 2 ? (
+                        <div className="space-y-2">
+                          <Label htmlFor="companyPhone" className="text-white/80">Company Phone</Label>
+                          <Input
+                            id="companyPhone"
+                            value={companyPhone}
+                            onChange={(event) => setCompanyPhone(event.target.value)}
+                            placeholder="+91 98765 43210"
+                            className="border-white/10 bg-black/35 text-white placeholder:text-white/35"
+                          />
+                        </div>
+                      ) : null}
+
+                      {currentSubstep === 3 ? (
+                        <div className="space-y-2">
+                          <Label htmlFor="companyAddress" className="text-white/80">Company Address</Label>
+                          <Textarea
+                            id="companyAddress"
+                            value={companyAddress}
+                            onChange={(event) => setCompanyAddress(event.target.value)}
+                            placeholder="Enter company address"
+                            rows={3}
+                            className="border-white/10 bg-black/35 text-white placeholder:text-white/35"
+                          />
+                        </div>
+                      ) : null}
+
+                      {currentSubstep === 4 ? (
+                        <div className="space-y-2">
+                          <Label htmlFor="companyLogoUrl" className="text-white/80">Company Logo URL (optional)</Label>
+                          <Input
+                            id="companyLogoUrl"
+                            type="url"
+                            value={companyLogoUrl}
+                            onChange={(event) => setCompanyLogoUrl(event.target.value)}
+                            placeholder="https://example.com/logo.png"
+                            className="border-white/10 bg-black/35 text-white placeholder:text-white/35"
+                          />
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {currentStep === 2 ? (
+                    <div className="space-y-3">
+                      {currentSubstep === 0 ? (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label htmlFor="workingStart" className="text-white/80">Work Hours Start</Label>
+                            <Input
+                              id="workingStart"
+                              type="time"
+                              value={workingStart}
+                              onChange={(event) => setWorkingStart(event.target.value)}
+                              className="border-white/10 bg-black/35 text-white"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="workingEnd" className="text-white/80">Work Hours End</Label>
+                            <Input
+                              id="workingEnd"
+                              type="time"
+                              value={workingEnd}
+                              onChange={(event) => setWorkingEnd(event.target.value)}
+                              className="border-white/10 bg-black/35 text-white"
+                            />
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {currentSubstep === 1 ? (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label className="text-white/80">Leave Deduction Type</Label>
+                            <Select value={leaveDeductionType} onValueChange={(value: "percentage" | "fixed") => setLeaveDeductionType(value)}>
+                              <SelectTrigger className="border-white/10 bg-black/35 text-white">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="percentage">Percentage</SelectItem>
+                                <SelectItem value="fixed">Fixed Amount</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="leaveDeductionValue" className="text-white/80">
+                              Leave Deduction Value {leaveDeductionType === "percentage" ? "(%)" : "(₹)"}
+                            </Label>
+                            <Input
+                              id="leaveDeductionValue"
+                              type="number"
+                              min={0}
+                              value={leaveDeductionValue}
+                              onChange={(event) => setLeaveDeductionValue(Number(event.target.value || 0))}
+                              className="border-white/10 bg-black/35 text-white"
+                            />
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {currentSubstep === 2 ? (
+                        <div className="space-y-2">
+                          <Label className="text-white/80">Weekend Days</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {dayOptions.map((day) => {
+                              const active = weekendDays.includes(day)
+                              return (
+                                <button
+                                  key={day}
+                                  type="button"
+                                  onClick={() => toggleWeekendDay(day)}
+                                  className={`rounded-full border px-3 py-1.5 text-xs capitalize transition ${
+                                    active
+                                      ? "border-[#ff6f4a]/60 bg-[#ff6f4a]/20 text-[#ffd1c4]"
+                                      : "border-white/15 bg-white/[0.03] text-white/65 hover:border-white/25"
+                                  }`}
+                                >
+                                  {day.slice(0, 3)}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {currentSubstep === 3 ? (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label className="text-white/80">Backup Frequency</Label>
+                            <Select value={backupFrequency} onValueChange={setBackupFrequency}>
+                              <SelectTrigger className="border-white/10 bg-black/35 text-white">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="hourly">Hourly</SelectItem>
+                                <SelectItem value="daily">Daily</SelectItem>
+                                <SelectItem value="weekly">Weekly</SelectItem>
+                                <SelectItem value="monthly">Monthly</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-white/80">Automation</Label>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setAutoMarkAbsent((prev) => !prev)}
+                                className={`flex-1 rounded-lg border px-3 py-2 text-xs transition ${
+                                  autoMarkAbsent
+                                    ? "border-[#ff6f4a]/60 bg-[#ff6f4a]/20 text-[#ffd1c4]"
+                                    : "border-white/15 bg-white/[0.03] text-white/65"
+                                }`}
+                              >
+                                Auto Mark Absent
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEmailNotifications((prev) => !prev)}
+                                className={`flex-1 rounded-lg border px-3 py-2 text-xs transition ${
+                                  emailNotifications
+                                    ? "border-[#ff6f4a]/60 bg-[#ff6f4a]/20 text-[#ffd1c4]"
+                                    : "border-white/15 bg-white/[0.03] text-white/65"
+                                }`}
+                              >
+                                Email Notifications
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {currentStep === 3 ? (
+                    <div className="space-y-3 text-sm text-white/75">
+                      <p className="rounded-lg border border-[#ff6f4a]/35 bg-[#ff6f4a]/10 px-3 py-2 text-[#ffd7cb]">
+                        Final quest: review your setup and launch the workspace.
+                      </p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <p><span className="text-white/45">Username:</span> {username || "-"}</p>
+                        <p><span className="text-white/45">Company:</span> {organizationName || "-"}</p>
+                        <p><span className="text-white/45">Email:</span> {companyEmail || "-"}</p>
+                        <p><span className="text-white/45">Phone:</span> {companyPhone || "-"}</p>
+                        <p><span className="text-white/45">Work Hours:</span> {workingStart} - {workingEnd}</p>
+                        <p><span className="text-white/45">Backup:</span> {backupFrequency}</p>
                       </div>
                     </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-white/80">Backup Frequency</Label>
-                      <Select value={backupFrequency} onValueChange={setBackupFrequency}>
-                        <SelectTrigger className="border-white/10 bg-black/35 text-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="hourly">Hourly</SelectItem>
-                          <SelectItem value="daily">Daily</SelectItem>
-                          <SelectItem value="weekly">Weekly</SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-white/80">Automation</Label>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setAutoMarkAbsent((prev) => !prev)}
-                          className={`flex-1 rounded-lg border px-3 py-2 text-xs transition ${
-                            autoMarkAbsent
-                              ? "border-[#ff6f4a]/60 bg-[#ff6f4a]/20 text-[#ffd1c4]"
-                              : "border-white/15 bg-white/[0.03] text-white/65"
-                          }`}
-                        >
-                          Auto Mark Absent
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEmailNotifications((prev) => !prev)}
-                          className={`flex-1 rounded-lg border px-3 py-2 text-xs transition ${
-                            emailNotifications
-                              ? "border-[#ff6f4a]/60 bg-[#ff6f4a]/20 text-[#ffd1c4]"
-                              : "border-white/15 bg-white/[0.03] text-white/65"
-                          }`}
-                        >
-                          Email Notifications
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  ) : null}
                 </div>
 
                 {error ? <p className="text-sm text-[#ff8b6e]">{error}</p> : null}
 
-                <Button
-                  className="w-full border border-[#ff8a6b]/45 bg-gradient-to-r from-[#ff6f4a] to-[#ff8f61] text-white hover:from-[#ff7f5d] hover:to-[#ffa07e]"
-                  type="submit"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Creating account..." : "Create Account"}
-                  {!isSubmitting ? <ArrowRight className="h-4 w-4" /> : null}
-                </Button>
+                <div className="flex items-center gap-2">
+                  {currentStep > 0 ? (
+                    <Button
+                      className="flex-1 border border-white/15 bg-white/[0.03] text-white hover:bg-white/[0.08]"
+                      type="button"
+                      onClick={handlePreviousStep}
+                    >
+                      Back
+                    </Button>
+                  ) : null}
+
+                  {currentStep < totalSteps - 1 ? (
+                    <Button
+                      className="flex-1 border border-[#ff8a6b]/45 bg-gradient-to-r from-[#ff6f4a] to-[#ff8f61] text-white hover:from-[#ff7f5d] hover:to-[#ffa07e]"
+                      type="button"
+                      onClick={handleNextStep}
+                    >
+                      Next Quest
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      className="flex-1 border border-[#ff8a6b]/45 bg-gradient-to-r from-[#ff6f4a] to-[#ff8f61] text-white hover:from-[#ff7f5d] hover:to-[#ffa07e]"
+                      type="submit"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Launching workspace..." : "Create Account"}
+                      {!isSubmitting ? <ArrowRight className="h-4 w-4" /> : null}
+                    </Button>
+                  )}
+                </div>
               </form>
 
               <p className="mt-5 text-center text-sm text-white/55">

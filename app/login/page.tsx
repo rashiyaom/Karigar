@@ -70,20 +70,23 @@ function LoginForm() {
 
       <div className="relative mx-auto flex w-full max-w-7xl flex-col px-4 pb-12 pt-6 sm:px-6 lg:px-8">
         <header className="mb-8 flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 backdrop-blur-xl sm:px-6">
-          <div className="flex items-center gap-2 text-sm font-medium tracking-wide text-white/90">
+          <Link href="/landing.html" className="flex items-center gap-2 text-sm font-medium tracking-wide text-white/90 transition hover:text-white">
             <Star className="h-4 w-4 text-[#ff6a45]" />
             Karigar Network
-          </div>
+          </Link>
           <div className="flex items-center gap-2">
+            <Link
+              href="/login"
+              className="rounded-md border border-[#ff6a45]/40 bg-[#ff6a45]/15 px-3 py-1.5 text-xs font-medium text-[#ffb39d]"
+            >
+              Login
+            </Link>
             <Link
               href="/register"
               className="rounded-md border border-white/15 bg-white/[0.03] px-3 py-1.5 text-xs text-white/75 transition hover:border-white/25 hover:text-white"
             >
               Register
             </Link>
-            <span className="rounded-md border border-[#ff6a45]/40 bg-[#ff6a45]/15 px-3 py-1.5 text-xs font-medium text-[#ffb39d]">
-              Login
-            </span>
           </div>
         </header>
 
@@ -146,19 +149,19 @@ function LoginForm() {
           <aside className="relative">
             <div className="sticky top-6 rounded-2xl border border-white/10 bg-[#070b12]/90 p-5 shadow-[0_24px_80px_-35px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:p-6">
               <h2 className="text-2xl font-semibold text-white">Welcome Back</h2>
-              <p className="mt-1 text-sm text-white/55">Sign in to continue to your Karigar workspace.</p>
+              <p className="mt-1 text-sm text-white/55">Sign in with username, mobile number, or email.</p>
 
               <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-white/80" htmlFor="username">
-                    Username
+                    Username / Mobile / Email
                   </label>
                   <Input
                     id="username"
                     autoComplete="username"
                     value={username}
                     onChange={(event) => setUsername(event.target.value)}
-                    placeholder="Enter your username"
+                    placeholder="Enter username, mobile, or email"
                     required
                     className="border-white/10 bg-black/35 text-white placeholder:text-white/35 focus-visible:ring-[#ff6a45]/40"
                   />

@@ -1,10 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { registerUser, setAuthCookie } from '@/lib/auth'
 import { setCsrfToken } from '@/lib/csrf'
-import { sanitizeObjectKeys, sanitizeString, hasDangerousPatterns } from '@/lib/input-sanitizer'
+import { sanitizeObjectKeys, hasDangerousPatterns } from '@/lib/input-sanitizer'
 import { checkApiRateLimit } from '@/lib/api-rate-limit'
 import { settingsSchema } from '@/lib/validation'
 import { mongoStore } from '@/lib/mongo-store'
+
+function normalizeIdentifier(value: string): string {
+  return value.trim().toLowerCase()
+}
+
+function normalizeMobile(value: string): string {
+  return value.trim().replace(/\s+/g, '')
+}
+
+function isEmailIdentifier(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+}
+
+function isMobileIdentifier(value: string): boolean {
+  return /^\+?[0-9]{10,15}$/.test(value)
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,9 +60,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const username = sanitizeString(rawUsername)
+    const username = normalizeIdentifier(rawUsername)
 
-    const authResult = await registerUser(username, rawPassword)
+    const settingsPayload = rawSettings ? settingsSchema.parse(rawSettings) : null
+    const emailFromSettings = settingsPayload?.companyEmail ? normalizeIdentifier(settingsPayload.companyEmail) : undefined
+    const mobileFromSettings = settingsPayload?.companyPhone ? normalizeMobile(settingsPayload.companyPhone) : undefined
+
+    const derivedEmail = isEmailIdentifier(username) ? username : emailFromSettings
+    const derivedMobile = isMobileIdentifier(username) ? normalizeMobile(username) : mobileFromSettings
+
+    const authResult = await registerUser({
+      username,
+      password: rawPassword,
+      email: derivedEmail,
+      mobile: derivedMobile,
+    })
 
     if (!authResult) {
       return NextResponse.json(
@@ -55,9 +83,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (rawSettings) {
-      const validatedSettings = settingsSchema.parse(rawSettings)
-      await mongoStore.updateSettings(validatedSettings, authResult.user.id)
+    if (settingsPayload) {
+      await mongoStore.updateSettings(settingsPayload, authResult.user.id)
     }
 
     await setAuthCookie(authResult.token)

@@ -10,12 +10,13 @@ export function middleware(request: NextRequest) {
 
   const authToken = request.cookies.get('auth-token')?.value
   const isAuthPage = pathname === '/login' || pathname === '/register'
+  const isPublicLanding = pathname === '/' || pathname === '/landing.html'
 
   if (isAuthPage && authToken) {
-    return NextResponse.redirect(new URL('/', request.url))
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  if (!isAuthPage && !authToken) {
+  if (!isAuthPage && !isPublicLanding && !authToken) {
     const loginUrl = new URL('/login', request.url)
     const nextPath = `${pathname}${search}`
     loginUrl.searchParams.set('next', nextPath)

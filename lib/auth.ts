@@ -15,6 +15,22 @@ export interface AuthUser {
   role: 'admin' | 'user'
 }
 
+type RegisterIdentity = {
+  username: string
+  password: string
+  email?: string
+  mobile?: string
+}
+
+function normalizeIdentifier(value: string): string {
+  return value.trim().toLowerCase()
+}
+
+function normalizeMobile(value: string): string {
+  return value.trim().replace(/\s+/g, '')
+}
+
+
 // Generate a secure token
 export function generateToken(): string {
   return crypto.randomBytes(32).toString('hex')
@@ -60,17 +76,24 @@ async function ensureMainAdminAccount() {
 }
 
 // Login user with bcrypt password verification
-export async function loginUser(username: string, password: string): Promise<{ token: string; user: AuthUser } | null> {
+export async function loginUser(identifier: string, password: string): Promise<{ token: string; user: AuthUser } | null> {
   try {
     await connectToDatabase()
     await ensureMainAdminAccount()
 
-    const normalizedUsername = username.trim().toLowerCase()
-    if (!normalizedUsername || !password) {
+    const normalizedIdentifier = normalizeIdentifier(identifier)
+    if (!normalizedIdentifier || !password) {
       return null
     }
 
-    const user = await UserModel.findOne({ username: normalizedUsername })
+    const mobileCandidate = normalizeMobile(identifier)
+    const user = await UserModel.findOne({
+      $or: [
+        { username: normalizedIdentifier },
+        { email: normalizedIdentifier },
+        { mobile: mobileCandidate },
+      ],
+    })
     if (!user) {
       return null
     }
@@ -105,26 +128,38 @@ export async function loginUser(username: string, password: string): Promise<{ t
 }
 
 export async function registerUser(
-  username: string,
-  password: string
+  identity: RegisterIdentity
 ): Promise<{ token: string; user: AuthUser } | null> {
   try {
     await connectToDatabase()
     await ensureMainAdminAccount()
 
-    const normalizedUsername = username.trim().toLowerCase()
-    if (!normalizedUsername || password.length < 8) {
+    const normalizedUsername = normalizeIdentifier(identity.username)
+    const normalizedEmail = identity.email ? normalizeIdentifier(identity.email) : undefined
+    const normalizedMobile = identity.mobile ? normalizeMobile(identity.mobile) : undefined
+
+    if (!normalizedUsername || identity.password.length < 8) {
       return null
     }
 
-    const existing = await UserModel.findOne({ username: normalizedUsername })
+    const dedupeQuery: Array<Record<string, string>> = [{ username: normalizedUsername }]
+    if (normalizedEmail) {
+      dedupeQuery.push({ email: normalizedEmail })
+    }
+    if (normalizedMobile) {
+      dedupeQuery.push({ mobile: normalizedMobile })
+    }
+
+    const existing = await UserModel.findOne({ $or: dedupeQuery })
     if (existing) {
       return null
     }
 
-    const passwordHash = await bcrypt.hash(password, 10)
+    const passwordHash = await bcrypt.hash(identity.password, 10)
     const user = await UserModel.create({
       username: normalizedUsername,
+      email: normalizedEmail,
+      mobile: normalizedMobile,
       password: passwordHash,
       role: 'user',
     })

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karigar - Workforce Operations Platform</title>
+  <meta name="description" content="Karigar unifies attendance, tasks, credits, and workforce operations in one secure platform." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #050608;
+      --panel: #0f1218;
+      --line: rgba(255, 255, 255, 0.09);
+      --text: #e8eaef;
+      --muted: rgba(232, 234, 239, 0.62);
+      --dim: rgba(232, 234, 239, 0.32);
+      --accent: #ff5a36;
+      --accent-strong: #ff6e49;
+      --radius: 18px;
+      --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+      --font-head: "Syne", sans-serif;
+      --font-body: "Manrope", sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; min-height: 100%; }
+
+    body {
+      overflow-x: hidden;
+      color: var(--text);
+      font-family: var(--font-body);
+      background:
+        radial-gradient(circle at 20% 10%, rgba(255, 90, 54, 0.14), transparent 32%),
+        radial-gradient(circle at 80% 80%, rgba(111, 141, 153, 0.08), transparent 36%),
+        linear-gradient(180deg, #050608 0%, #06080c 45%, #0b0f16 100%);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .noise,
+    .grid {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .noise {
+      opacity: 0.03;
+      background-image: repeating-radial-gradient(circle at 0 0, transparent 0, #fff 1px, transparent 2px);
+      background-size: 3px 3px;
+    }
+
+    .grid {
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: radial-gradient(circle at center, black 35%, transparent 95%);
+    }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      max-width: 1260px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(14px);
+      background: rgba(5, 6, 8, 0.72);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .nav-inner {
+      min-height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      padding: 10px 0;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .brand-mark {
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 90, 54, 0.4);
+      background: rgba(255, 90, 54, 0.12);
+      display: grid;
+      place-items: center;
+      color: var(--accent);
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .brand-name {
+      font-family: var(--font-head);
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .nav-links {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      transition: all 0.2s var(--ease);
+    }
+
+    .nav-links a:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
+
+    .nav-actions { display: inline-flex; gap: 10px; align-items: center; }
+
+    .btn {
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 14px;
+      transition: all 0.2s var(--ease);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid transparent;
+    }
+
+    .btn.ghost { color: var(--text); border-color: var(--line); background: rgba(255, 255, 255, 0.02); }
+    .btn.ghost:hover { background: rgba(255, 255, 255, 0.07); }
+
+    .btn.primary {
+      color: #0a0a0a;
+      background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+      box-shadow: 0 10px 24px rgba(255, 90, 54, 0.35);
+    }
+
+    .btn.primary:hover { transform: translateY(-1px); box-shadow: 0 16px 30px rgba(255, 90, 54, 0.45); }
+
+    .hero { padding: 42px 0 28px; }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 240px minmax(0, 1fr) 240px;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .side-circle {
+      min-height: 360px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+      color: var(--muted);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric { text-align: left; width: 120px; }
+    .metric strong {
+      display: block;
+      font-family: var(--font-head);
+      font-size: 34px;
+      line-height: 1;
+      color: #dce2e8;
+      margin-bottom: 8px;
+    }
+    .metric span { font-size: 12px; color: var(--dim); }
+
+    .hero-core {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 36px 30px 26px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0.005));
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-core::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 44%;
+      width: 520px;
+      height: 520px;
+      transform: translate(-50%, -50%);
+      border-radius: 999px;
+      background: radial-gradient(circle at 45% 35%, rgba(255, 106, 72, 0.42), rgba(255, 90, 54, 0.14) 45%, transparent 72%);
+      pointer-events: none;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      padding: 7px 12px;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #c4cfd8;
+      margin-bottom: 18px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 0 rgba(255, 90, 54, 0.7);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(255, 90, 54, 0.6); }
+      60% { box-shadow: 0 0 0 8px rgba(255, 90, 54, 0); }
+    }
+
+    .hero h1 {
+      position: relative;
+      z-index: 1;
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: clamp(32px, 5vw, 66px);
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+      max-width: 760px;
+    }
+
+    .hero h1 em { color: var(--accent); font-style: normal; }
+    .hero p {
+      position: relative;
+      z-index: 1;
+      margin-top: 16px;
+      max-width: 620px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .hero-cta { position: relative; z-index: 1; margin-top: 24px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .ticker {
+      margin-top: 20px;
+      border: 1px solid var(--line);
+      background: rgba(255, 90, 54, 0.08);
+      color: #ffab98;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+      flex-wrap: wrap;
+    }
+
+    .section { padding: 30px 0 16px; }
+
+    .section-head {
+      margin-bottom: 16px;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .section-kicker { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); margin-bottom: 8px; }
+    .section-title { font-family: var(--font-head); font-size: clamp(26px, 4.2vw, 44px); line-height: 1.08; letter-spacing: -0.02em; }
+    .section-title em { color: var(--accent); font-style: normal; }
+    .section-copy { color: var(--muted); max-width: 540px; font-size: 15px; line-height: 1.75; }
+
+    .feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+
+    .feature-card {
+      border-radius: 22px;
+      background: #11161d;
+      border: 1px solid rgba(199, 214, 223, 0.28);
+      overflow: hidden;
+      transition: transform 0.28s var(--ease), box-shadow 0.28s var(--ease), border-color 0.28s var(--ease);
+      box-shadow: 0 18px 30px rgba(0, 0, 0, 0.26);
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 90, 54, 0.45);
+      box-shadow: 0 24px 42px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 90, 54, 0.14) inset;
+    }
+
+    .feature-visual {
+      height: 190px;
+      background: #d8e2e6;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-visual::before {
+      content: "";
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      border: 1px solid rgba(30, 36, 44, 0.08);
+      border-radius: 999px;
+      top: -80px;
+      left: -60px;
+    }
+
+    .feature-visual::after {
+      content: "";
+      position: absolute;
+      width: 110px;
+      height: 40px;
+      border-radius: 999px;
+      bottom: 20px;
+      left: 18px;
+      background: var(--accent);
+      opacity: 0.92;
+    }
+
+    .feature-body { padding: 16px 14px 18px; }
+    .feature-body h3 {
+      font-size: 34px;
+      font-family: var(--font-head);
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+      color: #f0f2f5;
+    }
+    .feature-body p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+    .partners { padding: 38px 0 84px; }
+    .partner-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+
+    .partner {
+      height: 126px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      display: grid;
+      place-items: center;
+      color: #d2dbe2;
+      font-weight: 700;
+      font-family: var(--font-head);
+      background: rgba(255, 255, 255, 0.015);
+      font-size: 29px;
+      transition: all 0.25s var(--ease);
+    }
+
+    .partner:nth-child(4) { background: var(--accent); color: #151515; border-color: transparent; }
+    .partner:hover { transform: translateY(-3px); border-color: rgba(255, 90, 54, 0.4); }
+
+    .footer {
+      border-top: 1px solid var(--line);
+      padding: 22px 0 36px;
+      color: var(--dim);
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.68s var(--ease), transform 0.68s var(--ease);
+    }
+    .reveal.in { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 1100px) {
+      .hero-grid { grid-template-columns: 1fr; }
+      .side-circle {
+        min-height: unset;
+        border-radius: var(--radius);
+        flex-direction: row;
+        padding: 18px;
+        gap: 24px;
+        justify-content: flex-start;
+      }
+      .metric { width: auto; }
+      .metric strong { font-size: 28px; }
+      .feature-grid, .partner-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 760px) {
+      .nav-links {
+        order: 3;
+        width: 100%;
+        justify-content: space-between;
+      }
+      .hero { padding-top: 24px; }
+      .hero-core { border-radius: 22px; padding: 24px 18px; }
+      .feature-grid, .partner-row { grid-template-columns: 1fr; }
+      .partner { border-radius: 20px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+      .reveal { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+  <div class="grid" aria-hidden="true"></div>
+
+  <nav class="nav">
+    <div class="shell nav-inner">
+      <a class="brand" href="/landing.html">
+        <span class="brand-mark">✶</span>
+        <span class="brand-name">Karigar Network</span>
+      </a>
+
+      <div class="nav-links">
+        <a href="#about">About</a>
+        <a href="#product">Product</a>
+        <a href="#features">Solutions</a>
+        <a href="#partners">Partners</a>
+      </div>
+
+      <div class="nav-actions">
+        <a class="btn ghost" href="/login">Log In</a>
+        <a class="btn primary" href="/register">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="shell">
+    <section class="hero reveal" id="about">
+      <div class="hero-grid">
+        <aside class="side-circle">
+          <div class="metric">
+            <strong>93m+</strong>
+            <span>Total locked</span>
+          </div>
+          <div class="metric">
+            <strong>3.2b</strong>
+            <span>Market size</span>
+          </div>
+        </aside>
+
+        <article class="hero-core">
+          <span class="pill"><span class="dot"></span>Workforce OS for growing teams</span>
+          <h1>Next level of <em>operations</em> and <em>fintech-grade</em> workforce control.</h1>
+          <p>Karigar helps you run attendance, task execution, salary advances, and team accountability from one secure command layer.</p>
+          <div class="hero-cta">
+            <a class="btn primary" href="/register">Start Free</a>
+            <a class="btn ghost" href="/login">Sign In to Workspace</a>
+          </div>
+          <div class="ticker">
+            <span>The operations layer for fast-moving Indian businesses.</span>
+            <a class="btn ghost" style="padding:8px 12px" href="/register">Book Demo</a>
+          </div>
+        </article>
+
+        <aside class="side-circle">
+          <div class="metric">
+            <strong>1k+</strong>
+            <span>Awards</span>
+          </div>
+          <div class="metric">
+            <strong>221k</strong>
+            <span>Transactions</span>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section reveal" id="features">
+      <div class="section-head">
+        <div>
+          <p class="section-kicker">01 Capability Stack</p>
+          <h2 class="section-title">Your team gets <em>clarity</em>, not chaos.</h2>
+        </div>
+        <p class="section-copy">Move from fragmented tools to one platform designed for attendance discipline, execution velocity, and payroll confidence.</p>
+      </div>
+
+      <div class="feature-grid">
+        <article class="feature-card">
+          <div class="feature-visual"></div>
+          <div class="feature-body">
+            <h3>Constant Monitoring</h3>
+            <p>Track attendance, domains, tasks, and operational actions in one unified timeline.</p>
+          </div>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-visual" style="background:#dce5e8"></div>
+          <div class="feature-body">
+            <h3>AI-based Detection</h3>
+            <p>Detect delays, risky credit patterns, and workflow gaps before they become payroll disputes.</p>
+          </div>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-visual" style="background:#d3dde2"></div>
+          <div class="feature-body">
+            <h3>Automatic Triage</h3>
+            <p>Prioritize manager actions instantly with smart escalation and role-aware controls.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="partners reveal" id="partners">
+      <div class="section-head">
+        <div>
+          <p class="section-kicker">02 Trusted By Teams</p>
+          <h2 class="section-title">Investors and operators back the <em>Karigar</em> stack.</h2>
+        </div>
+      </div>
+
+      <div class="partner-row" id="product">
+        <div class="partner">B</div>
+        <div class="partner">◎</div>
+        <div class="partner">K</div>
+        <div class="partner">₹</div>
+        <div class="partner">P</div>
+      </div>
+    </section>
+
+    <section class="reveal" style="padding: 4px 0 24px;">
+      <div class="hero-core" style="padding:30px 24px;">
+        <h2 class="section-title" style="font-size: clamp(28px, 4vw, 48px); margin-bottom: 8px;">Ready to switch from manual ops to <em>precision?</em></h2>
+        <p class="section-copy" style="max-width: 640px; margin-bottom: 18px;">Launch a workspace in minutes. Keep your team aligned, your payouts accurate, and your history auditable.</p>
+        <div class="hero-cta">
+          <a class="btn primary" href="/register">Create Workspace</a>
+          <a class="btn ghost" href="/login">Already have an account?</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>© 2026 Karigar Network. All rights reserved.</span>
+      <span>Built for modern workforce operations.</span>
+    </footer>
+  </main>
+
+  <script>
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("in");
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+  </script>
+</body>
+</html>

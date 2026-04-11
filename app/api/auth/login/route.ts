@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { loginUser, setAuthCookie } from '@/lib/auth'
 import { setCsrfToken } from '@/lib/csrf'
-import { sanitizeString, hasDangerousPatterns } from '@/lib/input-sanitizer'
+import { hasDangerousPatterns } from '@/lib/input-sanitizer'
 import { checkApiRateLimit } from '@/lib/api-rate-limit'
 import { logSuccessfulLogin, logFailedLoginAttempt, logInjectionAttempt } from '@/lib/security-events'
+
+function normalizeIdentifier(value: string): string {
+  return value.trim().toLowerCase()
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,32 +23,32 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const rawUsername = typeof body?.username === 'string' ? body.username : ''
+    const rawIdentifier = typeof body?.username === 'string' ? body.username : ''
     const rawPassword = typeof body?.password === 'string' ? body.password : ''
 
-    if (!rawUsername || !rawPassword) {
+    if (!rawIdentifier || !rawPassword) {
       return NextResponse.json(
-        { success: false, error: 'Username and password are required.' },
+        { success: false, error: 'Username, mobile/email, and password are required.' },
         { status: 400 }
       )
     }
 
-    const username = sanitizeString(rawUsername)
+    const identifier = normalizeIdentifier(rawIdentifier)
 
-    if (hasDangerousPatterns(rawUsername) || hasDangerousPatterns(rawPassword)) {
-      await logInjectionAttempt(rawUsername || 'unknown', `${rawUsername}:${rawPassword}`, request)
+    if (hasDangerousPatterns(rawIdentifier) || hasDangerousPatterns(rawPassword)) {
+      await logInjectionAttempt(rawIdentifier || 'unknown', `${rawIdentifier}:${rawPassword}`, request)
       return NextResponse.json(
         { success: false, error: 'Invalid input detected.' },
         { status: 400 }
       )
     }
 
-    const authResult = await loginUser(username, rawPassword)
+    const authResult = await loginUser(identifier, rawPassword)
 
     if (!authResult) {
-      await logFailedLoginAttempt(username || 'unknown', request, 'INVALID_CREDENTIALS')
+      await logFailedLoginAttempt(identifier || 'unknown', request, 'INVALID_CREDENTIALS')
       return NextResponse.json(
-        { success: false, error: 'Invalid username or password.' },
+        { success: false, error: 'Invalid username, mobile/email, or password.' },
         { status: 401 }
       )
     }
