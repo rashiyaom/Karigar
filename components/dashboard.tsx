@@ -273,117 +273,137 @@ export function Dashboard() {
 
       <div className="container mx-auto px-4 py-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t("dashboard.totalEmployees")}</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+        <div className="mb-8 grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <Card className="group relative overflow-hidden border-white/10 bg-gradient-to-br from-sky-500/10 via-background to-background shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+            <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-sky-500/15 blur-2xl" />
+            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">{t("dashboard.totalEmployees")}</CardTitle>
+              <span className="rounded-full border border-sky-400/30 bg-sky-500/15 p-2">
+                <Users className="h-4 w-4 text-sky-300" />
+              </span>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{statsLoading ? "..." : stats?.totalEmployees || 0}</div>
+              <div className="text-2xl sm:text-3xl font-bold tracking-tight">{statsLoading ? "..." : stats?.totalEmployees || 0}</div>
+              <p className="mt-1 text-xs text-muted-foreground">Employees in registry</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t("dashboard.attendanceToday")}</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+          <Card className="group relative overflow-hidden border-white/10 bg-gradient-to-br from-emerald-500/10 via-background to-background shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+            <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-emerald-500/15 blur-2xl" />
+            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">{t("dashboard.attendanceToday")}</CardTitle>
+              <span className="rounded-full border border-emerald-400/30 bg-emerald-500/15 p-2">
+                <Calendar className="h-4 w-4 text-emerald-300" />
+              </span>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{statsLoading ? "..." : stats?.attendanceToday || 0}</div>
-              {stats && stats.totalEmployees > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {Math.round((stats.attendanceToday / stats.totalEmployees) * 100)}% present
+              <div className="text-2xl sm:text-3xl font-bold tracking-tight">{statsLoading ? "..." : stats?.attendanceToday || 0}</div>
+              {stats && stats.totalEmployees > 0 ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {Math.round((stats.attendanceToday / stats.totalEmployees) * 100)}% present today
                 </p>
+              ) : (
+                <p className="mt-1 text-xs text-muted-foreground">No attendance trend yet</p>
               )}
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t("dashboard.pendingTasks")}</CardTitle>
-              <CheckSquare className="h-4 w-4 text-muted-foreground" />
+          <Card className="group relative overflow-hidden border-white/10 bg-gradient-to-br from-amber-500/10 via-background to-background shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+            <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-amber-500/15 blur-2xl" />
+            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">{t("dashboard.pendingTasks")}</CardTitle>
+              <span className="rounded-full border border-amber-400/30 bg-amber-500/15 p-2">
+                <CheckSquare className="h-4 w-4 text-amber-300" />
+              </span>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{statsLoading ? "..." : stats?.pendingTasks || 0}</div>
+              <div className="text-2xl sm:text-3xl font-bold tracking-tight">{statsLoading ? "..." : stats?.pendingTasks || 0}</div>
+              <p className="mt-1 text-xs text-muted-foreground">Pending assignments</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t("dashboard.outstandingCredits")}</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
+          <Card className="group relative overflow-hidden border-white/10 bg-gradient-to-br from-rose-500/10 via-background to-background shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+            <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-rose-500/15 blur-2xl" />
+            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">{t("dashboard.outstandingCredits")}</CardTitle>
+              <span className="rounded-full border border-rose-400/30 bg-rose-500/15 p-2">
+                <CreditCard className="h-4 w-4 text-rose-300" />
+              </span>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{statsLoading ? "..." : stats?.outstandingCredits || 0}</div>
+              <div className="text-2xl sm:text-3xl font-bold tracking-tight">{statsLoading ? "..." : stats?.outstandingCredits || 0}</div>
+              <p className="mt-1 text-xs text-muted-foreground">Unsettled credit records</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Quick Actions */}
-        <Card className="mb-8">
+        <Card className="mb-8 border-white/10 bg-gradient-to-b from-muted/20 to-background">
           <CardHeader>
             <CardTitle>{t("dashboard.quickActions")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Button onClick={handleAddEmployee} className="h-16 sm:h-20 flex flex-col gap-2 text-sm">
-                <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+            <div className="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <Button
+                onClick={handleAddEmployee}
+                className="h-20 sm:h-24 touch-manipulation flex flex-col gap-2 rounded-xl border border-sky-400/30 bg-gradient-to-b from-sky-500/20 to-sky-600/10 text-sm font-medium hover:from-sky-500/30 hover:to-sky-600/20"
+              >
+                <Plus className="h-5 w-5" />
                 <span className="text-center leading-tight">{t("dashboard.addEmployee")}</span>
               </Button>
               <Button
                 variant="outline"
-                className="h-16 sm:h-20 flex flex-col gap-2 bg-transparent text-sm"
+                className="h-20 sm:h-24 touch-manipulation flex flex-col gap-2 rounded-xl border-emerald-400/30 bg-emerald-500/10 text-sm hover:bg-emerald-500/15"
                 onClick={() => setIsQuickAttendanceOpen(true)}
               >
-                <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
+                <Calendar className="h-5 w-5 text-emerald-300" />
                 <span className="text-center leading-tight">{t("dashboard.markAttendance")}</span>
               </Button>
               <Button
                 variant="outline"
-                className="h-16 sm:h-20 flex flex-col gap-2 bg-transparent text-sm"
+                className="h-20 sm:h-24 touch-manipulation flex flex-col gap-2 rounded-xl border-rose-400/30 bg-rose-500/10 text-sm hover:bg-rose-500/15"
                 onClick={() => setIsQuickCreditOpen(true)}
               >
-                <CreditCard className="h-4 w-4 sm:h-5 sm:w-5" />
+                <CreditCard className="h-5 w-5 text-rose-300" />
                 <span className="text-center leading-tight">{t("dashboard.addCredit")}</span>
               </Button>
               <Button
                 variant="outline"
-                className="h-16 sm:h-20 flex flex-col gap-2 bg-transparent text-sm"
+                className="h-20 sm:h-24 touch-manipulation flex flex-col gap-2 rounded-xl border-amber-400/30 bg-amber-500/10 text-sm hover:bg-amber-500/15"
                 onClick={() => setIsQuickTaskOpen(true)}
               >
-                <CheckSquare className="h-4 w-4 sm:h-5 sm:w-5" />
+                <CheckSquare className="h-5 w-5 text-amber-300" />
                 <span className="text-center leading-tight">{t("dashboard.assignTask")}</span>
               </Button>
             </div>
-            <div className="mt-4 flex flex-col sm:flex-row justify-center gap-2 sm:gap-4">
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
               <Link href="/attendance">
-                <Button variant="link" className="text-sm">
+                <Button variant="secondary" size="sm" className="rounded-full text-xs sm:text-sm">
                 Attendance Calendar →
                 </Button>
               </Link>
               <Link href="/credits">
-                <Button variant="link" className="text-sm">
+                <Button variant="secondary" size="sm" className="rounded-full text-xs sm:text-sm">
                 Credit Management →
                 </Button>
               </Link>
               <Link href="/tasks">
-                <Button variant="link" className="text-sm">
+                <Button variant="secondary" size="sm" className="rounded-full text-xs sm:text-sm">
                 Task Management →
                 </Button>
               </Link>
               <Link href="/history">
-                <Button variant="link" className="text-sm">
+                <Button variant="secondary" size="sm" className="rounded-full text-xs sm:text-sm">
                 Change History →
                 </Button>
               </Link>
               <Link href="/analytics">
-                <Button variant="link" className="text-sm">
+                <Button variant="secondary" size="sm" className="rounded-full text-xs sm:text-sm">
                 Data Analytics →
                 </Button>
               </Link>
               <Link href="/database-setup">
-                <Button variant="link" className="text-sm">
+                <Button variant="secondary" size="sm" className="rounded-full text-xs sm:text-sm">
                   Database Setup →
                 </Button>
               </Link>
