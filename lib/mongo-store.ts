@@ -46,11 +46,12 @@ class MongoDBStore {
   // Employee Methods
   // ========================
 
-  async createEmployee(employee: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'>): Promise<Employee> {
+  async createEmployee(employee: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'>, ownerId: string): Promise<Employee> {
     await this.ensureConnected()
 
     const newEmployee = await EmployeeModel.create({
       ...employee,
+      ownerId,
     })
 
     await this.addToHistory(
@@ -59,17 +60,18 @@ class MongoDBStore {
       newEmployee._id.toString(),
       `Created employee: ${employee.name}`,
       null,
-      newEmployee.toObject()
+      newEmployee.toObject(),
+      ownerId
     )
 
     return this.formatEmployee(newEmployee)
   }
 
-  async getEmployee(id: string): Promise<Employee | null> {
+  async getEmployee(id: string, ownerId: string): Promise<Employee | null> {
     await this.ensureConnected()
 
     try {
-      const employee = await EmployeeModel.findById(id)
+      const employee = await EmployeeModel.findOne({ _id: id, ownerId })
       return employee ? this.formatEmployee(employee) : null
     } catch (error) {
       console.error('Failed to get employee:', error)
@@ -77,22 +79,22 @@ class MongoDBStore {
     }
   }
 
-  async getAllEmployees(): Promise<Employee[]> {
+  async getAllEmployees(ownerId: string): Promise<Employee[]> {
     await this.ensureConnected()
 
-    const employees = await EmployeeModel.find().sort({ createdAt: -1 })
+    const employees = await EmployeeModel.find({ ownerId }).sort({ createdAt: -1 })
     return employees.map((emp) => this.formatEmployee(emp))
   }
 
-  async updateEmployee(id: string, updates: Partial<Employee>): Promise<Employee | null> {
+  async updateEmployee(id: string, updates: Partial<Employee>, ownerId: string): Promise<Employee | null> {
     await this.ensureConnected()
 
     try {
-      const oldEmployee = await EmployeeModel.findById(id)
+      const oldEmployee = await EmployeeModel.findOne({ _id: id, ownerId })
       if (!oldEmployee) return null
 
-      const updated = await EmployeeModel.findByIdAndUpdate(
-        id,
+      const updated = await EmployeeModel.findOneAndUpdate(
+        { _id: id, ownerId },
         { ...updates, updatedAt: new Date() },
         { new: true }
       )
@@ -104,7 +106,8 @@ class MongoDBStore {
           id,
           `Updated employee: ${oldEmployee.name}`,
           oldEmployee.toObject(),
-          updated.toObject()
+          updated.toObject(),
+          ownerId
         )
       }
 
@@ -115,16 +118,16 @@ class MongoDBStore {
     }
   }
 
-  async deleteEmployee(id: string): Promise<boolean> {
+  async deleteEmployee(id: string, ownerId: string): Promise<boolean> {
     await this.ensureConnected()
 
     try {
-      const employee = await EmployeeModel.findByIdAndDelete(id)
+      const employee = await EmployeeModel.findOneAndDelete({ _id: id, ownerId })
       if (employee) {
         // Cleanup: delete all related attendance, credits, tasks
-        await AttendanceModel.deleteMany({ employeeId: id })
-        await CreditModel.deleteMany({ employeeId: id })
-        await TaskModel.deleteMany({ employeeId: id })
+        await AttendanceModel.deleteMany({ employeeId: id, ownerId })
+        await CreditModel.deleteMany({ employeeId: id, ownerId })
+        await TaskModel.deleteMany({ employeeId: id, ownerId })
 
         await this.addToHistory(
           'delete',
@@ -132,7 +135,8 @@ class MongoDBStore {
           id,
           `Deleted employee: ${employee.name}`,
           employee.toObject(),
-          null
+          null,
+          ownerId
         )
         return true
       }
@@ -148,12 +152,14 @@ class MongoDBStore {
   // ========================
 
   async createAttendance(
-    attendance: Omit<Attendance, 'id' | 'createdAt' | 'updatedAt'>
+    attendance: Omit<Attendance, 'id' | 'createdAt' | 'updatedAt'>,
+    ownerId: string
   ): Promise<Attendance> {
     await this.ensureConnected()
 
     // Check for existing attendance on same date for same employee
     const existing = await AttendanceModel.findOne({
+      ownerId,
       employeeId: attendance.employeeId,
       date: attendance.date,
     })
@@ -165,53 +171,56 @@ class MongoDBStore {
     }
 
     const newAttendance = await AttendanceModel.create({
+      ownerId,
       employeeId: attendance.employeeId,
       date: attendance.date,
       status: attendance.status,
     })
 
-    const employee = await EmployeeModel.findById(attendance.employeeId)
+    const employee = await EmployeeModel.findOne({ _id: attendance.employeeId, ownerId })
     await this.addToHistory(
       'create',
       'attendance',
       newAttendance._id.toString(),
       `Marked ${employee?.name || 'Unknown'} as ${attendance.status} on ${attendance.date}`,
       null,
-      newAttendance.toObject()
+      newAttendance.toObject(),
+      ownerId
     )
 
     return this.formatAttendance(newAttendance)
   }
 
-  async getAttendanceByEmployee(employeeId: string): Promise<Attendance[]> {
+  async getAttendanceByEmployee(employeeId: string, ownerId: string): Promise<Attendance[]> {
     await this.ensureConnected()
 
     const attendance = await AttendanceModel.find({
+      ownerId,
       employeeId: employeeId,
     }).sort({ date: -1 })
 
     return attendance.map((att) => this.formatAttendance(att))
   }
 
-  async getAttendanceByDate(date: string): Promise<Attendance[]> {
+  async getAttendanceByDate(date: string, ownerId: string): Promise<Attendance[]> {
     await this.ensureConnected()
 
-    const attendance = await AttendanceModel.find({ date }).sort({ createdAt: -1 })
+    const attendance = await AttendanceModel.find({ ownerId, date }).sort({ createdAt: -1 })
     return attendance.map((att) => this.formatAttendance(att))
   }
 
-  async getAllAttendance(): Promise<Attendance[]> {
+  async getAllAttendance(ownerId: string): Promise<Attendance[]> {
     await this.ensureConnected()
 
-    const attendance = await AttendanceModel.find().sort({ date: -1 })
+    const attendance = await AttendanceModel.find({ ownerId }).sort({ date: -1 })
     return attendance.map((att) => this.formatAttendance(att))
   }
 
-  async getAttendanceById(id: string): Promise<Attendance | null> {
+  async getAttendanceById(id: string, ownerId: string): Promise<Attendance | null> {
     await this.ensureConnected()
 
     try {
-      const attendance = await AttendanceModel.findById(id)
+      const attendance = await AttendanceModel.findOne({ _id: id, ownerId })
       return attendance ? this.formatAttendance(attendance) : null
     } catch (error) {
       console.error('Failed to fetch attendance by ID:', error)
@@ -219,28 +228,29 @@ class MongoDBStore {
     }
   }
 
-  async updateAttendance(id: string, updates: Partial<Attendance>): Promise<Attendance | null> {
+  async updateAttendance(id: string, updates: Partial<Attendance>, ownerId: string): Promise<Attendance | null> {
     await this.ensureConnected()
 
     try {
-      const oldAttendance = await AttendanceModel.findById(id)
+      const oldAttendance = await AttendanceModel.findOne({ _id: id, ownerId })
       if (!oldAttendance) return null
 
-      const updated = await AttendanceModel.findByIdAndUpdate(
-        id,
+      const updated = await AttendanceModel.findOneAndUpdate(
+        { _id: id, ownerId },
         { ...updates, updatedAt: new Date() },
         { new: true }
       )
 
       if (updated) {
-        const employee = await EmployeeModel.findById(oldAttendance.employeeId)
+        const employee = await EmployeeModel.findOne({ _id: oldAttendance.employeeId, ownerId })
         await this.addToHistory(
           'update',
           'attendance',
           id,
           `Updated attendance for ${employee?.name || 'Unknown'} on ${oldAttendance.date}`,
           oldAttendance.toObject(),
-          updated.toObject()
+          updated.toObject(),
+          ownerId
         )
       }
 
@@ -251,20 +261,21 @@ class MongoDBStore {
     }
   }
 
-  async deleteAttendance(id: string): Promise<boolean> {
+  async deleteAttendance(id: string, ownerId: string): Promise<boolean> {
     await this.ensureConnected()
 
     try {
-      const attendance = await AttendanceModel.findByIdAndDelete(id)
+      const attendance = await AttendanceModel.findOneAndDelete({ _id: id, ownerId })
       if (attendance) {
-        const employee = await EmployeeModel.findById(attendance.employeeId)
+        const employee = await EmployeeModel.findOne({ _id: attendance.employeeId, ownerId })
         await this.addToHistory(
           'delete',
           'attendance',
           id,
           `Deleted attendance for ${employee?.name || 'Unknown'} on ${attendance.date}`,
           attendance.toObject(),
-          null
+          null,
+          ownerId
         )
         return true
       }
@@ -279,17 +290,17 @@ class MongoDBStore {
    * AUTO-RESET: Mark unmarked employees as ABSENT
    * Instead of deleting, this creates "absent" records for employees with no attendance
    */
-  async resetDailyAttendance(date?: string): Promise<number> {
+  async resetDailyAttendance(ownerId: string, date?: string): Promise<number> {
     await this.ensureConnected()
 
     const targetDate = date || new Date().toISOString().split('T')[0]
 
     try {
       // Get all active employees
-      const employees = await EmployeeModel.find({ status: 'active' })
+      const employees = await EmployeeModel.find({ status: 'active', ownerId })
 
       // Get employees already marked for this date
-      const markedEmployees = await AttendanceModel.find({ date: targetDate }).select('employeeId')
+      const markedEmployees = await AttendanceModel.find({ date: targetDate, ownerId }).select('employeeId')
       const markedEmployeeIds = markedEmployees.map((a) => a.employeeId.toString())
 
       // Mark unmarked employees as absent
@@ -297,6 +308,7 @@ class MongoDBStore {
       for (const employee of employees) {
         if (!markedEmployeeIds.includes(employee._id.toString())) {
           await AttendanceModel.create({
+            ownerId,
             employeeId: employee._id.toString(),
             date: targetDate,
             status: 'absent',
@@ -312,7 +324,8 @@ class MongoDBStore {
           'bulk',
           `Auto-marked ${addedCount} employees as absent for ${targetDate}`,
           null,
-          { date: targetDate, count: addedCount }
+          { date: targetDate, count: addedCount },
+          ownerId
         )
       }
 
@@ -327,10 +340,11 @@ class MongoDBStore {
   // Credit Methods
   // ========================
 
-  async createCredit(credit: Omit<Credit, 'id' | 'createdAt' | 'updatedAt'>): Promise<Credit> {
+  async createCredit(credit: Omit<Credit, 'id' | 'createdAt' | 'updatedAt'>, ownerId: string): Promise<Credit> {
     await this.ensureConnected()
 
     const newCredit = await CreditModel.create({
+      ownerId,
       employeeId: credit.employeeId,
       amount: credit.amount,
       dateTaken: credit.dateTaken,
@@ -338,41 +352,43 @@ class MongoDBStore {
       isPaid: credit.isPaid,
     })
 
-    const employee = await EmployeeModel.findById(credit.employeeId)
+    const employee = await EmployeeModel.findOne({ _id: credit.employeeId, ownerId })
     await this.addToHistory(
       'create',
       'credit',
       newCredit._id.toString(),
       `Added credit: ₹${credit.amount} for ${employee?.name || 'Unknown'}`,
       null,
-      newCredit.toObject()
+      newCredit.toObject(),
+      ownerId
     )
 
     return this.formatCredit(newCredit)
   }
 
-  async getCreditsByEmployee(employeeId: string): Promise<Credit[]> {
+  async getCreditsByEmployee(employeeId: string, ownerId: string): Promise<Credit[]> {
     await this.ensureConnected()
 
     const credits = await CreditModel.find({
+      ownerId,
       employeeId: employeeId,
     }).sort({ createdAt: -1 })
 
     return credits.map((credit) => this.formatCredit(credit))
   }
 
-  async getAllCredits(): Promise<Credit[]> {
+  async getAllCredits(ownerId: string): Promise<Credit[]> {
     await this.ensureConnected()
 
-    const credits = await CreditModel.find().sort({ createdAt: -1 })
+    const credits = await CreditModel.find({ ownerId }).sort({ createdAt: -1 })
     return credits.map((credit) => this.formatCredit(credit))
   }
 
-  async getCredit(id: string): Promise<Credit | null> {
+  async getCredit(id: string, ownerId: string): Promise<Credit | null> {
     await this.ensureConnected()
 
     try {
-      const credit = await CreditModel.findById(id)
+      const credit = await CreditModel.findOne({ _id: id, ownerId })
       return credit ? this.formatCredit(credit) : null
     } catch (error) {
       console.error('Failed to fetch credit by ID:', error)
@@ -380,28 +396,29 @@ class MongoDBStore {
     }
   }
 
-  async updateCredit(id: string, updates: Partial<Credit>): Promise<Credit | null> {
+  async updateCredit(id: string, updates: Partial<Credit>, ownerId: string): Promise<Credit | null> {
     await this.ensureConnected()
 
     try {
-      const oldCredit = await CreditModel.findById(id)
+      const oldCredit = await CreditModel.findOne({ _id: id, ownerId })
       if (!oldCredit) return null
 
-      const updated = await CreditModel.findByIdAndUpdate(
-        id,
+      const updated = await CreditModel.findOneAndUpdate(
+        { _id: id, ownerId },
         { ...updates, updatedAt: new Date() },
         { new: true }
       )
 
       if (updated) {
-        const employee = await EmployeeModel.findById(oldCredit.employeeId)
+        const employee = await EmployeeModel.findOne({ _id: oldCredit.employeeId, ownerId })
         await this.addToHistory(
           'update',
           'credit',
           id,
           `Updated credit: ₹${oldCredit.amount} for ${employee?.name || 'Unknown'}`,
           oldCredit.toObject(),
-          updated.toObject()
+          updated.toObject(),
+          ownerId
         )
       }
 
@@ -412,20 +429,21 @@ class MongoDBStore {
     }
   }
 
-  async deleteCredit(id: string): Promise<boolean> {
+  async deleteCredit(id: string, ownerId: string): Promise<boolean> {
     await this.ensureConnected()
 
     try {
-      const credit = await CreditModel.findByIdAndDelete(id)
+      const credit = await CreditModel.findOneAndDelete({ _id: id, ownerId })
       if (credit) {
-        const employee = await EmployeeModel.findById(credit.employeeId)
+        const employee = await EmployeeModel.findOne({ _id: credit.employeeId, ownerId })
         await this.addToHistory(
           'delete',
           'credit',
           id,
           `Deleted credit: ₹${credit.amount} for ${employee?.name || 'Unknown'}`,
           credit.toObject(),
-          null
+          null,
+          ownerId
         )
         return true
       }
@@ -440,10 +458,11 @@ class MongoDBStore {
   // Task Methods
   // ========================
 
-  async createTask(task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>): Promise<Task> {
+  async createTask(task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>, ownerId: string): Promise<Task> {
     await this.ensureConnected()
 
     const newTask = await TaskModel.create({
+      ownerId,
       employeeId: task.employeeId,
       title: task.title,
       description: task.description,
@@ -452,41 +471,43 @@ class MongoDBStore {
       isCompleted: task.isCompleted,
     })
 
-    const employee = await EmployeeModel.findById(task.employeeId)
+    const employee = await EmployeeModel.findOne({ _id: task.employeeId, ownerId })
     await this.addToHistory(
       'create',
       'task',
       newTask._id.toString(),
       `Created task: ${newTask.title} for ${employee?.name || 'Unknown'}`,
       null,
-      newTask.toObject()
+      newTask.toObject(),
+      ownerId
     )
 
     return this.formatTask(newTask)
   }
 
-  async getTasksByEmployee(employeeId: string): Promise<Task[]> {
+  async getTasksByEmployee(employeeId: string, ownerId: string): Promise<Task[]> {
     await this.ensureConnected()
 
     const tasks = await TaskModel.find({
+      ownerId,
       employeeId,
     }).sort({ createdAt: -1 })
 
     return tasks.map((task) => this.formatTask(task))
   }
 
-  async getAllTasks(): Promise<Task[]> {
+  async getAllTasks(ownerId: string): Promise<Task[]> {
     await this.ensureConnected()
 
-    const tasks = await TaskModel.find().sort({ createdAt: -1 })
+    const tasks = await TaskModel.find({ ownerId }).sort({ createdAt: -1 })
     return tasks.map((task: any) => this.formatTask(task))
   }
 
-  async getTask(id: string): Promise<Task | null> {
+  async getTask(id: string, ownerId: string): Promise<Task | null> {
     await this.ensureConnected()
 
     try {
-      const task = await TaskModel.findById(id)
+      const task = await TaskModel.findOne({ _id: id, ownerId })
       return task ? this.formatTask(task) : null
     } catch (error) {
       console.error('Failed to fetch task by ID:', error)
@@ -494,28 +515,29 @@ class MongoDBStore {
     }
   }
 
-  async updateTask(id: string, updates: Partial<Task>): Promise<Task | null> {
+  async updateTask(id: string, updates: Partial<Task>, ownerId: string): Promise<Task | null> {
     await this.ensureConnected()
 
     try {
-      const oldTask = await TaskModel.findById(id)
+      const oldTask = await TaskModel.findOne({ _id: id, ownerId })
       if (!oldTask) return null
 
-      const updated = await TaskModel.findByIdAndUpdate(
-        id,
+      const updated = await TaskModel.findOneAndUpdate(
+        { _id: id, ownerId },
         { ...updates, updatedAt: new Date() },
         { new: true }
       )
 
       if (updated) {
-        const employee = await EmployeeModel.findById(oldTask.employeeId)
+        const employee = await EmployeeModel.findOne({ _id: oldTask.employeeId, ownerId })
         await this.addToHistory(
           'update',
           'task',
           id,
           `Updated task: ${oldTask.title} for ${employee?.name || 'Unknown'}`,
           oldTask.toObject(),
-          updated.toObject()
+          updated.toObject(),
+          ownerId
         )
       }
 
@@ -526,20 +548,21 @@ class MongoDBStore {
     }
   }
 
-  async deleteTask(id: string): Promise<boolean> {
+  async deleteTask(id: string, ownerId: string): Promise<boolean> {
     await this.ensureConnected()
 
     try {
-      const task = await TaskModel.findByIdAndDelete(id)
+      const task = await TaskModel.findOneAndDelete({ _id: id, ownerId })
       if (task) {
-        const employee = await EmployeeModel.findById(task.employeeId)
+        const employee = await EmployeeModel.findOne({ _id: task.employeeId, ownerId })
         await this.addToHistory(
           'delete',
           'task',
           id,
           `Deleted task: ${task.title} for ${employee?.name || 'Unknown'}`,
           task.toObject(),
-          null
+          null,
+          ownerId
         )
         return true
       }
@@ -554,13 +577,14 @@ class MongoDBStore {
   // Settings Methods
   // ========================
 
-  async getSettings(): Promise<Settings> {
+  async getSettings(ownerId: string): Promise<Settings> {
     await this.ensureConnected()
 
-    let settings = await SettingsModel.findOne()
+    let settings = await SettingsModel.findOne({ ownerId })
 
     if (!settings) {
       settings = await SettingsModel.create({
+        ownerId,
         organizationName: 'My Company',
         leaveDeduction: { type: 'percentage', value: 10 },
       })
@@ -569,15 +593,15 @@ class MongoDBStore {
     return this.formatSettings(settings)
   }
 
-  async updateSettings(updates: Partial<Settings>): Promise<Settings> {
+  async updateSettings(updates: Partial<Settings>, ownerId: string): Promise<Settings> {
     await this.ensureConnected()
 
-    let settings = await SettingsModel.findOne()
+    let settings = await SettingsModel.findOne({ ownerId })
 
     if (!settings) {
-      settings = await SettingsModel.create(updates)
+      settings = await SettingsModel.create({ ...updates, ownerId })
     } else {
-      settings = await SettingsModel.findByIdAndUpdate(settings._id, updates, { new: true })
+      settings = await SettingsModel.findByIdAndUpdate(settings._id, { ...updates, ownerId }, { new: true })
     }
 
     return this.formatSettings(settings!)
@@ -587,10 +611,10 @@ class MongoDBStore {
   // Calculation Methods
   // ========================
 
-  async calculateEmployeeSalary(employeeId: string): Promise<number> {
+  async calculateEmployeeSalary(employeeId: string, ownerId: string): Promise<number> {
     await this.ensureConnected()
 
-    const employee = await EmployeeModel.findById(employeeId)
+    const employee = await EmployeeModel.findOne({ _id: employeeId, ownerId })
     if (!employee) return 0
 
     let finalSalary = employee.salary
@@ -598,6 +622,7 @@ class MongoDBStore {
 
     // Deduct for leaves
     const monthlyAttendance = await AttendanceModel.find({
+      ownerId,
       employeeId,
       date: { $regex: `^${currentMonth}` },
     })
@@ -607,7 +632,7 @@ class MongoDBStore {
     ).length
 
     if (leaveCount > 0) {
-      const settings = await this.getSettings()
+      const settings = await this.getSettings(ownerId)
       const { type, value } = settings.leaveDeduction
       if (type === 'percentage') {
         finalSalary -= (employee.salary * value * leaveCount) / 100
@@ -618,6 +643,7 @@ class MongoDBStore {
 
     // Deduct unpaid credits
     const unpaidCredits = await CreditModel.find({
+      ownerId,
       employeeId,
       isPaid: false,
     })
@@ -628,16 +654,17 @@ class MongoDBStore {
     return Math.max(0, finalSalary)
   }
 
-  async calculateEmployeeSalaryBreakdown(employeeId: string) {
+  async calculateEmployeeSalaryBreakdown(employeeId: string, ownerId: string) {
     await this.ensureConnected()
 
-    const employee = await EmployeeModel.findById(employeeId)
+    const employee = await EmployeeModel.findOne({ _id: employeeId, ownerId })
     if (!employee) return null
 
     const baseSalary = employee.salary
     const currentMonth = new Date().toISOString().slice(0, 7)
 
     const monthlyAttendance = await AttendanceModel.find({
+      ownerId,
       employeeId,
       date: { $regex: `^${currentMonth}` },
     })
@@ -648,7 +675,7 @@ class MongoDBStore {
 
     let leaveDeductions = 0
     if (leaveCount > 0) {
-      const settings = await this.getSettings()
+      const settings = await this.getSettings(ownerId)
       const { type, value } = settings.leaveDeduction
       if (type === 'percentage') {
         leaveDeductions = (employee.salary * value * leaveCount) / 100
@@ -658,6 +685,7 @@ class MongoDBStore {
     }
 
     const unpaidCredits = await CreditModel.find({
+      ownerId,
       employeeId,
       isPaid: false,
     })
@@ -680,16 +708,16 @@ class MongoDBStore {
   // Statistics Methods
   // ========================
 
-  async getStats() {
+  async getStats(ownerId: string) {
     await this.ensureConnected()
 
-    const employees = await EmployeeModel.find()
+    const employees = await EmployeeModel.find({ ownerId })
     const today = new Date().toISOString().slice(0, 10)
-    const todayAttendance = await AttendanceModel.find({ date: today })
+    const todayAttendance = await AttendanceModel.find({ date: today, ownerId })
     const presentToday = todayAttendance.filter((a) => a.status === 'present').length
-    const allTasks = await TaskModel.find()
+    const allTasks = await TaskModel.find({ ownerId })
     const pendingTasks = allTasks.filter((t) => !t.isCompleted).length
-    const allCredits = await CreditModel.find()
+    const allCredits = await CreditModel.find({ ownerId })
     const outstandingCredits = allCredits.filter((c) => !c.isPaid).length
 
     return {
@@ -704,10 +732,10 @@ class MongoDBStore {
   // History/Audit Methods
   // ========================
 
-  async getHistory(limit = 100) {
+  async getHistory(ownerId: string, limit = 100) {
     await this.ensureConnected()
 
-    const history = await HistoryModel.find().sort({ timestamp: -1 }).limit(limit)
+    const history = await HistoryModel.find({ ownerId }).sort({ timestamp: -1 }).limit(limit)
     return history.map((h) => h.toObject())
   }
 
@@ -717,7 +745,8 @@ class MongoDBStore {
     entityId: string,
     description: string,
     oldData?: any,
-    newData?: any
+    newData?: any,
+    ownerId?: string
   ) {
     try {
       await HistoryModel.create({
@@ -725,6 +754,7 @@ class MongoDBStore {
         action,
         entity,
         entityId,
+        ownerId,
         oldData,
         newData,
         description,

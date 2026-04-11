@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-import { mongoStore } from "@/lib/mongo-store"
 import { connectToDatabase } from "@/lib/mongodb"
 import mongoose from "mongoose"
 
@@ -18,9 +17,6 @@ export async function GET() {
     const readyState = mongoose.connection.readyState
     const isConnected = readyState === 1
 
-    // Get stats
-    const stats = await mongoStore.getStats()
-    
     // Get database info
     const db = mongoose.connection.db
     const collections = db ? (await db.listCollections().toArray()).map((c) => c.name) : []
@@ -50,7 +46,6 @@ export async function GET() {
           uri: process.env.MONGODB_URI?.replace(/:[^:]*@/, ":***@") || "not configured",
         },
         collections: collections,
-        stats: stats,
         dbStats: dbStats,
         timestamp: new Date().toISOString(),
         mongooseVersion: mongoose.version,

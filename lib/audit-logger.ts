@@ -1,5 +1,5 @@
 import { connectToDatabase } from './mongodb'
-import { Schema, model } from 'mongoose'
+import mongoose, { Schema, model } from 'mongoose'
 
 /**
  * Audit Log Schema
@@ -127,8 +127,10 @@ failedLoginSchema.index({ username: 1, attemptTime: -1 })
 failedLoginSchema.index({ ipAddress: 1, attemptTime: -1 })
 
 // Get or create models
-export const AuditLogModel = model('AuditLog', auditLogSchema)
-export const FailedLoginModel = model('FailedLogin', failedLoginSchema)
+export const AuditLogModel =
+  mongoose.models.AuditLog || model('AuditLog', auditLogSchema)
+export const FailedLoginModel =
+  mongoose.models.FailedLogin || model('FailedLogin', failedLoginSchema)
 
 /**
  * Log an audit event

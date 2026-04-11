@@ -1,12 +1,18 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { mongoStore } from "@/lib/mongo-store"
 import type { ApiResponse } from "@/lib/types"
+import { getCurrentUser } from "@/lib/auth"
 
 // This endpoint can be called by a cron job or scheduler to auto-reset attendance
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
+    }
+
     const today = new Date().toISOString().split('T')[0]
-    const addedCount = await mongoStore.resetDailyAttendance(today)
+    const addedCount = await mongoStore.resetDailyAttendance(user.id, today)
 
     return NextResponse.json<ApiResponse>({
       success: true,
@@ -30,8 +36,13 @@ export async function POST(request: NextRequest) {
 // Allow checking if auto-reset has been done today
 export async function GET(request: NextRequest) {
   try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
+    }
+
     const today = new Date().toISOString().split('T')[0]
-    const todayAttendance = await mongoStore.getAttendanceByDate(today)
+    const todayAttendance = await mongoStore.getAttendanceByDate(today, user.id)
 
     return NextResponse.json<ApiResponse>({
       success: true,

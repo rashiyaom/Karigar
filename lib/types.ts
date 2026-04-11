@@ -1,5 +1,6 @@
 export interface Employee {
   id: string
+  ownerId?: string
   name: string
   salary: number
   joiningDate: string
@@ -14,6 +15,7 @@ export interface Employee {
 
 export interface Attendance {
   id: string
+  ownerId?: string
   employeeId: string
   date: string
   status: "present" | "absent" | "half-day" | "sick-leave" | "paid-leave"
@@ -23,6 +25,7 @@ export interface Attendance {
 
 export interface Credit {
   id: string
+  ownerId?: string
   employeeId: string
   amount: number
   dateTaken: string
@@ -34,6 +37,7 @@ export interface Credit {
 
 export interface Task {
   id: string
+  ownerId?: string
   employeeId: string // Changed to match validation schema
   title: string
   description: string
@@ -45,6 +49,7 @@ export interface Task {
 }
 
 export interface Settings {
+  ownerId?: string
   organizationName: string
   companyLogoUrl?: string
   leaveDeduction: {

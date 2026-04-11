@@ -5,12 +5,12 @@ import mongoose from "mongoose"
 
 export async function GET() {
   try {
-    // Check authentication - only allow authenticated users
+    // Check authentication - only admins can access database details
     const user = await getCurrentUser()
-    if (!user) {
+    if (!user || user.role !== 'admin') {
       return NextResponse.json(
-        { error: 'Unauthorized - Admin access required' },
-        { status: 401 }
+        { error: 'Forbidden - Admin access required' },
+        { status: 403 }
       )
     }
     const readyStates: Record<number, string> = {
@@ -26,7 +26,7 @@ export async function GET() {
     if (!isConnected) {
       // Try to connect
       try {
-        await mongoStore.getStats()
+        await mongoStore.getStats(user.id)
       } catch (error) {
         // Connection attempt failed, return disconnected status
         return NextResponse.json({
@@ -47,7 +47,7 @@ export async function GET() {
       }
     }
 
-    const stats = await mongoStore.getStats()
+    const stats = await mongoStore.getStats(user.id)
     const db = mongoose.connection.db
     const collections = db ? (await db.listCollections().toArray()).map((c) => c.name) : []
 

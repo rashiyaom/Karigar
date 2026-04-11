@@ -2,10 +2,16 @@ import { type NextRequest, NextResponse } from "next/server"
 import { mongoStore } from "@/lib/mongo-store"
 import { creditSchema } from "@/lib/validation"
 import type { ApiResponse } from "@/lib/types"
+import { getCurrentUser } from "@/lib/auth"
 
 export async function GET() {
   try {
-    const credits = await mongoStore.getAllCredits()
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
+    }
+
+    const credits = await mongoStore.getAllCredits(user.id)
     return NextResponse.json<ApiResponse>({
       success: true,
       data: credits,
@@ -23,10 +29,15 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
+    }
+
     const body = await request.json()
     const validatedData = creditSchema.parse(body)
 
-    const credit = await mongoStore.createCredit(validatedData)
+    const credit = await mongoStore.createCredit(validatedData, user.id)
 
     return NextResponse.json<ApiResponse>(
       {

@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { mongoStore } from "@/lib/mongo-store"
 import { taskSchema } from "@/lib/validation"
 import type { ApiResponse } from "@/lib/types"
+import { getCurrentUser } from "@/lib/auth"
 
 type Params = Promise<{ id: string }>
 
@@ -10,8 +11,13 @@ export async function GET(
   { params }: { params: Params }
 ) {
   try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
+    }
+
     const { id } = await params
-    const task = await mongoStore.getTask(id)
+    const task = await mongoStore.getTask(id, user.id)
 
     if (!task) {
       return NextResponse.json<ApiResponse>(
@@ -43,11 +49,16 @@ export async function PUT(
   { params }: { params: Params }
 ) {
   try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
+    }
+
     const { id } = await params
     const body = await request.json()
     const validatedData = taskSchema.partial().parse(body)
 
-    const updated = await mongoStore.updateTask(id, validatedData)
+    const updated = await mongoStore.updateTask(id, validatedData, user.id)
 
     if (!updated) {
       return NextResponse.json<ApiResponse>(
@@ -89,8 +100,13 @@ export async function DELETE(
   { params }: { params: Params }
 ) {
   try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
+    }
+
     const { id } = await params
-    const success = await mongoStore.deleteTask(id)
+    const success = await mongoStore.deleteTask(id, user.id)
 
     if (!success) {
       return NextResponse.json<ApiResponse>(

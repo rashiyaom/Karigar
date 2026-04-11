@@ -198,7 +198,7 @@ export function HistoryTimeline() {
                             <span className="text-xs text-muted-foreground">
                               {formatDistanceToNow(new Date(entry.timestamp), { addSuffix: true })}
                             </span>
-                            {entry.oldData && !entry.description.includes("(UNDONE)") && (
+                            {entry.oldData != null && !entry.description.includes("(UNDONE)") && (
                               <Button size="sm" variant="ghost" onClick={() => handleUndo(entry.id)} className="h-6 px-2">
                                 <Undo2 className="h-3 w-3" />
                               </Button>
@@ -235,7 +235,7 @@ export function HistoryTimeline() {
                                 </div>
                               </div>
 
-                              {entry.oldData && (
+                              {entry.oldData != null && (
                                 <div>
                                   <h4 className="font-medium mb-2">Previous Data:</h4>
                                   <pre className="bg-muted p-3 rounded text-xs overflow-auto">
@@ -244,7 +244,7 @@ export function HistoryTimeline() {
                                 </div>
                               )}
 
-                              {entry.newData && (
+                              {entry.newData != null && (
                                 <div>
                                   <h4 className="font-medium mb-2">New Data:</h4>
                                   <pre className="bg-muted p-3 rounded text-xs overflow-auto">

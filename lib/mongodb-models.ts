@@ -6,6 +6,7 @@ export interface IEmployee extends Employee, Document {}
 
 const EmployeeSchema = new Schema<IEmployee>(
   {
+    ownerId: { type: String, index: true },
     name: { type: String, required: true, index: true },
     salary: { type: Number, required: true, min: 0 },
     joiningDate: { type: String, required: true },
@@ -26,6 +27,7 @@ export interface IAttendance extends Attendance, Document {}
 
 const AttendanceSchema = new Schema<IAttendance>(
   {
+    ownerId: { type: String, index: true },
     employeeId: { type: String, required: true, index: true },
     date: { type: String, required: true, index: true }, // ISO format: YYYY-MM-DD
     status: {
@@ -48,6 +50,7 @@ export interface ICredit extends Credit, Document {}
 
 const CreditSchema = new Schema<ICredit>(
   {
+    ownerId: { type: String, index: true },
     employeeId: { type: String, required: true, index: true },
     amount: { type: Number, required: true, min: 0 },
     dateTaken: { type: String, required: true },
@@ -65,6 +68,7 @@ export interface ITask extends Task, Document {}
 
 const TaskSchema = new Schema<ITask>(
   {
+    ownerId: { type: String, index: true },
     employeeId: { type: String, required: true, index: true },
     title: { type: String, required: true },
     description: { type: String, required: true },
@@ -83,6 +87,7 @@ export interface ISettings extends Settings, Document {}
 
 const SettingsSchema = new Schema<ISettings>(
   {
+    ownerId: { type: String, unique: true, sparse: true, index: true },
     organizationName: { type: String, default: 'My Company' },
     leaveDeduction: {
       type: { type: String, enum: ['percentage', 'fixed'], default: 'percentage' },
@@ -108,6 +113,7 @@ const SettingsSchema = new Schema<ISettings>(
 
 // History/Audit Schema
 export interface IHistory extends Document {
+  ownerId?: string
   timestamp: Date
   action: string
   entity: string
@@ -119,6 +125,7 @@ export interface IHistory extends Document {
 
 const HistorySchema = new Schema<IHistory>(
   {
+    ownerId: { type: String, index: true },
     timestamp: { type: Date, default: Date.now, index: true },
     action: { type: String, required: true },
     entity: { type: String, required: true },
@@ -136,6 +143,7 @@ const HistorySchema = new Schema<IHistory>(
 export interface IUser extends Document {
   username: string
   password: string
+  role: 'admin' | 'user'
   createdAt: Date
   updatedAt: Date
 }
@@ -144,6 +152,7 @@ const UserSchema = new Schema<IUser>(
   {
     username: { type: String, required: true, unique: true, lowercase: true, index: true },
     password: { type: String, required: true },
+    role: { type: String, enum: ['admin', 'user'], default: 'user', index: true },
   },
   {
     timestamps: true,

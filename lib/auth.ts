@@ -4,16 +4,16 @@ import { connectToDatabase } from './mongodb'
 import crypto from 'crypto'
 import bcrypt from 'bcrypt'
 
-// Get credentials from environment variables
-const DEMO_USERNAME = process.env.DEMO_USERNAME || 'omkar'
-const DEMO_PASSWORD = process.env.DEMO_PASSWORD || 'omkar@123'
-const DEMO_PASSWORD_HASH = process.env.DEMO_PASSWORD_HASH as string
+const MAIN_ADMIN_USERNAME = (process.env.MAIN_ADMIN_USERNAME || process.env.DEMO_USERNAME || 'admin').toLowerCase()
+const MAIN_ADMIN_PASSWORD = process.env.MAIN_ADMIN_PASSWORD || process.env.DEMO_PASSWORD || 'admin@123'
+const MAIN_ADMIN_PASSWORD_HASH = process.env.MAIN_ADMIN_PASSWORD_HASH
 const SESSION_DURATION = (parseInt(process.env.SESSION_EXPIRY_HOURS || '24') * 60 * 60 * 1000) // Default 24 hours
 const COOKIE_NAME = 'auth-token'
 
 export interface AuthUser {
   id: string
   username: string
+  role: 'admin' | 'user'
 }
 
 // Generate a secure token
@@ -21,32 +21,46 @@ export function generateToken(): string {
   return crypto.randomBytes(32).toString('hex')
 }
 
+async function ensureMainAdminAccount() {
+  const existingAdmin = await UserModel.findOne({ username: MAIN_ADMIN_USERNAME })
+  if (existingAdmin) {
+    if (existingAdmin.role !== 'admin') {
+      existingAdmin.role = 'admin'
+      await existingAdmin.save()
+    }
+    return existingAdmin
+  }
+
+  const passwordHash = MAIN_ADMIN_PASSWORD_HASH
+    ? MAIN_ADMIN_PASSWORD_HASH
+    : await bcrypt.hash(MAIN_ADMIN_PASSWORD, 10)
+
+  return UserModel.create({
+    username: MAIN_ADMIN_USERNAME,
+    password: passwordHash,
+    role: 'admin',
+  })
+}
+
 // Login user with bcrypt password verification
 export async function loginUser(username: string, password: string): Promise<{ token: string; user: AuthUser } | null> {
   try {
     await connectToDatabase()
+    await ensureMainAdminAccount()
 
-    // Validate credentials against environment configuration
-    if (username !== DEMO_USERNAME) {
+    const normalizedUsername = username.trim().toLowerCase()
+    if (!normalizedUsername || !password) {
       return null
     }
 
-    // Use hash verification when configured; otherwise use demo password fallback.
-    const passwordMatch = DEMO_PASSWORD_HASH
-      ? await bcrypt.compare(password, DEMO_PASSWORD_HASH)
-      : password === DEMO_PASSWORD
+    const user = await UserModel.findOne({ username: normalizedUsername })
+    if (!user) {
+      return null
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password)
     if (!passwordMatch) {
       return null
-    }
-
-    // Find or create user in database
-    let user = await UserModel.findOne({ username: DEMO_USERNAME.toLowerCase() })
-
-    if (!user) {
-      user = await UserModel.create({
-        username: DEMO_USERNAME.toLowerCase(),
-        password: DEMO_PASSWORD_HASH || (await bcrypt.hash(DEMO_PASSWORD, 10)),
-      })
     }
 
     // Create session
@@ -64,10 +78,59 @@ export async function loginUser(username: string, password: string): Promise<{ t
       user: {
         id: user._id.toString(),
         username: user.username,
+        role: user.role,
       },
     }
   } catch (error) {
     console.error('Login error:', error)
+    return null
+  }
+}
+
+export async function registerUser(
+  username: string,
+  password: string
+): Promise<{ token: string; user: AuthUser } | null> {
+  try {
+    await connectToDatabase()
+    await ensureMainAdminAccount()
+
+    const normalizedUsername = username.trim().toLowerCase()
+    if (!normalizedUsername || password.length < 8) {
+      return null
+    }
+
+    const existing = await UserModel.findOne({ username: normalizedUsername })
+    if (existing) {
+      return null
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10)
+    const user = await UserModel.create({
+      username: normalizedUsername,
+      password: passwordHash,
+      role: 'user',
+    })
+
+    const token = generateToken()
+    const expiresAt = new Date(Date.now() + SESSION_DURATION)
+
+    await SessionModel.create({
+      userId: user._id.toString(),
+      token,
+      expiresAt,
+    })
+
+    return {
+      token,
+      user: {
+        id: user._id.toString(),
+        username: user.username,
+        role: user.role,
+      },
+    }
+  } catch (error) {
+    console.error('Registration error:', error)
     return null
   }
 }
@@ -94,6 +157,7 @@ export async function verifyToken(token: string): Promise<AuthUser | null> {
     return {
       id: user._id.toString(),
       username: user.username,
+      role: user.role,
     }
   } catch (error) {
     console.error('Token verification error:', error)
@@ -161,6 +225,7 @@ export async function getAuthToken(): Promise<string | null> {
 export async function regenerateSession(oldToken: string): Promise<string> {
   try {
     await connectToDatabase()
+    await ensureMainAdminAccount()
 
     // Delete old session
     if (oldToken) {
@@ -170,13 +235,15 @@ export async function regenerateSession(oldToken: string): Promise<string> {
     // Create new session with fresh token
     const newToken = generateToken()
     const expiresAt = new Date(Date.now() + SESSION_DURATION)
+    const adminUser = await UserModel.findOne({ username: MAIN_ADMIN_USERNAME })
+
+    if (!adminUser) {
+      throw new Error('Failed to find main admin account')
+    }
 
     await SessionModel.create({
+      userId: adminUser._id.toString(),
       token: newToken,
-      user: {
-        username: DEMO_USERNAME,
-        id: 'demo-user',
-      },
       createdAt: new Date(),
       expiresAt,
     })
@@ -186,4 +253,8 @@ export async function regenerateSession(oldToken: string): Promise<string> {
     console.error('Session regeneration error:', error)
     throw error
   }
+}
+
+export function isAdminUser(user: AuthUser | null): boolean {
+  return user?.role === 'admin'
 }

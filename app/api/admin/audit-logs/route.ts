@@ -10,12 +10,12 @@ import {
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify authentication - only authorized users can view audit logs
+    // Verify admin authentication
     const user = await getCurrentUser()
-    if (!user) {
+    if (!user || user.role !== 'admin') {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: 'Forbidden - Admin access required' },
+        { status: 403 }
       )
     }
 
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
     const skip = parseInt(searchParams.get('skip') || '0')
 
-    let data: any = null
+    let data: unknown = null
 
     switch (type) {
       case 'stats':

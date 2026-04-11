@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { mongoStore } from "@/lib/mongo-store"
 import { attendanceSchema } from "@/lib/validation"
 import type { ApiResponse } from "@/lib/types"
+import { getCurrentUser } from "@/lib/auth"
 
 type Params = Promise<{ id: string }>
 
@@ -10,8 +11,13 @@ export async function GET(
   { params }: { params: Params }
 ) {
   try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
+    }
+
     const { id } = await params
-    const attendance = await mongoStore.getAttendanceByEmployee(id)
+    const attendance = await mongoStore.getAttendanceByEmployee(id, user.id)
 
     return NextResponse.json<ApiResponse>({
       success: true,
@@ -33,11 +39,16 @@ export async function PUT(
   { params }: { params: Params }
 ) {
   try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
+    }
+
     const { id } = await params
     const body = await request.json()
     const validatedData = attendanceSchema.partial().parse(body)
 
-    const updated = await mongoStore.updateAttendance(id, validatedData)
+    const updated = await mongoStore.updateAttendance(id, validatedData, user.id)
 
     if (!updated) {
       return NextResponse.json<ApiResponse>(
@@ -79,8 +90,13 @@ export async function DELETE(
   { params }: { params: Params }
 ) {
   try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
+    }
+
     const { id } = await params
-    const success = await mongoStore.deleteAttendance(id)
+    const success = await mongoStore.deleteAttendance(id, user.id)
 
     if (!success) {
       return NextResponse.json<ApiResponse>(

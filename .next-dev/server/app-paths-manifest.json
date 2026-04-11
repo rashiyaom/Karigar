@@ -1,8 +1,0 @@
-{
-  "/api/stats/route": "app/api/stats/route.js",
-  "/api/employees/route": "app/api/employees/route.js",
-  "/api/settings/route": "app/api/settings/route.js",
-  "/api/attendance/auto-reset/route": "app/api/attendance/auto-reset/route.js",
-  "/dashboard/page": "app/dashboard/page.js",
-  "/analytics/page": "app/analytics/page.js"
-}

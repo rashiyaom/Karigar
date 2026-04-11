@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { extractRequestMetadata, prepareUserDataExport, exportToJSON, exportToCSV, logGdprEvent } from '@/lib/data-protection'
 import { applyCorsHeaders } from '@/lib/cors-config'
 import { checkApiRateLimit } from '@/lib/api-rate-limit'
+import { getCurrentUser } from '@/lib/auth'
 
 export async function OPTIONS(request: NextRequest) {
   const response = new NextResponse(null, { status: 204 })
@@ -20,6 +21,11 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const currentUser = await getCurrentUser()
+    if (!currentUser) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    }
+
     const origin = request.headers.get('origin') || undefined
     const { ipAddress } = extractRequestMetadata(request)
 
@@ -41,21 +47,9 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json()
-    const { userId, username, format = 'json' } = body
-
-    // Validate required fields
-    if (!userId || !username) {
-      return applyCorsHeaders(
-        new NextResponse(
-          JSON.stringify({
-            success: false,
-            error: 'Missing required fields: userId, username',
-          }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } }
-        ),
-        origin
-      )
-    }
+    const { format = 'json' } = body
+    const userId = currentUser.id
+    const username = currentUser.username
 
     // Validate format
     if (!['json', 'csv'].includes(format)) {

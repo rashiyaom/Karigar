@@ -4,20 +4,20 @@ import { getCurrentUser } from "@/lib/auth"
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication - only allow authenticated users to access admin endpoints
+    // Check authentication - only admins can access database setup endpoints
     const user = await getCurrentUser()
-    if (!user) {
+    if (!user || user.role !== 'admin') {
       return NextResponse.json(
-        { error: 'Unauthorized - Admin access required' },
-        { status: 401 }
+        { error: 'Forbidden - Admin access required' },
+        { status: 403 }
       )
     }
 
     // Initialize database with sample data if needed
     await mongoStore.initializeDatabase()
     
-    const settings = await mongoStore.getSettings()
-    const stats = await mongoStore.getStats()
+    const settings = await mongoStore.getSettings(user.id)
+    const stats = await mongoStore.getStats(user.id)
 
     return NextResponse.json({
       success: true,

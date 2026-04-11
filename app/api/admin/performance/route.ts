@@ -16,6 +16,7 @@ import {
 } from '@/lib/performance-monitor'
 import { applyCorsHeaders } from '@/lib/cors-config'
 import { checkApiRateLimit } from '@/lib/api-rate-limit'
+import { getCurrentUser } from '@/lib/auth'
 
 export async function OPTIONS(request: NextRequest) {
   const response = new NextResponse(null, { status: 204 })
@@ -25,6 +26,17 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await getCurrentUser()
+    if (!user || user.role !== 'admin') {
+      return applyCorsHeaders(
+        new NextResponse(
+          JSON.stringify({ success: false, error: 'Forbidden - Admin access required' }),
+          { status: 403, headers: { 'Content-Type': 'application/json' } }
+        ),
+        request.headers.get('origin') || undefined
+      )
+    }
+
     const origin = request.headers.get('origin') || undefined
     const ipAddress =
       (request.headers.get('x-forwarded-for') as string)?.split(',')[0]?.trim() ||
@@ -52,7 +64,7 @@ export async function GET(request: NextRequest) {
     const endpoint = searchParams.get('endpoint') || ''
     const minutes = parseInt(searchParams.get('minutes') || '5')
 
-    let responseData: any
+    let responseData: unknown
 
     switch (type) {
       case 'health':

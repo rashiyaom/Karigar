@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { QueryProvider } from "@/components/query-provider"
 import { AttendanceAutoReset } from "@/components/attendance-auto-reset"
 import { ErrorBoundary } from "@/components/error-boundary"
+import { TopNavAuthStatus } from "@/components/top-nav-auth-status"
 import "./globals.css"
 
 const inter = Inter({
@@ -40,6 +41,7 @@ export default function RootLayout({
             <LanguageProvider>
               <QueryProvider>
                 <AttendanceAutoReset />
+                <TopNavAuthStatus />
                 {children}
                 <Toaster />
               </QueryProvider>

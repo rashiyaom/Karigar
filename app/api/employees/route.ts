@@ -6,9 +6,15 @@ import { checkRequestSize, requestSizeErrorResponse } from "@/lib/request-size-l
 import { checkApiRateLimit, getApiRateLimitStatus } from "@/lib/api-rate-limit"
 import { sanitizeObjectKeys, hasDangerousPatterns } from "@/lib/input-sanitizer"
 import type { ApiResponse } from "@/lib/types"
+import { getCurrentUser } from "@/lib/auth"
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
+    }
+
     // Get client IP for rate limiting
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
     const rateLimitKey = `api:${ip}`
@@ -30,7 +36,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const employees = await mongoStore.getAllEmployees()
+    const employees = await mongoStore.getAllEmployees(user.id)
     const status = getApiRateLimitStatus(rateLimitKey)
     
     const response = NextResponse.json<ApiResponse>({
@@ -57,6 +63,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
+    }
+
     // Get client IP for rate limiting
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
     const rateLimitKey = `api:${ip}`
@@ -108,7 +119,7 @@ export async function POST(request: NextRequest) {
     
     const validatedData = employeeSchema.parse(sanitizedBody)
 
-    const employee = await mongoStore.createEmployee(validatedData)
+    const employee = await mongoStore.createEmployee(validatedData, user.id)
     const status = getApiRateLimitStatus(rateLimitKey)
 
     const response = NextResponse.json<ApiResponse>(

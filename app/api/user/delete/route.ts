@@ -2,8 +2,8 @@
  * User Data Deletion Endpoint
  * GDPR Compliance: Right to Be Forgotten (Article 17)
  * Two-step process:
- * 1. POST with userId to request deletion and get verification code
- * 2. POST with verification code to confirm deletion
+ * 1. DELETE to request deletion and get verification code
+ * 2. PATCH with verification code to confirm deletion
  *
  * DELETE /api/user/delete - Request deletion
  * PATCH /api/user/delete - Confirm with verification code
@@ -20,6 +20,7 @@ import {
 } from '@/lib/data-protection'
 import { applyCorsHeaders } from '@/lib/cors-config'
 import { checkApiRateLimit } from '@/lib/api-rate-limit'
+import { getCurrentUser } from '@/lib/auth'
 
 // In-memory storage for deletion verification codes
 // In production: Use database with TTL (10 minutes)
@@ -39,6 +40,11 @@ export async function OPTIONS(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
+    const currentUser = await getCurrentUser()
+    if (!currentUser) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    }
+
     const origin = request.headers.get('origin') || undefined
     const { ipAddress } = extractRequestMetadata(request)
 
@@ -57,25 +63,10 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // Parse request body
-    const body = await request.json()
-    const { userId, username, password } = body
+    const userId = currentUser.id
+    const username = currentUser.username
 
-    // Validate required fields
-    if (!userId || !username) {
-      return applyCorsHeaders(
-        new NextResponse(
-          JSON.stringify({
-            success: false,
-            error: 'Missing required fields: userId, username',
-          }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } }
-        ),
-        origin
-      )
-    }
-
-    // In production: Verify password and user identity
+    // In production: Verify password and user identity with step-up auth
     // Currently: Accept any authenticated request
 
     // Generate verification code
@@ -138,6 +129,11 @@ export async function DELETE(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
+    const currentUser = await getCurrentUser()
+    if (!currentUser) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    }
+
     const origin = request.headers.get('origin') || undefined
     const { ipAddress } = extractRequestMetadata(request)
 
@@ -159,15 +155,16 @@ export async function PATCH(request: NextRequest) {
 
     // Parse request body
     const body = await request.json()
-    const { userId, username, verificationCode } = body
+    const { verificationCode } = body
+    const userId = currentUser.id
 
     // Validate required fields
-    if (!userId || !username || !verificationCode) {
+    if (!verificationCode) {
       return applyCorsHeaders(
         new NextResponse(
           JSON.stringify({
             success: false,
-            error: 'Missing required fields: userId, username, verificationCode',
+            error: 'Missing required fields: verificationCode',
           }),
           { status: 400, headers: { 'Content-Type': 'application/json' } }
         ),

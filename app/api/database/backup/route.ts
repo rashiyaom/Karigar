@@ -4,12 +4,12 @@ import { getCurrentUser } from "@/lib/auth"
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication - only allow authenticated users
+    // Check authentication - only admins can access backups
     const user = await getCurrentUser()
-    if (!user) {
+    if (!user || user.role !== 'admin') {
       return NextResponse.json(
-        { error: 'Unauthorized - Admin access required' },
-        { status: 401 }
+        { error: 'Forbidden - Admin access required' },
+        { status: 403 }
       )
     }
 
