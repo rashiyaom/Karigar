@@ -136,20 +136,20 @@ export function Dashboard() {
                 alt="Karigar Logo"
                 width={32}
                 height={32}
-                style={{ width: "auto", height: "32px" }}
                 className="rounded"
               />
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-xl sm:text-2xl font-bold text-foreground">Karigar</h1>
                   {settings?.companyLogoUrl && (
-                    <Image
-                      src={settings.companyLogoUrl}
-                      alt="Company Logo"
-                      width={32}
-                      height={32}
-                      className="rounded"
-                    />
+                    <div className="relative h-8 w-8">
+                      <Image
+                        src={settings.companyLogoUrl}
+                        alt="Company Logo"
+                        fill
+                        className="object-contain rounded"
+                      />
+                    </div>
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">

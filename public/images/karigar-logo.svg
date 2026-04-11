@@ -1,22 +1,23 @@
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
   <!-- Karigar Logo: Modern K Design -->
-  <!-- Light background for contrast -->
-  <rect width="512" height="512" fill="#FFFFFF" rx="40"/>
+  <!-- White background -->
+  <rect width="64" height="64" fill="#FFFFFF" rx="8"/>
   
-  <!-- Shadow/depth effect -->
+  <!-- Gradient definition -->
   <defs>
     <linearGradient id="kGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1F2937;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#111827;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#6B21A8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
     </linearGradient>
   </defs>
   
-  <!-- Left vertical stroke -->
-  <rect x="109" y="65" width="110" height="350" fill="url(#kGradient)"/>
+  <!-- K Shape using simpler geometry -->
+  <!-- Vertical stroke on left -->
+  <rect x="12" y="10" width="12" height="44" fill="url(#kGradient)" rx="2"/>
   
-  <!-- Top right diagonal -->
-  <path d="M 350 120 L 480 120 L 220 280 L 350 280 Z" fill="url(#kGradient)"/>
+  <!-- Top right diagonal stroke -->
+  <rect x="24" y="10" width="20" height="10" fill="url(#kGradient)" transform="rotate(30 34 15)" rx="1"/>
   
-  <!-- Bottom right diagonal -->
-  <path d="M 220 280 L 480 280 L 350 400 L 220 400 Z" fill="url(#kGradient)"/>
+  <!-- Bottom right diagonal stroke -->
+  <rect x="24" y="32" width="20" height="10" fill="url(#kGradient)" transform="rotate(-30 34 37)" rx="1"/>
 </svg>

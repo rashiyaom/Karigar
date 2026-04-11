@@ -124,19 +124,21 @@ export function SettingsForm({ onClose }: SettingsFormProps) {
               
               {formData.companyLogoUrl && (
                 <div className="flex items-center justify-center border rounded-lg p-4 bg-muted/50">
-                  <Image
-                    src={formData.companyLogoUrl}
-                    alt="Company Logo Preview"
-                    width={80}
-                    height={80}
-                    onError={() => {
-                      toast({
-                        title: "Error",
-                        description: "Failed to load image from URL",
-                        variant: "destructive",
-                      })
-                    }}
-                  />
+                  <div className="relative h-20 w-20">
+                    <Image
+                      src={formData.companyLogoUrl}
+                      alt="Company Logo Preview"
+                      fill
+                      className="object-contain"
+                      onError={() => {
+                        toast({
+                          title: "Error",
+                          description: "Failed to load image from URL",
+                          variant: "destructive",
+                        })
+                      }}
+                    />
+                  </div>
                 </div>
               )}
             </div>
