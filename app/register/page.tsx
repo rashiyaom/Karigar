@@ -56,7 +56,6 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [metricCounts, setMetricCounts] = useState<number[]>(heroMetrics.map(() => 0))
   const [cardTilts, setCardTilts] = useState<Record<number, { rotateX: number; rotateY: number }>>({})
-  const [scrollProgress, setScrollProgress] = useState(0)
   const [currentStep, setCurrentStep] = useState(0)
   const [currentSubstep, setCurrentSubstep] = useState(0)
   const [usernameAvailability, setUsernameAvailability] = useState<AvailabilityStatus>("idle")
@@ -87,10 +86,7 @@ export default function RegisterPage() {
     true,
   ]
   const totalSteps = questSteps.length
-  const stageProgress = Math.round((currentStep / (totalSteps - 1)) * 100)
   const completedSignals = completionSignals.filter(Boolean).length
-  const formCompletion = Math.round((completedSignals / completionSignals.length) * 100)
-  const setupProgress = Math.round(formCompletion * 0.5 + scrollProgress * 0.25 + stageProgress * 0.25)
   const questPoints = completedSignals * 25 + currentStep * 40
   const unlockedBadges = stepCompletion.filter(Boolean).length
   const isSubstepValid = (() => {
@@ -245,29 +241,6 @@ export default function RegisterPage() {
 
     return () => clearTimeout(timerId)
   }, [companyPhone])
-
-  useEffect(() => {
-    const updateScrollProgress = () => {
-      if (!formPanelRef.current) return
-
-      const rect = formPanelRef.current.getBoundingClientRect()
-      const viewportHeight = window.innerHeight
-      const track = rect.height + viewportHeight
-      const traveled = viewportHeight - rect.top
-      const progress = Math.min(100, Math.max(0, (traveled / track) * 100))
-
-      setScrollProgress(progress)
-    }
-
-    updateScrollProgress()
-    window.addEventListener("scroll", updateScrollProgress, { passive: true })
-    window.addEventListener("resize", updateScrollProgress)
-
-    return () => {
-      window.removeEventListener("scroll", updateScrollProgress)
-      window.removeEventListener("resize", updateScrollProgress)
-    }
-  }, [])
 
   const toggleWeekendDay = (day: string) => {
     setWeekendDays((prev) =>

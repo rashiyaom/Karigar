@@ -9,13 +9,11 @@ export function middleware(request: NextRequest) {
   }
 
   const authToken = request.cookies.get('auth-token')?.value
-  const roleCookie = request.cookies.get('user-role')?.value
-  const isAdmin = roleCookie === 'admin'
   const isAuthPage = pathname === '/login' || pathname === '/register'
   const isPublicLanding = pathname === '/' || pathname === '/landing.html'
 
   if (isAuthPage && authToken) {
-    return NextResponse.redirect(new URL(isAdmin ? '/admin/users' : '/dashboard', request.url))
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   if (!isAuthPage && !isPublicLanding && !authToken) {
@@ -23,16 +21,6 @@ export function middleware(request: NextRequest) {
     const nextPath = `${pathname}${search}`
     loginUrl.searchParams.set('next', nextPath)
     return NextResponse.redirect(loginUrl)
-  }
-
-  // Admin users should only access user-review pages.
-  if (authToken && isAdmin && !isAuthPage && !isPublicLanding && !pathname.startsWith('/admin/users')) {
-    return NextResponse.redirect(new URL('/admin/users', request.url))
-  }
-
-  // Non-admin users are not allowed on admin routes.
-  if (authToken && !isAdmin && pathname.startsWith('/admin')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   return NextResponse.next()
