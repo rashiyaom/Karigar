@@ -26,7 +26,7 @@ export async function GET() {
     if (db) {
       try {
         dbStats = await db.stats()
-      } catch (e) {
+      } catch {
         dbStats = { error: "Could not retrieve db stats" }
       }
     }

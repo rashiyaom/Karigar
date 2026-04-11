@@ -1,8 +1,7 @@
-import { NextRequest, NextResponse } from "next/server"
-import { mongoStore } from "@/lib/mongo-store"
+import { NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/auth"
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     // Check authentication - only admins can access backups
     const user = await getCurrentUser()

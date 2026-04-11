@@ -23,7 +23,7 @@ export async function DELETE(request: NextRequest) {
         message: `Reset attendance for ${deletedCount} records`
       },
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json<ApiResponse>(
       {
         success: false,

@@ -17,7 +17,7 @@ export async function GET() {
       success: true,
       data: attendance,
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json<ApiResponse>(
       {
         success: false,

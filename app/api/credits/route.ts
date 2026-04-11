@@ -16,7 +16,7 @@ export async function GET() {
       success: true,
       data: credits,
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json<ApiResponse>(
       {
         success: false,

@@ -27,7 +27,7 @@ export async function GET() {
       // Try to connect
       try {
         await mongoStore.getStats(user.id)
-      } catch (error) {
+      } catch {
         // Connection attempt failed, return disconnected status
         return NextResponse.json({
           success: true,

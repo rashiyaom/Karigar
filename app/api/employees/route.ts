@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     response.headers.set('X-RateLimit-Reset', status.resetTime.toString())
     
     return response
-  } catch (error) {
+  } catch {
     return NextResponse.json<ApiResponse>(
       {
         success: false,

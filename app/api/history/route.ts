@@ -15,7 +15,7 @@ export async function GET() {
       success: true,
       data: history,
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json<ApiResponse>(
       {
         success: false,

@@ -11,6 +11,7 @@ export async function GET(
   { params }: { params: Params }
 ) {
   try {
+    void request
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
@@ -33,7 +34,7 @@ export async function GET(
       success: true,
       data: credit,
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json<ApiResponse>(
       {
         success: false,
@@ -100,6 +101,7 @@ export async function DELETE(
   { params }: { params: Params }
 ) {
   try {
+    void request
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
@@ -122,7 +124,7 @@ export async function DELETE(
       success: true,
       data: { id },
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json<ApiResponse>(
       {
         success: false,
