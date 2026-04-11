@@ -256,14 +256,39 @@ export function Dashboard() {
                     <Settings className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] mx-2 overflow-y-auto">
+                <DialogContent className="max-w-[96vw] sm:max-w-5xl max-h-[92vh] mx-2 overflow-hidden border-border/70 p-0">
                   <DialogHeader>
-                    <DialogTitle>{t("common.settings")}</DialogTitle>
-                    <DialogDescription>
-                      Configure your organization settings, working hours, and system preferences.
-                    </DialogDescription>
+                    <div className="rounded-t-xl border-b border-border/60 bg-gradient-to-r from-slate-50 via-white to-orange-50 px-5 py-4 dark:from-slate-950 dark:via-slate-900 dark:to-orange-950/20 sm:px-7">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          {companyLogo ? (
+                            <Image
+                              src={companyLogo}
+                              alt={`${companyName} Logo`}
+                              width={42}
+                              height={42}
+                              className="rounded-md border border-border/50 bg-background p-1"
+                            />
+                          ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-md border border-border/50 bg-background font-semibold text-foreground">
+                              K
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Karigar App</p>
+                            <DialogTitle className="text-xl">{t("common.settings")}</DialogTitle>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="hidden sm:inline-flex">{companyName}</Badge>
+                      </div>
+                      <DialogDescription className="mt-2 text-sm text-muted-foreground">
+                        Configure organization identity, schedules, payroll rules, and automation in one place.
+                      </DialogDescription>
+                    </div>
                   </DialogHeader>
-                  <SettingsForm onClose={() => setIsSettingsOpen(false)} />
+                  <div className="max-h-[78vh] overflow-y-auto px-3 pb-4 pt-3 sm:px-5">
+                    <SettingsForm onClose={() => setIsSettingsOpen(false)} />
+                  </div>
                 </DialogContent>
               </Dialog>
             </div>

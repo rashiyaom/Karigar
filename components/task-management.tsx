@@ -19,12 +19,12 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Search, Edit, Trash2, CheckCircle, Clock, AlertTriangle, Calendar, User, Filter } from "lucide-react"
-import { format, isAfter, isBefore, addDays } from "date-fns"
-import { useLanguage } from "@/components/language-provider"
+import { format, isAfter, isBefore, addDays, formatDistanceToNowStrict } from "date-fns"
 import { useTasks, useEmployees, useUpdateTask, useDeleteTask } from "@/hooks/use-api"
 import { TaskForm } from "@/components/task-form"
 import { useToast } from "@/hooks/use-toast"
 import type { Task } from "@/lib/types"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export function TaskManagement() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -40,7 +40,6 @@ export function TaskManagement() {
     setCurrentDate(new Date())
   }, [])
 
-  const { t } = useLanguage()
   const { toast } = useToast()
   const { data: tasks = [], isLoading } = useTasks()
   const { data: employees = [] } = useEmployees()
@@ -118,7 +117,7 @@ export function TaskManagement() {
         title: "Success",
         description: `Task ${task.isCompleted ? "reopened" : "completed"} successfully.`,
       })
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to update task status.",
@@ -140,7 +139,7 @@ export function TaskManagement() {
           title: "Success",
           description: "Task deleted successfully.",
         })
-      } catch (error) {
+      } catch {
         toast({
           title: "Error",
           description: "Failed to delete task.",
@@ -157,21 +156,52 @@ export function TaskManagement() {
 
   if (isLoading || !currentDate) {
     return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="text-center">
-          <p className="text-muted-foreground">{t("common.loading")}</p>
+      <div className="container mx-auto px-4 py-6 space-y-4">
+        <Card className="border-border/60 shadow-sm">
+          <CardContent className="space-y-3 p-5">
+            <Skeleton className="h-7 w-64" />
+            <Skeleton className="h-4 w-80" />
+          </CardContent>
+        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <Card key={`task-skeleton-${idx}`} className="border-border/60 shadow-sm">
+              <CardContent className="space-y-2 p-4">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-8 w-16" />
+              </CardContent>
+            </Card>
+          ))}
         </div>
+        <Card className="border-border/60 shadow-sm">
+          <CardContent className="space-y-3 p-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-4 py-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="rounded-2xl border border-border/60 bg-gradient-to-r from-cyan-50 via-white to-amber-50 p-5 shadow-sm dark:from-cyan-950/30 dark:via-slate-900 dark:to-amber-950/20">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Live Task Board</p>
+            <h1 className="text-3xl font-bold">Task Management</h1>
+            <p className="text-muted-foreground">Manage and track employee tasks with real-time status updates.</p>
+          </div>
+          <Badge variant="outline" className="w-fit">Open tasks: {pendingTasks.length}</Badge>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Task Management</h1>
-          <p className="text-muted-foreground">Manage and track employee tasks</p>
+          <h2 className="text-lg font-semibold">Operations</h2>
+          <p className="text-sm text-muted-foreground">Create, assign, complete, and revisit tasks.</p>
         </div>
         <Dialog open={isTaskFormOpen} onOpenChange={setIsTaskFormOpen}>
           <DialogTrigger asChild>
@@ -199,50 +229,54 @@ export function TaskManagement() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <Card className="border-border/60 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{tasks.length}</div>
+            <p className="mt-1 text-xs text-muted-foreground">All records in database</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border/60 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending</CardTitle>
             <Clock className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{pendingTasks.length}</div>
+            <p className="mt-1 text-xs text-muted-foreground">Awaiting completion</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border/60 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Overdue</CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{overdueTasks.length}</div>
+            <p className="mt-1 text-xs text-muted-foreground">Need immediate attention</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border/60 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Due Soon</CardTitle>
             <Calendar className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{dueSoonTasks.length}</div>
+            <p className="mt-1 text-xs text-muted-foreground">Upcoming within 3 days</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
-      <Card className="mb-6">
+      <Card className="border-border/60 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
@@ -303,7 +337,7 @@ export function TaskManagement() {
 
       {/* Task Lists */}
       <Tabs defaultValue="all" className="space-y-4">
-        <TabsList>
+        <TabsList className="w-full overflow-x-auto justify-start">
           <TabsTrigger value="all">All Tasks ({filteredTasks.length})</TabsTrigger>
           <TabsTrigger value="pending">Pending ({pendingTasks.length})</TabsTrigger>
           <TabsTrigger value="overdue">Overdue ({overdueTasks.length})</TabsTrigger>
@@ -313,7 +347,6 @@ export function TaskManagement() {
         <TabsContent value="all">
           <TaskList
             tasks={filteredTasks}
-            employees={employees}
             onToggleComplete={handleToggleComplete}
             onEdit={handleEditTask}
             onDelete={handleDeleteTask}
@@ -327,7 +360,6 @@ export function TaskManagement() {
         <TabsContent value="pending">
           <TaskList
             tasks={pendingTasks}
-            employees={employees}
             onToggleComplete={handleToggleComplete}
             onEdit={handleEditTask}
             onDelete={handleDeleteTask}
@@ -341,7 +373,6 @@ export function TaskManagement() {
         <TabsContent value="overdue">
           <TaskList
             tasks={overdueTasks}
-            employees={employees}
             onToggleComplete={handleToggleComplete}
             onEdit={handleEditTask}
             onDelete={handleDeleteTask}
@@ -355,7 +386,6 @@ export function TaskManagement() {
         <TabsContent value="completed">
           <TaskList
             tasks={completedTasks}
-            employees={employees}
             onToggleComplete={handleToggleComplete}
             onEdit={handleEditTask}
             onDelete={handleDeleteTask}
@@ -372,13 +402,12 @@ export function TaskManagement() {
 
 interface TaskListProps {
   tasks: Task[]
-  employees: any[]
   onToggleComplete: (task: Task) => void
   onEdit: (task: Task) => void
   onDelete: (task: Task) => void
   getEmployeeName: (id: string) => string
   getEmployeeAvatar: (id: string) => string
-  getPriorityColor: (priority: string) => string
+  getPriorityColor: (priority: string) => "destructive" | "default" | "secondary"
   getStatusIcon: (task: Task) => React.ReactNode
 }
 
@@ -408,14 +437,14 @@ function TaskList({
   return (
     <div className="space-y-4">
       {tasks.map((task) => (
-        <Card key={task.id} className="hover:shadow-md transition-shadow">
+        <Card key={task.id} className="border-border/60 shadow-sm transition-shadow hover:shadow-md">
           <CardContent className="p-6">
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   {getStatusIcon(task)}
                   <h3 className="font-semibold text-lg">{task.title}</h3>
-                  <Badge variant={getPriorityColor(task.priority) as any}>{task.priority}</Badge>
+                  <Badge variant={getPriorityColor(task.priority)}>{task.priority}</Badge>
                   <Badge variant={task.isCompleted ? "default" : "secondary"}>
                     {task.isCompleted ? "completed" : "pending"}
                   </Badge>
@@ -440,11 +469,12 @@ function TaskList({
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     <span>Due: {format(new Date(task.deadline), "MMM dd, yyyy")}</span>
+                    <span className="text-xs">({formatDistanceToNowStrict(new Date(task.deadline), { addSuffix: true })})</span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-2 ml-4">
+              <div className="flex flex-wrap gap-2 lg:ml-4 lg:justify-end">
                 <Button
                   variant="outline"
                   size="sm"

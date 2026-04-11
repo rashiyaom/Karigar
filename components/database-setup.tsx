@@ -8,25 +8,35 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Database, FolderOpen, HardDrive, CheckCircle, AlertCircle, Download, Upload, Settings } from "lucide-react"
+import { Database, FolderOpen, HardDrive, CheckCircle, AlertCircle, Download, Upload, Settings, RefreshCcw } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface DatabaseSetupProps {
   onSetupComplete?: () => void
+}
+
+interface DatabaseStats {
+  employees: number
+  attendance: number
+  credits: number
+  tasks: number
 }
 
 export default function DatabaseSetup({ onSetupComplete }: DatabaseSetupProps) {
   const [currentPath, setCurrentPath] = useState<string>("")
   const [customPath, setCustomPath] = useState<string>("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isFetchingInfo, setIsFetchingInfo] = useState(true)
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle")
   const [message, setMessage] = useState("")
-  const [dbStats, setDbStats] = useState<any>(null)
+  const [dbStats, setDbStats] = useState<DatabaseStats | null>(null)
 
   useEffect(() => {
     fetchDatabaseInfo()
   }, [])
 
   const fetchDatabaseInfo = async () => {
+    setIsFetchingInfo(true)
     try {
       const response = await fetch("/api/database/info")
       const data = await response.json()
@@ -36,6 +46,8 @@ export default function DatabaseSetup({ onSetupComplete }: DatabaseSetupProps) {
       }
     } catch (error) {
       console.error("Failed to fetch database info:", error)
+    } finally {
+      setIsFetchingInfo(false)
     }
   }
 
@@ -67,8 +79,6 @@ export default function DatabaseSetup({ onSetupComplete }: DatabaseSetupProps) {
     setMessage("")
 
     try {
-      console.log("Setting database path to:", finalPath)
-      
       const response = await fetch("/api/database/setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -76,7 +86,6 @@ export default function DatabaseSetup({ onSetupComplete }: DatabaseSetupProps) {
       })
 
       const data = await response.json()
-      console.log("Database setup response:", data)
 
       if (data.success) {
         setStatus("success")
@@ -111,7 +120,7 @@ export default function DatabaseSetup({ onSetupComplete }: DatabaseSetupProps) {
         setStatus("error")
         setMessage(data.error || "Backup failed")
       }
-    } catch (error) {
+    } catch {
       setStatus("error")
       setMessage("Failed to create backup")
     } finally {
@@ -147,15 +156,23 @@ export default function DatabaseSetup({ onSetupComplete }: DatabaseSetupProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div className="text-center space-y-2">
-        <Database className="h-12 w-12 mx-auto text-blue-600" />
-        <h1 className="text-3xl font-bold">Database Configuration</h1>
-        <p className="text-muted-foreground">Configure where your employee management data will be stored locally</p>
+    <div className="max-w-5xl mx-auto p-6 space-y-6">
+      <div className="rounded-2xl border border-border/60 bg-gradient-to-r from-sky-50 via-white to-lime-50 p-5 shadow-sm dark:from-sky-950/30 dark:via-slate-900 dark:to-lime-950/20">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Live Database Control</p>
+            <h1 className="text-3xl font-bold">Database Configuration</h1>
+            <p className="text-muted-foreground">Configure storage location, review record counts, and run backups safely.</p>
+          </div>
+          <Button variant="outline" onClick={fetchDatabaseInfo} disabled={isLoading}>
+            <RefreshCcw className="h-4 w-4 mr-2" />
+            Refresh Status
+          </Button>
+        </div>
       </div>
 
       {/* Current Database Status */}
-      <Card>
+      <Card className="border-border/60 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-600" />
@@ -170,21 +187,32 @@ export default function DatabaseSetup({ onSetupComplete }: DatabaseSetupProps) {
             </Badge>
           </div>
 
+          {isFetchingInfo && !dbStats && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <div key={`db-stats-skeleton-${idx}`} className="rounded-lg border bg-muted/50 p-3">
+                  <Skeleton className="h-8 w-12 mx-auto" />
+                  <Skeleton className="h-3 w-20 mx-auto mt-2" />
+                </div>
+              ))}
+            </div>
+          )}
+
           {dbStats && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-3 bg-muted rounded-lg">
+              <div className="text-center p-3 rounded-lg border bg-muted/50">
                 <div className="text-2xl font-bold text-blue-600">{dbStats.employees}</div>
                 <div className="text-sm text-muted-foreground">Employees</div>
               </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
+              <div className="text-center p-3 rounded-lg border bg-muted/50">
                 <div className="text-2xl font-bold text-green-600">{dbStats.attendance}</div>
                 <div className="text-sm text-muted-foreground">Attendance Records</div>
               </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
+              <div className="text-center p-3 rounded-lg border bg-muted/50">
                 <div className="text-2xl font-bold text-orange-600">{dbStats.credits}</div>
                 <div className="text-sm text-muted-foreground">Credits</div>
               </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
+              <div className="text-center p-3 rounded-lg border bg-muted/50">
                 <div className="text-2xl font-bold text-purple-600">{dbStats.tasks}</div>
                 <div className="text-sm text-muted-foreground">Tasks</div>
               </div>
@@ -194,7 +222,7 @@ export default function DatabaseSetup({ onSetupComplete }: DatabaseSetupProps) {
       </Card>
 
       {/* Database Location Setup */}
-      <Card>
+      <Card className="border-border/60 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FolderOpen className="h-5 w-5" />
@@ -221,14 +249,14 @@ export default function DatabaseSetup({ onSetupComplete }: DatabaseSetupProps) {
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">
-              If you enter a directory path, we'll automatically add the database filename. 
+              If you enter a directory path, we will automatically add the database filename. 
               Make sure you have write permissions to the selected location.
             </p>
           </div>
 
           <div className="space-y-2">
             <Label>Recommended Paths:</Label>
-            <div className="grid gap-2">
+            <div className="grid gap-2 md:grid-cols-2">
               {getRecommendedPaths().map((path, index) => (
                 <Button
                   key={index}
@@ -243,7 +271,7 @@ export default function DatabaseSetup({ onSetupComplete }: DatabaseSetupProps) {
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
-              Click on a recommended path to use it, then click "Set Path" to apply.
+              Click on a recommended path to use it, then click &quot;Set Path&quot; to apply.
             </p>
           </div>
 
@@ -263,7 +291,7 @@ export default function DatabaseSetup({ onSetupComplete }: DatabaseSetupProps) {
       </Card>
 
       {/* Database Management */}
-      <Card>
+      <Card className="border-border/60 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Database className="h-5 w-5" />
@@ -272,7 +300,7 @@ export default function DatabaseSetup({ onSetupComplete }: DatabaseSetupProps) {
           <CardDescription>Backup and manage your database</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <Button onClick={handleBackup} disabled={isLoading} variant="outline">
               <Download className="h-4 w-4 mr-2" />
               Create Backup
@@ -288,7 +316,7 @@ export default function DatabaseSetup({ onSetupComplete }: DatabaseSetupProps) {
       <Separator />
 
       <div className="text-center">
-        <Button onClick={onSetupComplete} size="lg">
+        <Button onClick={onSetupComplete} size="lg" className="w-full sm:w-auto">
           Continue to Application
         </Button>
       </div>

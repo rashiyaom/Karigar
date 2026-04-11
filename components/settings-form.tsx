@@ -11,9 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
 import { useLanguage } from "@/components/language-provider"
 import { useSettings, useUpdateSettings } from "@/hooks/use-api"
 import { useToast } from "@/hooks/use-toast"
+import { Building2, Sparkles } from "lucide-react"
 
 interface SettingsFormProps {
   onClose: () => void
@@ -70,7 +72,7 @@ export function SettingsForm({ onClose }: SettingsFormProps) {
         description: "Settings updated successfully",
       })
       onClose()
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to update settings",
@@ -91,8 +93,27 @@ export function SettingsForm({ onClose }: SettingsFormProps) {
   const isLoading = updateSettingsMutation.isPending
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-h-[80vh] overflow-y-auto">
-      <Card>
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <Card className="border-border/60 bg-gradient-to-r from-amber-50 via-white to-rose-50 shadow-sm dark:from-amber-950/20 dark:via-slate-900 dark:to-rose-950/20">
+        <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg border border-border/60 bg-background p-2">
+              <Building2 className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Karigar App</p>
+              <h3 className="text-base font-semibold">Brand and Operations Settings</h3>
+              <p className="text-sm text-muted-foreground">These changes are applied live across your dashboard and modules.</p>
+            </div>
+          </div>
+          <Badge variant="outline" className="w-fit">
+            <Sparkles className="mr-1 h-3.5 w-3.5" />
+            Branded Experience
+          </Badge>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/60 shadow-sm">
         <CardHeader>
           <CardTitle>Organization Settings</CardTitle>
         </CardHeader>
@@ -179,7 +200,7 @@ export function SettingsForm({ onClose }: SettingsFormProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-border/60 shadow-sm">
         <CardHeader>
           <CardTitle>Working Hours & Schedule</CardTitle>
         </CardHeader>
@@ -225,7 +246,7 @@ export function SettingsForm({ onClose }: SettingsFormProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-border/60 shadow-sm">
         <CardHeader>
           <CardTitle>Leave Deduction Settings</CardTitle>
         </CardHeader>
@@ -268,7 +289,7 @@ export function SettingsForm({ onClose }: SettingsFormProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-border/60 shadow-sm">
         <CardHeader>
           <CardTitle>Automation & Notifications</CardTitle>
         </CardHeader>

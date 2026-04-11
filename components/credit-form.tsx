@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useLanguage } from "@/components/language-provider"
 import { useEmployees, useCreateCredit } from "@/hooks/use-api"
 import { useToast } from "@/hooks/use-toast"
-import { format } from "date-fns"
+import { addDays, endOfMonth, format, subDays } from "date-fns"
 import type { Employee } from "@/lib/types"
 
 interface CreditFormProps {
@@ -34,11 +34,12 @@ export function CreditForm({ employee, isOpen, onClose }: CreditFormProps) {
 
   // Set current date on client-side only
   useEffect(() => {
+    if (!isOpen) return
     setFormData(prev => ({
       ...prev,
       dateTaken: format(new Date(), "yyyy-MM-dd")
     }))
-  }, [])
+  }, [isOpen])
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -96,6 +97,21 @@ export function CreditForm({ employee, isOpen, onClose }: CreditFormProps) {
 
   const selectedEmployee = employees.find((emp) => emp.id === formData.employeeId)
   const isLoading = createCreditMutation.isPending
+
+  const applyDateTakenPreset = (preset: "today" | "yesterday") => {
+    const baseDate = preset === "today" ? new Date() : subDays(new Date(), 1)
+    handleInputChange("dateTaken", format(baseDate, "yyyy-MM-dd"))
+  }
+
+  const applyPromisePreset = (preset: "plus7" | "plus15" | "monthEnd") => {
+    const baseDate =
+      preset === "plus7"
+        ? addDays(new Date(), 7)
+        : preset === "plus15"
+          ? addDays(new Date(), 15)
+          : endOfMonth(new Date())
+    handleInputChange("promiseReturnDate", format(baseDate, "yyyy-MM-dd"))
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -200,6 +216,10 @@ export function CreditForm({ employee, isOpen, onClose }: CreditFormProps) {
 
             <div className="space-y-2">
               <Label htmlFor="dateTaken">{t("credits.dateTaken")} *</Label>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => applyDateTakenPreset("today")}>Today</Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => applyDateTakenPreset("yesterday")}>Yesterday</Button>
+              </div>
               <Input
                 id="dateTaken"
                 type="date"
@@ -212,6 +232,11 @@ export function CreditForm({ employee, isOpen, onClose }: CreditFormProps) {
 
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="promiseReturnDate">{t("credits.promiseReturnDate")} *</Label>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => applyPromisePreset("plus7")}>+7 Days</Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => applyPromisePreset("plus15")}>+15 Days</Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => applyPromisePreset("monthEnd")}>End of Month</Button>
+              </div>
               <Input
                 id="promiseReturnDate"
                 type="date"
