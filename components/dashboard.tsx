@@ -4,6 +4,7 @@ import { DialogTrigger } from "@/components/ui/dialog"
 import Image from "next/image"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,6 +28,7 @@ import {
   History,
   FileText,
   Database,
+  LogOut,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useLanguage } from "@/components/language-provider"
@@ -56,6 +58,8 @@ export function Dashboard() {
   const [isQuickCreditOpen, setIsQuickCreditOpen] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
   const [isQuickTaskOpen, setIsQuickTaskOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const router = useRouter()
 
   const { theme, setTheme } = useTheme()
   const { language, setLanguage, t } = useLanguage()
@@ -67,6 +71,9 @@ export function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useStats()
   const { data: settings } = useSettings()
   const deleteEmployeeMutation = useDeleteEmployee()
+
+  const companyName = settings?.organizationName?.trim() || "Karigar"
+  const companyLogo = settings?.companyLogoUrl
 
   const filteredEmployees = employees.filter(
     (employee) =>
@@ -112,6 +119,29 @@ export function Dashboard() {
     setIsEmployeeFormOpen(true)
   }
 
+  const handleLogout = async () => {
+    if (isLoggingOut) return
+
+    setIsLoggingOut(true)
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      router.push("/")
+      router.refresh()
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to logout. Please try again.",
+        variant: "destructive",
+      })
+      setIsLoggingOut(false)
+    }
+  }
+
   if (employeesError) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -131,35 +161,43 @@ export function Dashboard() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              <Image
-                src="/images/karigar-logo.svg"
-                alt="Karigar Logo"
-                width={32}
-                height={32}
-                className="rounded"
-              />
+              {companyLogo ? (
+                <Image
+                  src={companyLogo}
+                  alt={`${companyName} Logo`}
+                  width={32}
+                  height={32}
+                  className="rounded"
+                />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded bg-muted text-xs font-semibold text-muted-foreground">
+                  {companyName.charAt(0).toUpperCase()}
+                </div>
+              )}
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xl sm:text-2xl font-bold text-foreground">Karigar</h1>
-                  {settings?.companyLogoUrl && (
-                    <div className="relative h-8 w-8">
-                      <Image
-                        src={settings.companyLogoUrl}
-                        alt="Company Logo"
-                        fill
-                        className="object-contain rounded"
-                      />
-                    </div>
-                  )}
+                  <h1 className="text-xl sm:text-2xl font-bold text-foreground">{companyName}</h1>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {settings?.organizationName || "My Company"} • {t("dashboard.title")}
+                  {t("dashboard.title")}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
               <ConnectionStatus />
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 sm:h-10"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                title="Logout"
+              >
+                <LogOut className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Logout</span>
+              </Button>
 
               <Link href="/database-setup">
                 <Button

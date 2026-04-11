@@ -28,7 +28,7 @@ interface ConnectionStatus {
 
 // Global connection pool instance
 let mongoClient: MongoClient | null = null
-let connectionStatus: ConnectionStatus = {
+const connectionStatus: ConnectionStatus = {
   isConnected: false,
   poolSize: 0,
   availableConnections: 0,

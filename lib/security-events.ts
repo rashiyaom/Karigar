@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { logAuditEvent, logFailedLogin } from './audit-logger'
+import { getCurrentUser } from './auth'
 
 /**
  * Extract request metadata

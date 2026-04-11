@@ -6,13 +6,10 @@ import bcrypt from 'bcrypt'
 
 // Get credentials from environment variables
 const DEMO_USERNAME = process.env.DEMO_USERNAME || 'omkar'
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD || 'omkar@123'
 const DEMO_PASSWORD_HASH = process.env.DEMO_PASSWORD_HASH as string
 const SESSION_DURATION = (parseInt(process.env.SESSION_EXPIRY_HOURS || '24') * 60 * 60 * 1000) // Default 24 hours
 const COOKIE_NAME = 'auth-token'
-
-if (!DEMO_PASSWORD_HASH) {
-  throw new Error('DEMO_PASSWORD_HASH environment variable is not set')
-}
 
 export interface AuthUser {
   id: string
@@ -34,8 +31,10 @@ export async function loginUser(username: string, password: string): Promise<{ t
       return null
     }
 
-    // Use bcrypt for timing-safe password comparison
-    const passwordMatch = await bcrypt.compare(password, DEMO_PASSWORD_HASH)
+    // Use hash verification when configured; otherwise use demo password fallback.
+    const passwordMatch = DEMO_PASSWORD_HASH
+      ? await bcrypt.compare(password, DEMO_PASSWORD_HASH)
+      : password === DEMO_PASSWORD
     if (!passwordMatch) {
       return null
     }
@@ -46,7 +45,7 @@ export async function loginUser(username: string, password: string): Promise<{ t
     if (!user) {
       user = await UserModel.create({
         username: DEMO_USERNAME.toLowerCase(),
-        password: DEMO_PASSWORD_HASH, // Store hashed password
+        password: DEMO_PASSWORD_HASH || (await bcrypt.hash(DEMO_PASSWORD, 10)),
       })
     }
 

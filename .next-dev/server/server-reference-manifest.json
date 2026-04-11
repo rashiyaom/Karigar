@@ -1,0 +1,19 @@
+{
+  "node": {
+    "00f52eb69ecd9ce4b83c90e01b14a40fae2693011e": {
+      "workers": {
+        "app/dashboard/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fomvipulbhairashiya%2FDownloads%2Fprojects%2FKarigar%2Fapp%2Fdashboard%2Fpage.tsx%22%2C%5B%7B%22id%22%3A%2200f52eb69ecd9ce4b83c90e01b14a40fae2693011e%22%2C%22exportedName%22%3A%22%24%24RSC_SERVER_ACTION_0%22%2C%22filename%22%3A%22app%2Fdashboard%2Fpage.tsx%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/page": "rsc"
+      },
+      "filename": "app/dashboard/page.tsx",
+      "exportedName": "$$RSC_SERVER_ACTION_0"
+    }
+  },
+  "edge": {},
+  "encryptionKey": "SqK8Z3h8vgmhQu22vd2dc4v2D3UoVXxUIgI+0AnbMqU="
+}

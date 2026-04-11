@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { mongoStore } from "@/lib/mongo-store"
 import { employeeSchema } from "@/lib/validation"
-import { getCurrentUser } from "@/lib/auth"
 import { verifyCsrfMiddleware, csrfErrorResponse } from "@/lib/csrf-middleware"
 import { checkRequestSize, requestSizeErrorResponse } from "@/lib/request-size-limit"
 import { checkApiRateLimit, getApiRateLimitStatus } from "@/lib/api-rate-limit"
@@ -28,15 +27,6 @@ export async function GET(request: NextRequest) {
             'X-RateLimit-Reset': status.resetTime.toString(),
           },
         }
-      )
-    }
-
-    // Verify authentication
-    const user = await getCurrentUser()
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
       )
     }
 
@@ -92,15 +82,6 @@ export async function POST(request: NextRequest) {
     const isValidSize = await checkRequestSize(request)
     if (!isValidSize) {
       return requestSizeErrorResponse()
-    }
-
-    // Verify authentication
-    const user = await getCurrentUser()
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
     }
 
     // Verify CSRF token for state-changing operation
