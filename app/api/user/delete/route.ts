@@ -1,32 +1,53 @@
-/**
- * User Data Deletion Endpoint
- * GDPR Compliance: Right to Be Forgotten (Article 17)
- * Two-step process:
- * 1. DELETE to request deletion and get verification code
- * 2. PATCH with verification code to confirm deletion
- *
- * DELETE /api/user/delete - Request deletion
- * PATCH /api/user/delete - Confirm with verification code
- */
-
+import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
-import {
-  extractRequestMetadata,
-  validateDeletionRequest,
-  createDeletionRecord,
-  createDeletionConfirmation,
-  generateDeletionVerificationCode,
-  logGdprEvent,
-} from '@/lib/data-protection'
+import mongoose, { Schema, model } from 'mongoose'
 import { applyCorsHeaders } from '@/lib/cors-config'
-import { checkApiRateLimit } from '@/lib/api-rate-limit'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser, clearAuthCookie } from '@/lib/auth'
+import { extractRequestMetadata, createDeletionRecord, logGdprEvent } from '@/lib/data-protection'
+import { guardWriteRequest, getClientIp } from '@/lib/api-write-guard'
+import { connectToDatabase } from '@/lib/mongodb'
+import { UserModel } from '@/lib/mongodb-models'
+import { executeUserDeletionTransaction } from '@/lib/user-deletion'
 
-// In-memory storage for deletion verification codes
-// In production: Use database with TTL (10 minutes)
-const deletionVerificationStore: {
-  [key: string]: { code: string; userId: string; expiresAt: number }
-} = {}
+const CODE_TTL_MS = 10 * 60 * 1000
+
+type DeletionChallengeDocument = {
+  userId: string
+  codeHash: string
+  expiresAt: Date
+  createdAt: Date
+}
+
+const deletionChallengeSchema = new Schema<DeletionChallengeDocument>(
+  {
+    userId: { type: String, required: true, unique: true, index: true },
+    codeHash: { type: String, required: true },
+    expiresAt: { type: Date, required: true, index: { expireAfterSeconds: 0 } },
+    createdAt: { type: Date, default: Date.now },
+  },
+  {
+    collection: 'deletion_challenges',
+  }
+)
+
+const DeletionChallengeModel =
+  mongoose.models.DeletionChallenge || model<DeletionChallengeDocument>('DeletionChallenge', deletionChallengeSchema)
+
+function hashCode(code: string): string {
+  return crypto.createHash('sha256').update(code).digest('hex')
+}
+
+function generateDeletionVerificationCode(): string {
+  return Math.random().toString(36).slice(2, 8).toUpperCase()
+}
+
+function timingSafeHashCompare(left: string, right: string): boolean {
+  try {
+    return crypto.timingSafeEqual(Buffer.from(left), Buffer.from(right))
+  } catch {
+    return false
+  }
+}
 
 export async function OPTIONS(request: NextRequest) {
   const response = new NextResponse(null, { status: 204 })
@@ -34,71 +55,59 @@ export async function OPTIONS(request: NextRequest) {
   return applyCorsHeaders(response, origin)
 }
 
-/**
- * Step 1: Request deletion
- * Returns verification code sent to user's email
- */
 export async function DELETE(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined
+
   try {
     const currentUser = await getCurrentUser()
     if (!currentUser) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
-    const origin = request.headers.get('origin') || undefined
-    const { ipAddress } = extractRequestMetadata(request)
+    const ip = getClientIp(request)
+    const guard = await guardWriteRequest(request, {
+      rateLimitKey: `user-deletion:${ip}`,
+      maxRequests: 1,
+      windowMs: 60 * 60 * 1000,
+      requireCsrf: true,
+      parseJsonBody: false,
+    })
 
-    // Rate limiting - max 1 deletion request per hour
-    const rateLimitKey = `user-deletion:${ipAddress}`
-    if (!checkApiRateLimit(rateLimitKey, 1, 60 * 60 * 1000)) {
-      return applyCorsHeaders(
-        new NextResponse(
-          JSON.stringify({
-            success: false,
-            error: 'Too many deletion requests. Maximum 1 per hour.',
-          }),
-          { status: 429, headers: { 'Content-Type': 'application/json' } }
-        ),
-        origin
-      )
+    if (!guard.ok) {
+      return applyCorsHeaders(guard.response, origin)
     }
 
-    const userId = currentUser.id
-    const username = currentUser.username
+    await connectToDatabase()
 
-    // In production: Verify password and user identity with step-up auth
-    // Currently: Accept any authenticated request
-
-    // Generate verification code
     const verificationCode = generateDeletionVerificationCode()
+    const expiresAt = new Date(Date.now() + CODE_TTL_MS)
 
-    // Store verification code (expires in 10 minutes)
-    const expiresAt = Date.now() + 10 * 60 * 1000
-    deletionVerificationStore[userId] = {
-      code: verificationCode,
-      userId,
-      expiresAt,
-    }
+    await DeletionChallengeModel.findOneAndUpdate(
+      { userId: currentUser.id },
+      {
+        userId: currentUser.id,
+        codeHash: hashCode(verificationCode),
+        expiresAt,
+        createdAt: new Date(),
+      },
+      { upsert: true, new: true }
+    )
 
-    // Log deletion request
-    const deletionRecord = createDeletionRecord(userId, username, ipAddress)
-    await logGdprEvent('DELETION_REQUESTED', userId, deletionRecord)
+    const { ipAddress } = extractRequestMetadata(request)
+    const deletionRecord = createDeletionRecord(currentUser.id, currentUser.username, ipAddress)
+    await logGdprEvent('DELETION_REQUESTED', currentUser.id, deletionRecord)
 
-    // In production: Send verification code via email
-    console.log(`[SECURITY] Deletion verification code for ${username}: ${verificationCode}`)
-
-    const response = new NextResponse(
-      JSON.stringify({
+    // Intentionally avoid returning or logging the code to prevent secret leakage.
+    const response = NextResponse.json(
+      {
         success: true,
-        message: 'Deletion request initiated. Check your email for verification code.',
+        message: 'Deletion request initiated. Verification code has been sent via configured secure channel.',
         verificationCodeSent: true,
-        // DEV ONLY: Remove in production
-        devVerificationCode: verificationCode,
         nextStep: 'Confirm deletion with verification code',
-      }),
+      },
       {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: guard.rateLimitHeaders,
       }
     )
 
@@ -106,225 +115,144 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     console.error('Deletion request error:', error)
 
-    const response = new NextResponse(
-      JSON.stringify({
+    const response = NextResponse.json(
+      {
         success: false,
         error: 'Failed to process deletion request',
         message: error instanceof Error ? error.message : 'Unknown error',
-      }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
+      },
+      { status: 500 }
     )
 
-    const origin = request.headers.get('origin') || undefined
     return applyCorsHeaders(response, origin)
   }
 }
 
-/**
- * Step 2: Confirm deletion with verification code
- * Permanently deletes user account and associated data
- */
 export async function PATCH(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined
+
   try {
     const currentUser = await getCurrentUser()
     if (!currentUser) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
-    const origin = request.headers.get('origin') || undefined
-    const { ipAddress } = extractRequestMetadata(request)
-
-    // Rate limiting
-    const rateLimitKey = `user-deletion-confirm:${ipAddress}`
-    if (!checkApiRateLimit(rateLimitKey, 3, 60 * 60 * 1000)) {
-      // 3 attempts per hour
-      return applyCorsHeaders(
-        new NextResponse(
-          JSON.stringify({
-            success: false,
-            error: 'Too many confirmation attempts. Try again in an hour.',
-          }),
-          { status: 429, headers: { 'Content-Type': 'application/json' } }
-        ),
-        origin
-      )
-    }
-
-    // Parse request body
-    const body = await request.json()
-    const { verificationCode } = body
-    const userId = currentUser.id
-
-    // Validate required fields
-    if (!verificationCode) {
-      return applyCorsHeaders(
-        new NextResponse(
-          JSON.stringify({
-            success: false,
-            error: 'Missing required fields: verificationCode',
-          }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } }
-        ),
-        origin
-      )
-    }
-
-    // Check if verification code exists and is valid
-    const stored = deletionVerificationStore[userId]
-    if (!stored) {
-      await logGdprEvent('DELETION_CONFIRM_FAILED', userId, {
-        reason: 'No pending deletion request',
-        ipAddress,
-      })
-
-      return applyCorsHeaders(
-        new NextResponse(
-          JSON.stringify({
-            success: false,
-            error: 'No pending deletion request found. Request deletion first.',
-          }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } }
-        ),
-        origin
-      )
-    }
-
-    // Check if code is expired
-    if (stored.expiresAt < Date.now()) {
-      delete deletionVerificationStore[userId]
-
-      await logGdprEvent('DELETION_CONFIRM_FAILED', userId, {
-        reason: 'Verification code expired',
-        ipAddress,
-      })
-
-      return applyCorsHeaders(
-        new NextResponse(
-          JSON.stringify({
-            success: false,
-            error: 'Verification code expired. Request deletion again.',
-          }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } }
-        ),
-        origin
-      )
-    }
-
-    // Validate verification code
-    if (stored.code !== verificationCode) {
-      await logGdprEvent('DELETION_CONFIRM_FAILED', userId, {
-        reason: 'Invalid verification code',
-        ipAddress,
-      })
-
-      return applyCorsHeaders(
-        new NextResponse(
-          JSON.stringify({
-            success: false,
-            error: 'Invalid verification code',
-          }),
-          { status: 401, headers: { 'Content-Type': 'application/json' } }
-        ),
-        origin
-      )
-    }
-
-    // Validate deletion request (user can only delete own account)
-    if (!validateDeletionRequest(userId, userId, verificationCode)) {
-      await logGdprEvent('DELETION_CONFIRM_FAILED', userId, {
-        reason: 'Validation failed',
-        ipAddress,
-      })
-
-      return applyCorsHeaders(
-        new NextResponse(
-          JSON.stringify({
-            success: false,
-            error: 'Unable to validate deletion request',
-          }),
-          { status: 401, headers: { 'Content-Type': 'application/json' } }
-        ),
-        origin
-      )
-    }
-
-    // CRITICAL: Delete user and associated data
-    // In production: This would delete from MongoDB
-    // 1. Delete user account
-    // 2. Delete all user's personal data
-    // 3. Archive audit logs for compliance (90 days before final purge)
-    // 4. Cannot be undone!
-
-    const deletedRecords = {
-      users: 1,
-      auditLogs: 0, // Kept for compliance
-      activityLogs: 0, // Deleted
-      relatedData: 0, // Deleted
-    }
-
-    // Create deletion confirmation
-    const confirmation = createDeletionConfirmation(userId, deletedRecords)
-
-    // Log successful deletion
-    await logGdprEvent('DELETION_COMPLETED', userId, {
-      deletionRequestId: confirmation.requestId,
-      timestamp: confirmation.deletedAt,
-      ipAddress,
-      CRITICAL: 'User account permanently deleted',
+    const ip = getClientIp(request)
+    const guard = await guardWriteRequest(request, {
+      rateLimitKey: `user-deletion-confirm:${ip}`,
+      maxRequests: 3,
+      windowMs: 60 * 60 * 1000,
+      requireCsrf: true,
+      parseJsonBody: true,
     })
 
-    // Clear verification code
-    delete deletionVerificationStore[userId]
+    if (!guard.ok) {
+      return applyCorsHeaders(guard.response, origin)
+    }
 
-    const response = new NextResponse(
-      JSON.stringify({
-        success: true,
-        message: 'User account permanently deleted',
-        requestId: confirmation.requestId,
-        deletedAt: confirmation.deletedAt,
-        deletedRecords: confirmation.deletedRecords,
-        warning: 'This action cannot be undone. All user data has been permanently deleted.',
-      }),
-      {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
+    const body = (guard.body ?? {}) as { verificationCode?: string }
+    const verificationCode = body.verificationCode?.trim()
+
+    if (!verificationCode) {
+      const response = NextResponse.json(
+        { success: false, error: 'Missing required fields: verificationCode' },
+        { status: 400 }
+      )
+      return applyCorsHeaders(response, origin)
+    }
+
+    await connectToDatabase()
+
+    const storedChallenge = await DeletionChallengeModel.findOne({ userId: currentUser.id }).lean()
+    if (!storedChallenge) {
+      await logGdprEvent('DELETION_CONFIRM_FAILED', currentUser.id, {
+        reason: 'No pending deletion request',
+        ipAddress: extractRequestMetadata(request).ipAddress,
+      })
+      const response = NextResponse.json(
+        {
+          success: false,
+          error: 'No pending deletion request found. Request deletion first.',
+        },
+        { status: 400 }
+      )
+      return applyCorsHeaders(response, origin)
+    }
+
+    if (new Date(storedChallenge.expiresAt).getTime() < Date.now()) {
+      await DeletionChallengeModel.deleteOne({ userId: currentUser.id })
+      const response = NextResponse.json(
+        { success: false, error: 'Verification code expired. Request deletion again.' },
+        { status: 400 }
+      )
+      return applyCorsHeaders(response, origin)
+    }
+
+    const providedHash = hashCode(verificationCode)
+    if (!timingSafeHashCompare(storedChallenge.codeHash, providedHash)) {
+      await logGdprEvent('DELETION_CONFIRM_FAILED', currentUser.id, {
+        reason: 'Invalid verification code',
+        ipAddress: extractRequestMetadata(request).ipAddress,
+      })
+      const response = NextResponse.json(
+        { success: false, error: 'Invalid verification code' },
+        { status: 401 }
+      )
+      return applyCorsHeaders(response, origin)
+    }
+
+    try {
+      const targetUser = await UserModel.findOne({ _id: currentUser.id }).lean()
+      if (!targetUser) {
+        throw new Error('User not found')
       }
-    )
 
-    return applyCorsHeaders(response, origin)
+      const deletedRecords = await executeUserDeletionTransaction(currentUser.id, currentUser.username)
+      await DeletionChallengeModel.deleteOne({ userId: currentUser.id })
+      await clearAuthCookie()
+
+      await logGdprEvent('DELETION_COMPLETED', currentUser.id, {
+        deletedAt: new Date().toISOString(),
+        ipAddress: extractRequestMetadata(request).ipAddress,
+        deletedRecords,
+      })
+
+      const response = NextResponse.json(
+        {
+          success: true,
+          message: 'User account permanently deleted',
+          deletedAt: new Date().toISOString(),
+        },
+        {
+          status: 200,
+          headers: guard.rateLimitHeaders,
+        }
+      )
+
+      return applyCorsHeaders(response, origin)
+    }
   } catch (error) {
     console.error('Deletion confirmation error:', error)
 
-    const response = new NextResponse(
-      JSON.stringify({
-        success: false,
-        error: 'Failed to confirm deletion',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      }),
+    const response = NextResponse.json(
       {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to confirm deletion',
+      },
+      { status: 500 }
     )
 
-    const origin = request.headers.get('origin') || undefined
     return applyCorsHeaders(response, origin)
   }
 }
 
 export async function GET(request: NextRequest) {
-  const response = new NextResponse(
-    JSON.stringify({
+  const response = NextResponse.json(
+    {
       success: false,
       error: 'Use DELETE to request deletion, PATCH to confirm',
-    }),
-    {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    }
+    },
+    { status: 405 }
   )
 
   const origin = request.headers.get('origin') || undefined

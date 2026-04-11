@@ -3,6 +3,7 @@ import { mongoStore } from "@/lib/mongo-store"
 import { creditSchema } from "@/lib/validation"
 import type { ApiResponse } from "@/lib/types"
 import { getCurrentUser } from "@/lib/auth"
+import { guardWriteRequest, getClientIp } from "@/lib/api-write-guard"
 
 type Params = Promise<{ id: string }>
 
@@ -55,9 +56,21 @@ export async function PUT(
       return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
+    const ip = getClientIp(request)
+    const guard = await guardWriteRequest(request, {
+      rateLimitKey: `credits-write:${ip}`,
+      maxRequests: 120,
+      windowMs: 60 * 1000,
+      requireCsrf: true,
+      parseJsonBody: true,
+    })
+
+    if (!guard.ok) {
+      return guard.response
+    }
+
     const { id } = await params
-    const body = await request.json()
-    const validatedData = creditSchema.partial().parse(body)
+    const validatedData = creditSchema.partial().parse(guard.body)
 
     const updated = await mongoStore.updateCredit(id, validatedData, user.id)
 
@@ -71,10 +84,16 @@ export async function PUT(
       )
     }
 
-    return NextResponse.json<ApiResponse>({
+    const response = NextResponse.json<ApiResponse>({
       success: true,
       data: updated,
     })
+
+    Object.entries(guard.rateLimitHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value)
+    })
+
+    return response
   } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json<ApiResponse>(
@@ -101,7 +120,19 @@ export async function DELETE(
   { params }: { params: Params }
 ) {
   try {
-    void request
+    const ip = getClientIp(request)
+    const guard = await guardWriteRequest(request, {
+      rateLimitKey: `credits-write:${ip}`,
+      maxRequests: 120,
+      windowMs: 60 * 1000,
+      requireCsrf: true,
+      parseJsonBody: false,
+    })
+
+    if (!guard.ok) {
+      return guard.response
+    }
+
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
@@ -120,10 +151,16 @@ export async function DELETE(
       )
     }
 
-    return NextResponse.json<ApiResponse>({
+    const response = NextResponse.json<ApiResponse>({
       success: true,
       data: { id },
     })
+
+    Object.entries(guard.rateLimitHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value)
+    })
+
+    return response
   } catch {
     return NextResponse.json<ApiResponse>(
       {

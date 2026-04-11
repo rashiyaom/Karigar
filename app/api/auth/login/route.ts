@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     const identifier = normalizeIdentifier(rawIdentifier)
 
     if (hasDangerousPatterns(rawIdentifier) || hasDangerousPatterns(rawPassword)) {
-      await logInjectionAttempt(rawIdentifier || 'unknown', `${rawIdentifier}:${rawPassword}`, request)
+      await logInjectionAttempt(rawIdentifier || 'unknown', rawIdentifier, request)
       return NextResponse.json(
         { success: false, error: 'Invalid input detected.' },
         { status: 400 }

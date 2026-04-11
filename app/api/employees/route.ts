@@ -1,12 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { mongoStore } from "@/lib/mongo-store"
 import { employeeSchema } from "@/lib/validation"
-import { verifyCsrfMiddleware, csrfErrorResponse } from "@/lib/csrf-middleware"
-import { checkRequestSize, requestSizeErrorResponse } from "@/lib/request-size-limit"
 import { checkApiRateLimit, getApiRateLimitStatus } from "@/lib/api-rate-limit"
-import { sanitizeObjectKeys, hasDangerousPatterns } from "@/lib/input-sanitizer"
 import type { ApiResponse } from "@/lib/types"
 import { getCurrentUser } from "@/lib/auth"
+import { guardWriteRequest, getClientIp } from "@/lib/api-write-guard"
 
 export async function GET(request: NextRequest) {
   try {
@@ -68,59 +66,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get client IP for rate limiting
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
-    const rateLimitKey = `api:${ip}`
+    const ip = getClientIp(request)
+    const guard = await guardWriteRequest(request, {
+      rateLimitKey: `employees-write:${ip}`,
+      maxRequests: 120,
+      windowMs: 60 * 1000,
+      requireCsrf: true,
+      parseJsonBody: true,
+    })
 
-    // Check API rate limit
-    if (!checkApiRateLimit(rateLimitKey)) {
-      const status = getApiRateLimitStatus(rateLimitKey)
-      return NextResponse.json(
-        { error: 'Too many requests. Please try again later.' },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': Math.ceil((status.resetTime - Date.now()) / 1000).toString(),
-            'X-RateLimit-Limit': '100',
-            'X-RateLimit-Remaining': '0',
-            'X-RateLimit-Reset': status.resetTime.toString(),
-          },
-        }
-      )
+    if (!guard.ok) {
+      return guard.response
     }
 
-    // Check request size
-    const isValidSize = await checkRequestSize(request)
-    if (!isValidSize) {
-      return requestSizeErrorResponse()
-    }
-
-    // Verify CSRF token for state-changing operation
-    const isCsrfValid = await verifyCsrfMiddleware(request)
-    if (!isCsrfValid) {
-      return csrfErrorResponse()
-    }
-
-    const body = await request.json()
-    
-    // Check for dangerous patterns in request
-    if (hasDangerousPatterns(JSON.stringify(body))) {
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: "Invalid input detected",
-        },
-        { status: 400 },
-      )
-    }
-
-    // Sanitize object keys to prevent NoSQL injection
-    const sanitizedBody = sanitizeObjectKeys(body)
-    
-    const validatedData = employeeSchema.parse(sanitizedBody)
+    const validatedData = employeeSchema.parse(guard.body)
 
     const employee = await mongoStore.createEmployee(validatedData, user.id)
-    const status = getApiRateLimitStatus(rateLimitKey)
 
     const response = NextResponse.json<ApiResponse>(
       {
@@ -130,10 +91,9 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     )
     
-    // Add rate limit headers
-    response.headers.set('X-RateLimit-Limit', '100')
-    response.headers.set('X-RateLimit-Remaining', status.remaining.toString())
-    response.headers.set('X-RateLimit-Reset', status.resetTime.toString())
+    Object.entries(guard.rateLimitHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value)
+    })
 
     return response
   } catch (error) {

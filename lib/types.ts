@@ -73,4 +73,12 @@ export interface ApiResponse<T = unknown> {
   success: boolean
   data?: T
   error?: string
+  pagination?: {
+    page: number
+    pageSize: number
+    total: number
+    totalPages: number
+    hasNextPage: boolean
+    hasPreviousPage: boolean
+  }
 }

@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server"
 import { connectToDatabase } from "@/lib/mongodb"
+import { getCurrentUser } from "@/lib/auth"
 import mongoose from "mongoose"
 
 export async function GET() {
   try {
+    const user = await getCurrentUser()
+    if (!user || user.role !== 'admin') {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden - Admin access required' },
+        { status: 403 }
+      )
+    }
+
     // Force connection
     await connectToDatabase()
 
@@ -17,38 +26,16 @@ export async function GET() {
     const readyState = mongoose.connection.readyState
     const isConnected = readyState === 1
 
-    // Get database info
-    const db = mongoose.connection.db
-    const collections = db ? (await db.listCollections().toArray()).map((c) => c.name) : []
-    
-    // Get database stats
-    let dbStats = {}
-    if (db) {
-      try {
-        dbStats = await db.stats()
-      } catch {
-        dbStats = { error: "Could not retrieve db stats" }
-      }
-    }
-
     return NextResponse.json({
       success: true,
       data: {
-        status: "connected",
-        database: "MongoDB Atlas",
+        status: isConnected ? 'healthy' : 'degraded',
         connection: {
-          host: mongoose.connection.host,
-          port: mongoose.connection.port,
-          name: mongoose.connection.name,
           readyState: readyState,
           readyStateLabel: readyStates[readyState],
           isConnected: isConnected,
-          uri: process.env.MONGODB_URI?.replace(/:[^:]*@/, ":***@") || "not configured",
         },
-        collections: collections,
-        dbStats: dbStats,
         timestamp: new Date().toISOString(),
-        mongooseVersion: mongoose.version,
       },
     })
   } catch (error) {

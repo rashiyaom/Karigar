@@ -3,6 +3,7 @@ import { mongoStore } from "@/lib/mongo-store"
 import { settingsSchema } from "@/lib/validation"
 import type { ApiResponse } from "@/lib/types"
 import { getCurrentUser } from "@/lib/auth"
+import { guardWriteRequest, getClientIp } from "@/lib/api-write-guard"
 
 export async function GET() {
   try {
@@ -34,15 +35,33 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
-    const body = await request.json()
-    const validatedData = settingsSchema.parse(body)
+    const ip = getClientIp(request)
+    const guard = await guardWriteRequest(request, {
+      rateLimitKey: `settings-write:${ip}`,
+      maxRequests: 60,
+      windowMs: 60 * 1000,
+      requireCsrf: true,
+      parseJsonBody: true,
+    })
+
+    if (!guard.ok) {
+      return guard.response
+    }
+
+    const validatedData = settingsSchema.parse(guard.body)
 
     const settings = await mongoStore.updateSettings(validatedData, user.id)
 
-    return NextResponse.json<ApiResponse>({
+    const response = NextResponse.json<ApiResponse>({
       success: true,
       data: settings,
     })
+
+    Object.entries(guard.rateLimitHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value)
+    })
+
+    return response
   } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json<ApiResponse>(

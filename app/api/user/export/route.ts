@@ -10,8 +10,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { extractRequestMetadata, prepareUserDataExport, exportToJSON, exportToCSV, logGdprEvent } from '@/lib/data-protection'
 import { applyCorsHeaders } from '@/lib/cors-config'
-import { checkApiRateLimit } from '@/lib/api-rate-limit'
 import { getCurrentUser } from '@/lib/auth'
+import { guardWriteRequest, getClientIp } from '@/lib/api-write-guard'
 
 export async function OPTIONS(request: NextRequest) {
   const response = new NextResponse(null, { status: 204 })
@@ -29,24 +29,20 @@ export async function POST(request: NextRequest) {
     const origin = request.headers.get('origin') || undefined
     const { ipAddress } = extractRequestMetadata(request)
 
-    // Rate limiting
-    const rateLimitKey = `user-export:${ipAddress}`
-    if (!checkApiRateLimit(rateLimitKey, 5, 60 * 60 * 1000)) {
-      // 5 exports per hour
-      return applyCorsHeaders(
-        new NextResponse(
-          JSON.stringify({
-            success: false,
-            error: 'Too many export requests. Maximum 5 per hour.',
-          }),
-          { status: 429, headers: { 'Content-Type': 'application/json' } }
-        ),
-        origin
-      )
+    const ip = getClientIp(request)
+    const guard = await guardWriteRequest(request, {
+      rateLimitKey: `user-export:${ip}`,
+      maxRequests: 5,
+      windowMs: 60 * 60 * 1000,
+      requireCsrf: true,
+      parseJsonBody: true,
+    })
+
+    if (!guard.ok) {
+      return applyCorsHeaders(guard.response, origin)
     }
 
-    // Parse request body
-    const body = await request.json()
+    const body = (guard.body ?? {}) as { format?: string }
     const { format = 'json' } = body
     const userId = currentUser.id
     const username = currentUser.username
@@ -96,6 +92,7 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': contentType,
         'Content-Disposition': `attachment; filename="user-data-${username}-${new Date().toISOString().split('T')[0]}.${format}"`,
+        ...guard.rateLimitHeaders,
       },
     })
 

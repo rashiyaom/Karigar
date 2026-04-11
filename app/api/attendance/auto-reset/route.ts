@@ -1,11 +1,25 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { mongoStore } from "@/lib/mongo-store"
 import type { ApiResponse } from "@/lib/types"
 import { getCurrentUser } from "@/lib/auth"
+import { guardWriteRequest, getClientIp } from "@/lib/api-write-guard"
 
 // This endpoint can be called by a cron job or scheduler to auto-reset attendance
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIp(request)
+    const guard = await guardWriteRequest(request, {
+      rateLimitKey: `attendance-auto-reset:${ip}`,
+      maxRequests: 20,
+      windowMs: 60 * 1000,
+      requireCsrf: true,
+      parseJsonBody: false,
+    })
+
+    if (!guard.ok) {
+      return guard.response
+    }
+
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 })
@@ -14,7 +28,7 @@ export async function POST() {
     const today = new Date().toISOString().split('T')[0]
     const addedCount = await mongoStore.resetDailyAttendance(user.id, today)
 
-    return NextResponse.json<ApiResponse>({
+    const response = NextResponse.json<ApiResponse>({
       success: true,
       data: { 
         addedCount,
@@ -22,6 +36,12 @@ export async function POST() {
         message: `Auto-reset attendance - marked ${addedCount} employees as absent on ${today}`
       },
     })
+
+    Object.entries(guard.rateLimitHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value)
+    })
+
+    return response
   } catch {
     return NextResponse.json<ApiResponse>(
       {

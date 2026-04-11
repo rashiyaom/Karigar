@@ -1,9 +1,23 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { mongoStore } from "@/lib/mongo-store"
 import { getCurrentUser } from "@/lib/auth"
+import { guardWriteRequest, getClientIp } from "@/lib/api-write-guard"
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIp(request)
+    const guard = await guardWriteRequest(request, {
+      rateLimitKey: `db-setup:${ip}`,
+      maxRequests: 10,
+      windowMs: 60 * 1000,
+      requireCsrf: true,
+      parseJsonBody: false,
+    })
+
+    if (!guard.ok) {
+      return guard.response
+    }
+
     // Check authentication - only admins can access database setup endpoints
     const user = await getCurrentUser()
     if (!user || user.role !== 'admin') {
@@ -19,7 +33,7 @@ export async function POST() {
     const settings = await mongoStore.getSettings(user.id)
     const stats = await mongoStore.getStats(user.id)
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: {
         message: "MongoDB initialized successfully and connected",
@@ -30,6 +44,12 @@ export async function POST() {
         stats,
       },
     })
+
+    Object.entries(guard.rateLimitHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value)
+    })
+
+    return response
   } catch (error) {
     console.error("Database setup error:", error)
     return NextResponse.json(

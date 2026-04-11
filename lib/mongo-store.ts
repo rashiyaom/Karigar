@@ -16,6 +16,16 @@ type MongoEntityBase = {
   updatedAt?: Date
 }
 
+type PaginationOptions = {
+  page: number
+  pageSize: number
+}
+
+type PaginatedResult<T> = {
+  data: T[]
+  total: number
+}
+
 /**
  * MongoDB-backed store for persistent, cross-device data storage
  * Replaces both SQLiteStore and InMemoryStore
@@ -218,6 +228,21 @@ class MongoDBStore {
     return attendance.map((att) => this.formatAttendance(att))
   }
 
+  async getAttendancePage(ownerId: string, options: PaginationOptions): Promise<PaginatedResult<Attendance>> {
+    await this.ensureConnected()
+
+    const skip = (options.page - 1) * options.pageSize
+    const [records, total] = await Promise.all([
+      AttendanceModel.find({ ownerId }).sort({ date: -1 }).skip(skip).limit(options.pageSize),
+      AttendanceModel.countDocuments({ ownerId }),
+    ])
+
+    return {
+      data: records.map((att) => this.formatAttendance(att)),
+      total,
+    }
+  }
+
   async getAttendanceById(id: string, ownerId: string): Promise<Attendance | null> {
     await this.ensureConnected()
 
@@ -386,6 +411,21 @@ class MongoDBStore {
     return credits.map((credit) => this.formatCredit(credit))
   }
 
+  async getCreditsPage(ownerId: string, options: PaginationOptions): Promise<PaginatedResult<Credit>> {
+    await this.ensureConnected()
+
+    const skip = (options.page - 1) * options.pageSize
+    const [records, total] = await Promise.all([
+      CreditModel.find({ ownerId }).sort({ createdAt: -1 }).skip(skip).limit(options.pageSize),
+      CreditModel.countDocuments({ ownerId }),
+    ])
+
+    return {
+      data: records.map((credit) => this.formatCredit(credit)),
+      total,
+    }
+  }
+
   async getCredit(id: string, ownerId: string): Promise<Credit | null> {
     await this.ensureConnected()
 
@@ -503,6 +543,21 @@ class MongoDBStore {
 
     const tasks = await TaskModel.find({ ownerId }).sort({ createdAt: -1 })
     return tasks.map((task) => this.formatTask(task))
+  }
+
+  async getTasksPage(ownerId: string, options: PaginationOptions): Promise<PaginatedResult<Task>> {
+    await this.ensureConnected()
+
+    const skip = (options.page - 1) * options.pageSize
+    const [records, total] = await Promise.all([
+      TaskModel.find({ ownerId }).sort({ createdAt: -1 }).skip(skip).limit(options.pageSize),
+      TaskModel.countDocuments({ ownerId }),
+    ])
+
+    return {
+      data: records.map((task) => this.formatTask(task)),
+      total,
+    }
   }
 
   async getTask(id: string, ownerId: string): Promise<Task | null> {
@@ -739,6 +794,21 @@ class MongoDBStore {
 
     const history = await HistoryModel.find({ ownerId }).sort({ timestamp: -1 }).limit(limit)
     return history.map((h) => h.toObject())
+  }
+
+  async getHistoryPage(ownerId: string, options: PaginationOptions): Promise<PaginatedResult<Record<string, unknown>>> {
+    await this.ensureConnected()
+
+    const skip = (options.page - 1) * options.pageSize
+    const [records, total] = await Promise.all([
+      HistoryModel.find({ ownerId }).sort({ timestamp: -1 }).skip(skip).limit(options.pageSize),
+      HistoryModel.countDocuments({ ownerId }),
+    ])
+
+    return {
+      data: records.map((item) => item.toObject()),
+      total,
+    }
   }
 
   private async addToHistory(
