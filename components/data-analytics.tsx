@@ -1,289 +1,291 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Download, RefreshCw, Users, CreditCard, Calculator, TrendingUp, FileSpreadsheet, Check } from "lucide-react"
-import { useEmployees, useCredits, useStats } from "@/hooks/use-api"
-import { useLanguage } from "@/components/language-provider"
+import { useMemo, useState } from "react"
 import Link from "next/link"
-import { format } from "date-fns"
-import { exportEmployeeToExcel, exportMultipleEmployees } from "@/lib/excel-export"
-import { toast } from "sonner"
-import { Checkbox } from "@/components/ui/checkbox"
+import { format, subMonths } from "date-fns"
+import { useQuery } from "@tanstack/react-query"
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  XAxis,
+} from "recharts"
+import {
+  ArrowLeft,
+  Activity,
+  CalendarDays,
+  RefreshCw,
+  TrendingUp,
+  Users,
+  Wallet,
+} from "lucide-react"
+
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useCredits, useEmployees, useSettings, useTasks } from "@/hooks/use-api"
+import type { ApiResponse, Attendance } from "@/lib/types"
+
+const ATTENDANCE_COLORS: Record<Attendance["status"], string> = {
+  present: "#22c55e",
+  absent: "#ef4444",
+  "half-day": "#f59e0b",
+  "sick-leave": "#3b82f6",
+  "paid-leave": "#a855f7",
+}
+
+const ATTENDANCE_LABELS: Record<Attendance["status"], string> = {
+  present: "Present",
+  absent: "Absent",
+  "half-day": "Half Day",
+  "sick-leave": "Sick Leave",
+  "paid-leave": "Paid Leave",
+}
+
+const PRIORITY_COLORS: Record<"high" | "medium" | "low", string> = {
+  high: "#ef4444",
+  medium: "#f59e0b",
+  low: "#3b82f6",
+}
+
+function getMonthOptions(count = 8) {
+  const now = new Date()
+  return Array.from({ length: count }).map((_, index) => {
+    const monthDate = subMonths(now, index)
+    const value = format(monthDate, "yyyy-MM")
+    const label = format(monthDate, "MMMM yyyy")
+    return { value, label }
+  })
+}
+
+function percentage(value: number, total: number) {
+  if (total <= 0) return 0
+  return Number(((value / total) * 100).toFixed(1))
+}
+
+function getStatusWeight(status: Attendance["status"]) {
+  if (status === "present" || status === "paid-leave" || status === "sick-leave") return 1
+  if (status === "half-day") return 0.5
+  return 0
+}
+
+function currency(value: number) {
+  return new Intl.NumberFormat("en-IN", {
+    maximumFractionDigits: 0,
+  }).format(Math.max(0, Math.round(value)))
+}
+
+async function fetchAllAttendance() {
+  const response = await fetch("/api/attendance")
+  const json: ApiResponse<Attendance[]> = await response.json()
+
+  if (!response.ok || !json.success || !json.data) {
+    throw new Error(json.error || "Failed to fetch attendance")
+  }
+
+  return json.data
+}
 
 export function DataAnalytics() {
-  const [selectedMonth, setSelectedMonth] = useState("")
-  const [currentDateTime, setCurrentDateTime] = useState("")
-  const [monthOptions, setMonthOptions] = useState<{ value: string; label: string }[]>([])
-  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([])
-  const [isExporting, setIsExporting] = useState(false)
-  const { t } = useLanguage()
-
-  // Set the current date/time on client-side only
-  useEffect(() => {
-    const now = new Date()
-    setSelectedMonth(format(now, "yyyy-MM"))
-    setCurrentDateTime(format(now, "MMM dd, yyyy 'at' HH:mm"))
-    
-    // Generate month options
-    const options = []
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const value = format(date, "yyyy-MM")
-      const label = format(date, "MMMM yyyy")
-      options.push({ value, label })
-    }
-    setMonthOptions(options)
-  }, [])
+  const monthOptions = useMemo(() => getMonthOptions(), [])
+  const [selectedMonth, setSelectedMonth] = useState(monthOptions[0]?.value || format(new Date(), "yyyy-MM"))
 
   const { data: employees = [], isLoading: employeesLoading, refetch: refetchEmployees } = useEmployees()
-  const { data: allCredits = [], isLoading: creditsLoading, refetch: refetchCredits } = useCredits()
-  const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useStats()
+  const { data: credits = [], isLoading: creditsLoading, refetch: refetchCredits } = useCredits()
+  const { data: tasks = [], isLoading: tasksLoading, refetch: refetchTasks } = useTasks()
+  const { data: settings } = useSettings()
 
-  const calculateEmployeeSalary = (employee: any) => {
-    // Calculate directly from available data
-    // Unpaid credits calculation
-    const employeeCredits = allCredits.filter((c: any) => c.employeeId === employee.id && !c.isPaid)
-    const unpaidCredits = employeeCredits.reduce((sum: number, c: any) => sum + (c.amount || 0), 0)
-    
-    // For now, return basic calculation (leave deductions would require attendance data)
-    return {
-      baseSalary: employee.salary || 0,
-      unpaidCredits,
-      leaveDeductions: 0, // Would need more complex calculation
-      totalDeductions: unpaidCredits,
-      netSalary: (employee.salary || 0) - unpaidCredits,
+  const {
+    data: attendance = [],
+    isLoading: attendanceLoading,
+    refetch: refetchAttendance,
+  } = useQuery({
+    queryKey: ["attendance-all"],
+    queryFn: fetchAllAttendance,
+    refetchInterval: 30000,
+  })
+
+  const isLoading = employeesLoading || creditsLoading || tasksLoading || attendanceLoading
+  const companyName = settings?.organizationName || "Your Organization"
+  const totalBaseSalary = useMemo(
+    () => employees.reduce((sum, employee) => sum + (employee.salary || 0), 0),
+    [employees],
+  )
+
+  const salaryMap = useMemo(() => {
+    return new Map(employees.map((employee) => [employee.id, employee.salary || 0]))
+  }, [employees])
+
+  const selectedMonthAttendance = useMemo(
+    () => attendance.filter((record) => record.date.startsWith(selectedMonth)),
+    [attendance, selectedMonth],
+  )
+
+  const selectedMonthCredits = useMemo(
+    () => credits.filter((credit) => credit.dateTaken.startsWith(selectedMonth)),
+    [credits, selectedMonth],
+  )
+
+  const selectedMonthTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      const deadlineMonth = task.deadline ? format(new Date(task.deadline), "yyyy-MM") : ""
+      const createdMonth = task.createdAt ? format(new Date(task.createdAt), "yyyy-MM") : ""
+      return deadlineMonth === selectedMonth || createdMonth === selectedMonth
+    })
+  }, [tasks, selectedMonth])
+
+  const attendanceDistribution = useMemo(() => {
+    const base = {
+      present: 0,
+      absent: 0,
+      "half-day": 0,
+      "sick-leave": 0,
+      "paid-leave": 0,
+    } satisfies Record<Attendance["status"], number>
+
+    for (const record of selectedMonthAttendance) {
+      base[record.status] += 1
     }
-  }
 
-  const calculatePayrollSummary = () => {
-    let totalBaseSalary = 0
-    let totalUnpaidCredits = 0
-    let totalLeaveDeductions = 0
-    let totalNetSalary = 0
+    return Object.entries(base).map(([status, count]) => ({
+      status,
+      label: ATTENDANCE_LABELS[status as Attendance["status"]],
+      value: count,
+      fill: ATTENDANCE_COLORS[status as Attendance["status"]],
+    }))
+  }, [selectedMonthAttendance])
 
-    const employeeSalaries = employees.map((employee) => {
-      const salaryData = calculateEmployeeSalary(employee)
-      totalBaseSalary += salaryData.baseSalary
-      totalUnpaidCredits += salaryData.unpaidCredits
-      totalLeaveDeductions += salaryData.leaveDeductions
-      totalNetSalary += salaryData.netSalary
+  const attendanceRate = useMemo(() => {
+    const scored = selectedMonthAttendance.reduce((sum, row) => sum + getStatusWeight(row.status), 0)
+    return percentage(scored, selectedMonthAttendance.length)
+  }, [selectedMonthAttendance])
+
+  const taskSummary = useMemo(() => {
+    const now = new Date()
+    const completed = selectedMonthTasks.filter((task) => task.isCompleted).length
+    const pending = selectedMonthTasks.filter((task) => !task.isCompleted).length
+    const overdue = selectedMonthTasks.filter((task) => !task.isCompleted && new Date(task.deadline) < now).length
+
+    return {
+      completed,
+      pending,
+      overdue,
+      completionRate: percentage(completed, selectedMonthTasks.length),
+    }
+  }, [selectedMonthTasks])
+
+  const outstandingCreditAmount = useMemo(() => {
+    return credits.filter((credit) => !credit.isPaid).reduce((sum, credit) => sum + credit.amount, 0)
+  }, [credits])
+
+  const selectedMonthCreditAmount = useMemo(() => {
+    return selectedMonthCredits.reduce((sum, credit) => sum + credit.amount, 0)
+  }, [selectedMonthCredits])
+
+  const selectedMonthLeaveDeduction = useMemo(() => {
+    return selectedMonthAttendance.reduce((sum, row) => {
+      const salary = salaryMap.get(row.employeeId) || 0
+      if (row.status === "absent") return sum + salary / 30
+      if (row.status === "half-day") return sum + salary / 60
+      return sum
+    }, 0)
+  }, [selectedMonthAttendance, salaryMap])
+
+  const selectedMonthNetPayroll = Math.max(0, totalBaseSalary - selectedMonthLeaveDeduction - selectedMonthCreditAmount)
+
+  const monthlyTrend = useMemo(() => {
+    return [...monthOptions]
+      .reverse()
+      .map((month) => {
+        const monthAttendance = attendance.filter((row) => row.date.startsWith(month.value))
+        const monthCredits = credits.filter((credit) => credit.dateTaken.startsWith(month.value))
+
+        const leaveDeduction = monthAttendance.reduce((sum, row) => {
+          const salary = salaryMap.get(row.employeeId) || 0
+          if (row.status === "absent") return sum + salary / 30
+          if (row.status === "half-day") return sum + salary / 60
+          return sum
+        }, 0)
+
+        const creditAmount = monthCredits.reduce((sum, credit) => sum + credit.amount, 0)
+        const deductions = leaveDeduction + creditAmount
+
+        return {
+          month: format(new Date(`${month.value}-01`), "MMM yy"),
+          payroll: totalBaseSalary,
+          deductions,
+          net: Math.max(0, totalBaseSalary - deductions),
+        }
+      })
+  }, [monthOptions, attendance, credits, salaryMap, totalBaseSalary])
+
+  const taskByPriority = useMemo(() => {
+    return (["high", "medium", "low"] as const).map((priority) => {
+      const bucket = selectedMonthTasks.filter((task) => task.priority === priority)
+      const done = bucket.filter((task) => task.isCompleted).length
+      const pending = bucket.length - done
 
       return {
-        ...employee,
-        ...salaryData,
+        priority: priority.charAt(0).toUpperCase() + priority.slice(1),
+        completed: done,
+        pending,
+        fill: PRIORITY_COLORS[priority],
       }
     })
+  }, [selectedMonthTasks])
 
-    return {
-      employeeSalaries,
-      summary: {
-        totalBaseSalary,
-        totalUnpaidCredits,
-        totalLeaveDeductions,
-        totalDeductions: totalUnpaidCredits + totalLeaveDeductions,
-        totalNetSalary,
-        employeeCount: employees.length,
-      },
-    }
-  }
+  const employeeInsights = useMemo(() => {
+    return employees
+      .map((employee) => {
+        const personAttendance = selectedMonthAttendance.filter((row) => row.employeeId === employee.id)
+        const personTasks = tasks.filter((task) => task.employeeId === employee.id)
+        const personCredits = credits.filter((credit) => credit.employeeId === employee.id && !credit.isPaid)
 
-  const handleRefreshData = async () => {
-    await Promise.all([refetchEmployees(), refetchCredits(), refetchStats()])
-    setSelectedMonth(selectedMonth)
-  }
-
-  const payrollData = calculatePayrollSummary()
-  const isLoading = employeesLoading || creditsLoading || statsLoading
-
-  const handleExportSelected = async () => {
-    if (selectedEmployeeIds.length === 0) {
-      toast.error("Please select at least one employee to export")
-      return
-    }
-
-    setIsExporting(true)
-    try {
-      const selectedEmployees = employees.filter(emp => selectedEmployeeIds.includes(emp.id))
-      
-      // Fetch full data for each selected employee
-      const employeeDataPromises = selectedEmployees.map(async (employee) => {
-        const [attendanceRes, creditsRes, tasksRes] = await Promise.all([
-          fetch(`/api/attendance/employee/${employee.id}`).then(r => r.json()),
-          fetch(`/api/credits/employee/${employee.id}`).then(r => r.json()),
-          fetch(`/api/tasks/employee/${employee.id}`).then(r => r.json())
-        ])
-
-        const attendance = attendanceRes.data || []
-        const credits = creditsRes.data || []
-        const tasks = tasksRes.data || []
-
-        // Calculate stats
-        const salaryData = calculateEmployeeSalary(employee)
-        const totalTasks = tasks.length
-        const completedTasks = tasks.filter((t: any) => t.isCompleted).length
-        const pendingTasks = totalTasks - completedTasks
-        const overdueTasks = tasks.filter((t: any) => !t.isCompleted && new Date(t.deadline) < new Date()).length
-        
-        const totalCredits = credits.length
-        const unpaidCredits = credits.filter((c: any) => !c.isPaid).length
-        const totalCreditAmount = credits.reduce((sum: number, c: any) => sum + c.amount, 0)
-        const unpaidCreditAmount = credits.filter((c: any) => !c.isPaid).reduce((sum: number, c: any) => sum + c.amount, 0)
-        
-        const presentDays = attendance.filter((a: any) => a.status === 'present').length
-        const absentDays = attendance.filter((a: any) => a.status === 'absent').length
-        const halfDays = attendance.filter((a: any) => a.status === 'half-day').length
-        const totalDays = attendance.length
-        const attendancePercentage = totalDays > 0 ? ((presentDays + halfDays * 0.5) / totalDays * 100).toFixed(1) : '0'
+        const attendanceScore = personAttendance.reduce((sum, row) => sum + getStatusWeight(row.status), 0)
+        const attendancePct = percentage(attendanceScore, personAttendance.length)
+        const pendingTasks = personTasks.filter((task) => !task.isCompleted).length
+        const overdueTasks = personTasks.filter(
+          (task) => !task.isCompleted && new Date(task.deadline) < new Date(),
+        ).length
+        const unpaidCredit = personCredits.reduce((sum, credit) => sum + credit.amount, 0)
 
         return {
-          employee,
-          attendance,
-          credits,
-          tasks,
-          stats: {
-            totalTasks,
-            completedTasks,
-            pendingTasks,
-            overdueTasks,
-            totalCredits,
-            unpaidCredits,
-            totalCreditAmount,
-            unpaidCreditAmount,
-            presentDays,
-            absentDays,
-            halfDays,
-            attendancePercentage,
-            baseSalary: salaryData.baseSalary,
-            leaveDeduction: salaryData.leaveDeductions,
-            creditDeduction: salaryData.unpaidCredits,
-            netSalary: salaryData.netSalary
-          }
+          id: employee.id,
+          name: employee.name,
+          role: employee.role,
+          attendancePct,
+          pendingTasks,
+          overdueTasks,
+          unpaidCredit,
         }
       })
+      .sort((a, b) => b.unpaidCredit + b.overdueTasks * 1000 - (a.unpaidCredit + a.overdueTasks * 1000))
+      .slice(0, 6)
+  }, [employees, selectedMonthAttendance, tasks, credits])
 
-      const employeeData = await Promise.all(employeeDataPromises)
-      await exportMultipleEmployees(employeeData)
-      toast.success(`Successfully exported ${selectedEmployeeIds.length} employee(s) to Excel`)
-    } catch (error) {
-      console.error("Export error:", error)
-      toast.error("Failed to export employee data")
-    } finally {
-      setIsExporting(false)
-    }
-  }
-
-  const handleExportAll = async () => {
-    setIsExporting(true)
-    try {
-      // Fetch full data for all employees
-      const employeeDataPromises = employees.map(async (employee) => {
-        const [attendanceRes, creditsRes, tasksRes] = await Promise.all([
-          fetch(`/api/attendance/employee/${employee.id}`).then(r => r.json()),
-          fetch(`/api/credits/employee/${employee.id}`).then(r => r.json()),
-          fetch(`/api/tasks/employee/${employee.id}`).then(r => r.json())
-        ])
-
-        const attendance = attendanceRes.data || []
-        const credits = creditsRes.data || []
-        const tasks = tasksRes.data || []
-
-        // Calculate stats
-        const salaryData = calculateEmployeeSalary(employee)
-        const totalTasks = tasks.length
-        const completedTasks = tasks.filter((t: any) => t.isCompleted).length
-        const pendingTasks = totalTasks - completedTasks
-        const overdueTasks = tasks.filter((t: any) => !t.isCompleted && new Date(t.deadline) < new Date()).length
-        
-        const totalCredits = credits.length
-        const unpaidCredits = credits.filter((c: any) => !c.isPaid).length
-        const totalCreditAmount = credits.reduce((sum: number, c: any) => sum + c.amount, 0)
-        const unpaidCreditAmount = credits.filter((c: any) => !c.isPaid).reduce((sum: number, c: any) => sum + c.amount, 0)
-        
-        const presentDays = attendance.filter((a: any) => a.status === 'present').length
-        const absentDays = attendance.filter((a: any) => a.status === 'absent').length
-        const halfDays = attendance.filter((a: any) => a.status === 'half-day').length
-        const totalDays = attendance.length
-        const attendancePercentage = totalDays > 0 ? ((presentDays + halfDays * 0.5) / totalDays * 100).toFixed(1) : '0'
-
-        return {
-          employee,
-          attendance,
-          credits,
-          tasks,
-          stats: {
-            totalTasks,
-            completedTasks,
-            pendingTasks,
-            overdueTasks,
-            totalCredits,
-            unpaidCredits,
-            totalCreditAmount,
-            unpaidCreditAmount,
-            presentDays,
-            absentDays,
-            halfDays,
-            attendancePercentage,
-            baseSalary: salaryData.baseSalary,
-            leaveDeduction: salaryData.leaveDeductions,
-            creditDeduction: salaryData.unpaidCredits,
-            netSalary: salaryData.netSalary
-          }
-        }
-      })
-
-      const employeeData = await Promise.all(employeeDataPromises)
-      await exportMultipleEmployees(employeeData)
-      toast.success(`Successfully exported all ${employees.length} employees to Excel`)
-    } catch (error) {
-      console.error("Export error:", error)
-      toast.error("Failed to export employee data")
-    } finally {
-      setIsExporting(false)
-    }
-  }
-
-  const toggleEmployeeSelection = (employeeId: string) => {
-    setSelectedEmployeeIds(prev => 
-      prev.includes(employeeId) 
-        ? prev.filter(id => id !== employeeId)
-        : [...prev, employeeId]
-    )
-  }
-
-  const selectAllEmployees = () => {
-    if (selectedEmployeeIds.length === employees.length) {
-      setSelectedEmployeeIds([])
-    } else {
-      setSelectedEmployeeIds(employees.map(emp => emp.id))
-    }
-  }
-
-  // Don't render until client-side initialization is complete
-  if (!currentDateTime || !monthOptions.length) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    )
+  const handleRefresh = async () => {
+    await Promise.all([refetchEmployees(), refetchCredits(), refetchTasks(), refetchAttendance()])
   }
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading salary data...</p>
+          <RefreshCw className="mx-auto h-8 w-8 animate-spin text-cyan-400" />
+          <p className="mt-3 text-sm text-muted-foreground">Building analytics from live data...</p>
         </div>
       </div>
     )
@@ -291,28 +293,33 @@ export function DataAnalytics() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <Link href="/">
-                <Button variant="outline" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
+      <header className="border-b border-border/60 bg-gradient-to-b from-cyan-500/10 via-background to-background">
+        <div className="container mx-auto px-4 py-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-3">
+              <Link href="/dashboard">
+                <Button variant="outline" size="sm" className="mt-1 rounded-full">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Dashboard
                 </Button>
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Monthly Salary Overview</h1>
+                <h1 className="text-2xl font-bold tracking-tight">Operational Analytics</h1>
                 <p className="text-sm text-muted-foreground">
-                  Track your monthly payroll obligations with real-time data
+                  {companyName} • Live payroll, attendance, task and credit intelligence
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary" className="rounded-full border-cyan-400/40 bg-cyan-500/15 text-cyan-300">
+                <Activity className="mr-1 h-3.5 w-3.5" />
+                Live every 30s
+              </Badge>
+
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-[170px] rounded-full">
+                  <CalendarDays className="mr-2 h-4 w-4" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -324,304 +331,221 @@ export function DataAnalytics() {
                 </SelectContent>
               </Select>
 
-              <Button variant="outline" size="sm" onClick={handleRefreshData} disabled={isLoading}>
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+              <Button variant="outline" size="sm" onClick={handleRefresh} className="rounded-full">
+                <RefreshCw className="mr-2 h-4 w-4" />
                 Refresh
               </Button>
-
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="relative"
-                  >
-                    <FileSpreadsheet className="h-4 w-4 mr-2" />
-                    Export to Excel
-                    {selectedEmployeeIds.length > 0 && (
-                      <span className="ml-2 bg-green-500 text-white text-xs rounded-full px-2 py-0.5">
-                        {selectedEmployeeIds.length}
-                      </span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80" align="end">
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-semibold mb-2">Export Employee Data</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Select employees to export detailed reports
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2 p-2 border-b">
-                        <Checkbox
-                          id="select-all"
-                          checked={selectedEmployeeIds.length === employees.length && employees.length > 0}
-                          onCheckedChange={selectAllEmployees}
-                        />
-                        <label
-                          htmlFor="select-all"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
-                        >
-                          Select All ({employees.length})
-                        </label>
-                      </div>
-
-                      <div className="max-h-64 overflow-y-auto space-y-1">
-                        {employees.map((employee) => (
-                          <div
-                            key={employee.id}
-                            className="flex items-center space-x-2 p-2 hover:bg-muted rounded-md"
-                          >
-                            <Checkbox
-                              id={`emp-${employee.id}`}
-                              checked={selectedEmployeeIds.includes(employee.id)}
-                              onCheckedChange={() => toggleEmployeeSelection(employee.id)}
-                            />
-                            <label
-                              htmlFor={`emp-${employee.id}`}
-                              className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
-                            >
-                              <div className="font-medium">{employee.name}</div>
-                              <div className="text-xs text-muted-foreground">{employee.role}</div>
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 pt-2 border-t">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleExportAll}
-                        disabled={isExporting || employees.length === 0}
-                        className="flex-1"
-                      >
-                        {isExporting ? (
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                          <Download className="h-4 w-4 mr-2" />
-                        )}
-                        All
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={handleExportSelected}
-                        disabled={isExporting || selectedEmployeeIds.length === 0}
-                        className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                      >
-                        {isExporting ? (
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                          <Check className="h-4 w-4 mr-2" />
-                        )}
-                        Selected
-                      </Button>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6">
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-sm text-green-700 font-medium">
-              Real-time data • Last updated: {currentDateTime || "Loading..."}
-            </span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="border-l-4 border-l-blue-500">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Base Salary</CardTitle>
-              <Calculator className="h-4 w-4 text-muted-foreground" />
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        <section className="grid grid-cols-1 min-[520px]:grid-cols-2 xl:grid-cols-4 gap-4">
+          <Card className="border-white/10 bg-gradient-to-br from-cyan-500/10 to-background">
+            <CardHeader className="pb-2">
+              <CardDescription>Total Workforce</CardDescription>
+              <CardTitle className="text-3xl">{employees.length}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                ₹{payrollData.summary.totalBaseSalary.toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground">{payrollData.summary.employeeCount} employees</p>
+            <CardContent className="pt-0 text-xs text-muted-foreground flex items-center gap-2">
+              <Users className="h-3.5 w-3.5" />
+              Active workforce in system
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-red-500">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Deductions</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
+          <Card className="border-white/10 bg-gradient-to-br from-emerald-500/10 to-background">
+            <CardHeader className="pb-2">
+              <CardDescription>Attendance Score</CardDescription>
+              <CardTitle className="text-3xl">{attendanceRate}%</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                ₹{payrollData.summary.totalDeductions.toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground">Credits + Leave deductions</p>
+            <CardContent className="pt-0 text-xs text-muted-foreground">
+              {selectedMonthAttendance.length} records in {format(new Date(`${selectedMonth}-01`), "MMMM")}
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-green-500">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Net Payroll</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <Card className="border-white/10 bg-gradient-to-br from-amber-500/10 to-background">
+            <CardHeader className="pb-2">
+              <CardDescription>Task Completion</CardDescription>
+              <CardTitle className="text-3xl">{taskSummary.completionRate}%</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                ₹{payrollData.summary.totalNetSalary.toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground">Amount to pay this month</p>
+            <CardContent className="pt-0 text-xs text-muted-foreground flex items-center gap-3">
+              <span>{taskSummary.completed} done</span>
+              <span>{taskSummary.pending} pending</span>
+              <span>{taskSummary.overdue} overdue</span>
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-orange-500">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Unpaid Credits</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
+          <Card className="border-white/10 bg-gradient-to-br from-rose-500/10 to-background">
+            <CardHeader className="pb-2">
+              <CardDescription>Net Payroll Estimate</CardDescription>
+              <CardTitle className="text-3xl">₹{currency(selectedMonthNetPayroll)}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600">
-                ₹{payrollData.summary.totalUnpaidCredits.toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground">Outstanding credit amount</p>
+            <CardContent className="pt-0 text-xs text-muted-foreground flex items-center gap-2">
+              <Wallet className="h-3.5 w-3.5" />
+              Outstanding credits: ₹{currency(outstandingCreditAmount)}
             </CardContent>
           </Card>
-        </div>
+        </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Employee Salary Breakdown - {selectedMonth ? format(new Date(selectedMonth + "-01"), "MMMM yyyy") : "Loading..."}
-              <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Live Data</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-2 font-medium">Employee</th>
-                    <th className="text-right py-3 px-2 font-medium">Base Salary</th>
-                    <th className="text-right py-3 px-2 font-medium">Unpaid Credits</th>
-                    <th className="text-right py-3 px-2 font-medium">Leave Deductions</th>
-                    <th className="text-right py-3 px-2 font-medium">Total Deductions</th>
-                    <th className="text-right py-3 px-2 font-medium text-green-600">Net Salary</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {payrollData.employeeSalaries.map((employee) => (
-                    <tr key={employee.id} className="border-b hover:bg-muted/50">
-                      <td className="py-3 px-2">
-                        <div>
-                          <div className="font-medium">{employee.name}</div>
-                          <div className="text-sm text-muted-foreground">{employee.role}</div>
-                        </div>
-                      </td>
-                      <td className="text-right py-3 px-2">₹{(employee.baseSalary || 0).toLocaleString()}</td>
-                      <td className="text-right py-3 px-2 text-red-600">
-                        {(employee.unpaidCredits || 0) > 0 ? `₹${(employee.unpaidCredits || 0).toLocaleString()}` : "-"}
-                      </td>
-                      <td className="text-right py-3 px-2 text-orange-600">
-                        {(employee.leaveDeductions || 0) > 0
-                          ? `₹${(employee.leaveDeductions || 0).toLocaleString()}`
-                          : "-"}
-                      </td>
-                      <td className="text-right py-3 px-2 text-red-600">
-                        ₹{(employee.totalDeductions || 0).toLocaleString()}
-                      </td>
-                      <td className="text-right py-3 px-2 font-semibold text-green-600">
-                        ₹{(employee.netSalary || 0).toLocaleString()}
-                      </td>
+        <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <Card className="xl:col-span-2 border-white/10 bg-gradient-to-b from-cyan-500/5 to-background">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-cyan-300" />
+                Payroll Trend (Last {monthOptions.length} Months)
+              </CardTitle>
+              <CardDescription>Base payroll vs deductions vs projected net payout</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer
+                className="h-[320px] w-full"
+                config={{
+                  payroll: { label: "Payroll", color: "#22d3ee" },
+                  deductions: { label: "Deductions", color: "#fb7185" },
+                  net: { label: "Net", color: "#4ade80" },
+                }}
+              >
+                <AreaChart data={monthlyTrend} margin={{ left: 12, right: 12 }}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Area type="monotone" dataKey="payroll" stroke="var(--color-payroll)" fill="var(--color-payroll)" fillOpacity={0.2} />
+                  <Area type="monotone" dataKey="deductions" stroke="var(--color-deductions)" fill="var(--color-deductions)" fillOpacity={0.18} />
+                  <Area type="monotone" dataKey="net" stroke="var(--color-net)" fill="var(--color-net)" fillOpacity={0.2} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                </AreaChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="border-white/10 bg-gradient-to-b from-emerald-500/5 to-background">
+            <CardHeader>
+              <CardTitle>Attendance Mix</CardTitle>
+              <CardDescription>Status distribution for selected month</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer
+                className="h-[320px] w-full"
+                config={{
+                  present: { label: "Present", color: ATTENDANCE_COLORS.present },
+                  absent: { label: "Absent", color: ATTENDANCE_COLORS.absent },
+                  halfDay: { label: "Half Day", color: ATTENDANCE_COLORS["half-day"] },
+                  sickLeave: { label: "Sick Leave", color: ATTENDANCE_COLORS["sick-leave"] },
+                  paidLeave: { label: "Paid Leave", color: ATTENDANCE_COLORS["paid-leave"] },
+                }}
+              >
+                <PieChart>
+                  <ChartTooltip content={<ChartTooltipContent nameKey="label" />} />
+                  <Pie
+                    data={attendanceDistribution.filter((item) => item.value > 0)}
+                    dataKey="value"
+                    nameKey="label"
+                    innerRadius={64}
+                    outerRadius={102}
+                    paddingAngle={2}
+                  >
+                    {attendanceDistribution.map((entry) => (
+                      <Cell key={entry.status} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <ChartLegend content={<ChartLegendContent nameKey="label" />} />
+                </PieChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <Card className="xl:col-span-2 border-white/10 bg-gradient-to-b from-amber-500/5 to-background">
+            <CardHeader>
+              <CardTitle>Task Priority Execution</CardTitle>
+              <CardDescription>Completed vs pending tasks by priority bucket</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer
+                className="h-[300px] w-full"
+                config={{
+                  completed: { label: "Completed", color: "#4ade80" },
+                  pending: { label: "Pending", color: "#f97316" },
+                }}
+              >
+                <BarChart data={taskByPriority} margin={{ left: 12, right: 12 }}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="priority" tickLine={false} axisLine={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="completed" fill="var(--color-completed)" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="pending" fill="var(--color-pending)" radius={[6, 6, 0, 0]} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                </BarChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="border-white/10 bg-gradient-to-b from-rose-500/5 to-background">
+            <CardHeader>
+              <CardTitle>Month Breakdown</CardTitle>
+              <CardDescription>Current month financial drivers</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex items-center justify-between rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2">
+                <span>Base Payroll</span>
+                <strong>₹{currency(totalBaseSalary)}</strong>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2">
+                <span>Leave Deductions</span>
+                <strong>₹{currency(selectedMonthLeaveDeduction)}</strong>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2">
+                <span>Credits Issued</span>
+                <strong>₹{currency(selectedMonthCreditAmount)}</strong>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2">
+                <span>Projected Net</span>
+                <strong>₹{currency(selectedMonthNetPayroll)}</strong>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section>
+          <Card className="border-white/10 bg-gradient-to-b from-background to-muted/20">
+            <CardHeader>
+              <CardTitle>High Attention Employees</CardTitle>
+              <CardDescription>
+                Sorted by financial exposure and overdue delivery risk for the selected period
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] text-sm">
+                  <thead>
+                    <tr className="border-b border-border/60 text-muted-foreground">
+                      <th className="py-3 text-left font-medium">Employee</th>
+                      <th className="py-3 text-left font-medium">Role</th>
+                      <th className="py-3 text-right font-medium">Attendance %</th>
+                      <th className="py-3 text-right font-medium">Pending Tasks</th>
+                      <th className="py-3 text-right font-medium">Overdue</th>
+                      <th className="py-3 text-right font-medium">Unpaid Credit</th>
                     </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 font-semibold bg-muted/30">
-                    <td className="py-4 px-2">Total ({payrollData.summary.employeeCount} employees)</td>
-                    <td className="text-right py-4 px-2">₹{payrollData.summary.totalBaseSalary.toLocaleString()}</td>
-                    <td className="text-right py-4 px-2 text-red-600">
-                      ₹{payrollData.summary.totalUnpaidCredits.toLocaleString()}
-                    </td>
-                    <td className="text-right py-4 px-2 text-orange-600">
-                      ₹{payrollData.summary.totalLeaveDeductions.toLocaleString()}
-                    </td>
-                    <td className="text-right py-4 px-2 text-red-600">
-                      ₹{payrollData.summary.totalDeductions.toLocaleString()}
-                    </td>
-                    <td className="text-right py-4 px-2 font-bold text-green-600 text-lg">
-                      ₹{payrollData.summary.totalNetSalary.toLocaleString()}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Deduction Breakdown</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
-  <span className="font-medium text-black">Unpaid Credits</span>
-  <span className="font-bold text-red-600">
-    ₹{payrollData.summary.totalUnpaidCredits.toLocaleString()}
-  </span>
-</div>
-
-<div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
-  <span className="font-medium text-black">Leave Deductions</span>
-  <span className="font-bold text-orange-600">
-    ₹{payrollData.summary.totalLeaveDeductions.toLocaleString()}
-  </span>
-</div>
-
-<div className="flex justify-between items-center p-3 bg-gray-100 rounded-lg border-2">
-  <span className="font-semibold text-black">Total Deductions</span>
-  <span className="font-bold text-gray-800">
-    ₹{payrollData.summary.totalDeductions.toLocaleString()}
-  </span>
-</div>
+                  </thead>
+                  <tbody>
+                    {employeeInsights.map((employee) => (
+                      <tr key={employee.id} className="border-b border-border/40 hover:bg-muted/30">
+                        <td className="py-3 font-medium">{employee.name}</td>
+                        <td className="py-3 text-muted-foreground">{employee.role}</td>
+                        <td className="py-3 text-right">{employee.attendancePct}%</td>
+                        <td className="py-3 text-right">{employee.pendingTasks}</td>
+                        <td className="py-3 text-right text-amber-400">{employee.overdueTasks}</td>
+                        <td className="py-3 text-right text-rose-400">₹{currency(employee.unpaidCredit)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-  <span className="font-medium text-black">Total Base Salary</span>
-  <span className="font-bold text-blue-600">
-    ₹{payrollData.summary.totalBaseSalary.toLocaleString()}
-  </span>
-</div>
-
-<div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
-  <span className="font-medium text-black">Less: Deductions</span>
-  <span className="font-bold text-red-600">
-    -₹{payrollData.summary.totalDeductions.toLocaleString()}
-  </span>
-</div>
-
-<div className="flex justify-between items-center p-4 bg-green-100 rounded-lg border-2 border-green-300">
-  <span className="font-semibold text-lg text-black">Net Amount to Pay</span>
-  <span className="font-bold text-green-700 text-xl">
-    ₹{payrollData.summary.totalNetSalary.toLocaleString()}
-  </span>
-</div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   )
 }

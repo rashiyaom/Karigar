@@ -89,29 +89,32 @@ export function QuickAttendance() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Clock className="h-5 w-5" />
+    <Card className="relative overflow-hidden border-white/10 bg-gradient-to-b from-emerald-500/10 via-background to-background">
+      <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-emerald-500/20 blur-2xl" />
+      <CardHeader className="border-b border-border/40 pb-4">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <span className="rounded-full border border-emerald-400/30 bg-emerald-500/15 p-2">
+            <Clock className="h-4 w-4 text-emerald-300" />
+          </span>
           Quick Attendance - {currentDate || "Loading..."}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 pt-5">
         {/* Employee Selection */}
-        <div>
+        <div className="rounded-xl border border-border/50 bg-background/40 p-4">
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-medium">Select Employees</h4>
-            <Button variant="outline" size="sm" onClick={handleSelectAll}>
+            <Button variant="outline" size="sm" className="rounded-full" onClick={handleSelectAll}>
               {selectedEmployees.length === employees.length ? "Deselect All" : "Select All"}
             </Button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1">
             {employees.map((employee) => (
               <div
                 key={employee.id}
                 className={`
-                  flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors
-                  ${selectedEmployees.includes(employee.id) ? "bg-primary/10 border-primary" : "hover:bg-muted/50"}
+                  flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all
+                  ${selectedEmployees.includes(employee.id) ? "bg-emerald-500/15 border-emerald-400/50 shadow-sm" : "hover:bg-muted/50"}
                 `}
                 onClick={() => handleEmployeeToggle(employee.id)}
               >
@@ -138,14 +141,14 @@ export function QuickAttendance() {
         </div>
 
         {/* Attendance Status Selection */}
-        <div>
+        <div className="rounded-xl border border-border/50 bg-background/40 p-4">
           <h4 className="font-medium mb-4">Attendance Status</h4>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2">
             {Object.entries(attendanceStatusConfig).map(([status, config]) => (
               <Button
                 key={status}
                 variant={attendanceStatus === status ? "default" : "outline"}
-                className="h-auto p-3 flex flex-col gap-2"
+                className="h-auto min-h-20 rounded-xl p-3 flex flex-col gap-2"
                 onClick={() => setAttendanceStatus(status)}
               >
                 <div className={`w-4 h-4 rounded-full ${config.color}`} />
@@ -156,9 +159,10 @@ export function QuickAttendance() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
           <Button
             variant="outline"
+            className="w-full sm:w-auto"
             onClick={() => {
               setSelectedEmployees([])
               setAttendanceStatus("")
@@ -167,6 +171,7 @@ export function QuickAttendance() {
             Clear
           </Button>
           <Button
+            className="w-full sm:w-auto"
             onClick={handleMarkAttendance}
             disabled={selectedEmployees.length === 0 || !attendanceStatus || createAttendanceMutation.isPending}
           >

@@ -76,16 +76,19 @@ export function QuickCredit() {
   const selectedEmployeeData = employees.find((emp) => emp.id === selectedEmployee)
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5" />
+    <Card className="relative overflow-hidden border-white/10 bg-gradient-to-b from-rose-500/10 via-background to-background">
+      <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-rose-500/20 blur-2xl" />
+      <CardHeader className="border-b border-border/40 pb-4">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <span className="rounded-full border border-rose-400/30 bg-rose-500/15 p-2">
+            <CreditCard className="h-4 w-4 text-rose-300" />
+          </span>
           Quick Credit - {format(today, "MMMM dd, yyyy")}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 pt-5">
         {/* Employee Selection */}
-        <div className="space-y-2">
+        <div className="space-y-2 rounded-xl border border-border/50 bg-background/40 p-4">
           <Label>Select Employee</Label>
           <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
             <SelectTrigger>
@@ -118,7 +121,7 @@ export function QuickCredit() {
 
         {/* Selected Employee Info */}
         {selectedEmployeeData && (
-          <Card className="bg-muted/50">
+          <Card className="border-rose-400/30 bg-rose-500/10">
             <CardContent className="pt-4">
               <div className="flex items-center gap-4">
                 <Avatar>
@@ -148,7 +151,7 @@ export function QuickCredit() {
         )}
 
         {/* Credit Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-xl border border-border/50 bg-background/40 p-4">
           <div className="space-y-2">
             <Label htmlFor="amount">Credit Amount</Label>
             <Input
@@ -182,9 +185,10 @@ export function QuickCredit() {
         
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
           <Button
             variant="outline"
+            className="w-full sm:w-auto"
             onClick={() => {
               setSelectedEmployee("")
               setAmount(0)
@@ -193,7 +197,7 @@ export function QuickCredit() {
           >
             Clear
           </Button>
-          <Button onClick={handleSubmit} disabled={!selectedEmployee || amount <= 0 || createCreditMutation.isPending}>
+          <Button className="w-full sm:w-auto" onClick={handleSubmit} disabled={!selectedEmployee || amount <= 0 || createCreditMutation.isPending}>
             {createCreditMutation.isPending ? "Creating..." : "Add Credit"}
           </Button>
         </div>

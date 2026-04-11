@@ -3,6 +3,25 @@ import { mongoStore } from "@/lib/mongo-store"
 import { attendanceSchema } from "@/lib/validation"
 import type { ApiResponse } from "@/lib/types"
 
+export async function GET() {
+  try {
+    const attendance = await mongoStore.getAllAttendance()
+
+    return NextResponse.json<ApiResponse>({
+      success: true,
+      data: attendance,
+    })
+  } catch (error) {
+    return NextResponse.json<ApiResponse>(
+      {
+        success: false,
+        error: "Failed to fetch attendance records",
+      },
+      { status: 500 },
+    )
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
