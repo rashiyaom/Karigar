@@ -185,6 +185,36 @@ const SessionSchema = new Schema<ISession>(
   }
 )
 
+// Registration OTP Challenge Schema
+export interface IRegistrationOtpChallenge extends Document {
+  mobile: string
+  otpHash: string
+  expiresAt: Date
+  attemptCount: number
+  lastSentAt: Date
+  isVerified: boolean
+  verificationToken?: string
+  verificationExpiresAt?: Date
+  providerRequestId?: string
+}
+
+const RegistrationOtpChallengeSchema = new Schema<IRegistrationOtpChallenge>(
+  {
+    mobile: { type: String, required: true, unique: true, index: true },
+    otpHash: { type: String, required: true },
+    expiresAt: { type: Date, required: true, index: { expireAfterSeconds: 0 } },
+    attemptCount: { type: Number, default: 0 },
+    lastSentAt: { type: Date, default: Date.now },
+    isVerified: { type: Boolean, default: false },
+    verificationToken: { type: String, index: true },
+    verificationExpiresAt: { type: Date },
+    providerRequestId: { type: String },
+  },
+  {
+    collection: 'registration_otp_challenges',
+  }
+)
+
 
 // Create models
 export const EmployeeModel = mongoose.models.Employee || mongoose.model<IEmployee>('Employee', EmployeeSchema)
@@ -195,3 +225,6 @@ export const SettingsModel = mongoose.models.Settings || mongoose.model<ISetting
 export const HistoryModel = mongoose.models.History || mongoose.model<IHistory>('History', HistorySchema)
 export const UserModel = mongoose.models.User || mongoose.model<IUser>('User', UserSchema)
 export const SessionModel = mongoose.models.Session || mongoose.model<ISession>('Session', SessionSchema)
+export const RegistrationOtpChallengeModel =
+  mongoose.models.RegistrationOtpChallenge ||
+  mongoose.model<IRegistrationOtpChallenge>('RegistrationOtpChallenge', RegistrationOtpChallengeSchema)

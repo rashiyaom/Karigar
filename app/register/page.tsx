@@ -3,12 +3,13 @@
 import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowRight, Sparkles, Star } from "lucide-react"
+import { ArrowRight, Sparkles } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { BrandMark } from "@/components/brand-mark"
 
 const heroMetrics = [
   { target: 1, suffix: " min", label: "Quick setup" },
@@ -25,6 +26,12 @@ const featureCards = [
 
 const questSteps = ["Access", "Company", "Work Rules", "Launch"]
 const stepSubstepCounts = [3, 5, 4, 1]
+
+type AvailabilityStatus = "idle" | "checking" | "available" | "taken" | "invalid" | "error"
+
+const normalizeMobileInput = (value: string) => value.trim().replace(/\s+/g, "")
+const isEmailIdentifier = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+const isMobileIdentifier = (value: string) => /^\+?[0-9]{10,15}$/.test(normalizeMobileInput(value))
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -52,16 +59,20 @@ export default function RegisterPage() {
   const [scrollProgress, setScrollProgress] = useState(0)
   const [currentStep, setCurrentStep] = useState(0)
   const [currentSubstep, setCurrentSubstep] = useState(0)
+  const [usernameAvailability, setUsernameAvailability] = useState<AvailabilityStatus>("idle")
+  const [usernameAvailabilityMessage, setUsernameAvailabilityMessage] = useState("")
+  const [phoneAvailability, setPhoneAvailability] = useState<AvailabilityStatus>("idle")
+  const [phoneAvailabilityMessage, setPhoneAvailabilityMessage] = useState("")
 
   const dayOptions = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 
   const completionSignals = [
-    username.trim().length >= 3,
+    usernameAvailability === "available",
     password.length >= 8,
     confirmPassword.length > 0 && confirmPassword === password,
     organizationName.trim().length > 0,
     companyEmail.trim().includes("@"),
-    companyPhone.trim().length >= 8,
+    phoneAvailability === "available",
     companyAddress.trim().length > 0,
     Boolean(workingStart),
     Boolean(workingEnd),
@@ -70,8 +81,8 @@ export default function RegisterPage() {
     Boolean(backupFrequency),
   ]
   const stepCompletion = [
-    username.trim().length >= 3 && password.length >= 8 && confirmPassword.length > 0 && confirmPassword === password,
-    organizationName.trim().length > 0 && companyEmail.trim().includes("@") && companyPhone.trim().length >= 8,
+    usernameAvailability === "available" && password.length >= 8 && confirmPassword.length > 0 && confirmPassword === password,
+    organizationName.trim().length > 0 && companyEmail.trim().includes("@") && phoneAvailability === "available",
     Boolean(workingStart) && Boolean(workingEnd) && weekendDays.length > 0 && leaveDeductionValue > 0 && Boolean(backupFrequency),
     true,
   ]
@@ -84,7 +95,7 @@ export default function RegisterPage() {
   const unlockedBadges = stepCompletion.filter(Boolean).length
   const isSubstepValid = (() => {
     if (currentStep === 0) {
-      if (currentSubstep === 0) return username.trim().length >= 3
+      if (currentSubstep === 0) return usernameAvailability === "available"
       if (currentSubstep === 1) return password.length >= 8
       return confirmPassword.length > 0 && confirmPassword === password
     }
@@ -92,7 +103,7 @@ export default function RegisterPage() {
     if (currentStep === 1) {
       if (currentSubstep === 0) return organizationName.trim().length > 0
       if (currentSubstep === 1) return companyEmail.trim().includes("@")
-      if (currentSubstep === 2) return companyPhone.trim().length >= 8
+      if (currentSubstep === 2) return phoneAvailability === "available"
       if (currentSubstep === 3) return companyAddress.trim().length > 0
       return true
     }
@@ -133,33 +144,107 @@ export default function RegisterPage() {
   }, [currentStep])
 
   useEffect(() => {
-    if (currentStep > 1) return
-    if (!isSubstepValid) return
-    if (currentStep === totalSteps - 1) return
+    const identifier = username.trim()
 
-    const timer = window.setTimeout(() => {
-      if (currentSubstep < stepSubstepCounts[currentStep] - 1) {
-        setCurrentSubstep((prev) => prev + 1)
-        return
+    if (!identifier) {
+      setUsernameAvailability("idle")
+      setUsernameAvailabilityMessage("")
+      return
+    }
+
+    const isEmail = isEmailIdentifier(identifier)
+    const isMobile = isMobileIdentifier(identifier)
+
+    if (!isEmail && !isMobile && identifier.length < 3) {
+      setUsernameAvailability("invalid")
+      setUsernameAvailabilityMessage("Username must be at least 3 characters.")
+      return
+    }
+
+    if (isEmail && !isEmailIdentifier(identifier)) {
+      setUsernameAvailability("invalid")
+      setUsernameAvailabilityMessage("Enter a valid email address.")
+      return
+    }
+
+    setUsernameAvailability("checking")
+    setUsernameAvailabilityMessage("Checking availability...")
+
+    const timerId = setTimeout(async () => {
+      try {
+        const response = await fetch("/api/auth/check-availability", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ identifier }),
+        })
+
+        const result = await response.json()
+        if (!response.ok || !result?.success) {
+          setUsernameAvailability("error")
+          setUsernameAvailabilityMessage(result?.error || "Could not check identifier right now.")
+          return
+        }
+
+        const exists = Boolean(result?.data?.identifierExists)
+        setUsernameAvailability(exists ? "taken" : "available")
+        setUsernameAvailabilityMessage(exists ? "This identifier is already in use." : "Identifier is available.")
+      } catch {
+        setUsernameAvailability("error")
+        setUsernameAvailabilityMessage("Could not check identifier right now.")
       }
+    }, 450)
 
-      setCurrentStep((prev) => Math.min(prev + 1, totalSteps - 1))
-    }, 420)
+    return () => clearTimeout(timerId)
+  }, [username])
 
-    return () => window.clearTimeout(timer)
-  }, [
-    currentStep,
-    currentSubstep,
-    isSubstepValid,
-    totalSteps,
-    username,
-    password,
-    confirmPassword,
-    organizationName,
-    companyEmail,
-    companyPhone,
-    companyAddress,
-  ])
+  useEffect(() => {
+    const rawPhone = companyPhone.trim()
+
+    if (!rawPhone) {
+      setPhoneAvailability("idle")
+      setPhoneAvailabilityMessage("")
+      return
+    }
+
+    if (!isMobileIdentifier(rawPhone)) {
+      setPhoneAvailability("invalid")
+      setPhoneAvailabilityMessage("Enter a valid mobile number.")
+      return
+    }
+
+    setPhoneAvailability("checking")
+    setPhoneAvailabilityMessage("Checking mobile number...")
+
+    const timerId = setTimeout(async () => {
+      try {
+        const response = await fetch("/api/auth/check-availability", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ mobile: rawPhone }),
+        })
+
+        const result = await response.json()
+        if (!response.ok || !result?.success) {
+          setPhoneAvailability("error")
+          setPhoneAvailabilityMessage(result?.error || "Could not validate mobile right now.")
+          return
+        }
+
+        const exists = Boolean(result?.data?.mobileExists)
+        setPhoneAvailability(exists ? "taken" : "available")
+        setPhoneAvailabilityMessage(exists ? "This mobile number is already registered." : "Mobile number is available.")
+      } catch {
+        setPhoneAvailability("error")
+        setPhoneAvailabilityMessage("Could not validate mobile right now.")
+      }
+    }, 450)
+
+    return () => clearTimeout(timerId)
+  }, [companyPhone])
 
   useEffect(() => {
     const updateScrollProgress = () => {
@@ -236,6 +321,10 @@ export default function RegisterPage() {
     event.preventDefault()
     setError(null)
 
+    if (currentStep < totalSteps - 1) {
+      return
+    }
+
     if (!organizationName.trim()) {
       setError("Organization name is required.")
       return
@@ -248,6 +337,11 @@ export default function RegisterPage() {
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.")
+      return
+    }
+
+    if (!Number.isFinite(leaveDeductionValue) || leaveDeductionValue < 0) {
+      setError("Leave deduction value must be a valid non-negative number.")
       return
     }
 
@@ -309,8 +403,7 @@ export default function RegisterPage() {
       <div className="relative mx-auto flex w-full max-w-7xl flex-col px-4 pb-12 pt-6 sm:px-6 lg:px-8">
         <header className="mb-8 flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 backdrop-blur-xl sm:px-6">
           <div className="flex items-center gap-2 text-sm font-medium tracking-wide text-white/90">
-            <Star className="h-4 w-4 text-[#ff6f4a]" />
-            Karigar Network
+            <BrandMark size="sm" showName nameClassName="text-white/90" />
           </div>
           <div className="flex items-center gap-2">
             <span className="rounded-md border border-[#ff6f4a]/50 bg-[#ff6f4a]/15 px-3 py-1.5 text-xs font-medium text-[#ffb39f]">
@@ -398,17 +491,18 @@ export default function RegisterPage() {
               <p className="mt-1 text-sm text-white/55">Start your isolated workspace with complete operations setup.</p>
 
               <div className="mt-4 rounded-xl border border-white/10 bg-black/25 p-3">
-                <div className="mb-2 flex items-center justify-between text-xs text-white/70">
-                  <span>Onboarding Progress</span>
-                  <span>{setupProgress}%</span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full rounded-full bg-gradient-to-r from-[#ff6f4a] to-[#ffae96] transition-all duration-500" style={{ width: `${setupProgress}%` }} />
-                </div>
-                <p className="mt-2 text-[11px] text-white/45">Quest {currentStep + 1}/{totalSteps} • XP {questPoints} • Badges {unlockedBadges}</p>
+                <p className="text-[11px] text-white/55">Quest {currentStep + 1}/{totalSteps} • XP {questPoints} • Badges {unlockedBadges}</p>
               </div>
 
-              <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
+              <form
+                className="mt-6 space-y-5"
+                onSubmit={handleSubmit}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && currentStep < totalSteps - 1) {
+                    event.preventDefault()
+                  }
+                }}
+              >
                 <div className="rounded-xl border border-white/10 bg-black/25 p-4">
                   <div className="mb-4 flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-white/80">Step {currentStep + 1}: {questSteps[currentStep]}</h3>
@@ -434,7 +528,7 @@ export default function RegisterPage() {
                     })}
                   </div>
 
-                  <p className="mb-3 text-xs text-white/45">Mini step {currentSubstep + 1} of {stepSubstepCounts[currentStep]} {currentStep <= 1 ? "(auto-advances when valid)" : ""}</p>
+                  <p className="mb-3 text-xs text-white/45">Mini step {currentSubstep + 1} of {stepSubstepCounts[currentStep]}</p>
 
                   {currentStep === 0 ? (
                     <div className="space-y-3">
@@ -450,6 +544,19 @@ export default function RegisterPage() {
                             required
                             className="border-white/10 bg-black/35 text-white placeholder:text-white/35"
                           />
+                          {usernameAvailabilityMessage ? (
+                            <p
+                              className={`text-xs ${
+                                usernameAvailability === "available"
+                                  ? "text-emerald-300"
+                                  : usernameAvailability === "checking"
+                                    ? "text-white/60"
+                                    : "text-[#ff8b6e]"
+                              }`}
+                            >
+                              {usernameAvailabilityMessage}
+                            </p>
+                          ) : null}
                         </div>
                       ) : null}
 
@@ -527,6 +634,19 @@ export default function RegisterPage() {
                             placeholder="+91 98765 43210"
                             className="border-white/10 bg-black/35 text-white placeholder:text-white/35"
                           />
+                          {phoneAvailabilityMessage ? (
+                            <p
+                              className={`text-xs ${
+                                phoneAvailability === "available"
+                                  ? "text-emerald-300"
+                                  : phoneAvailability === "checking"
+                                    ? "text-white/60"
+                                    : "text-[#ff8b6e]"
+                              }`}
+                            >
+                              {phoneAvailabilityMessage}
+                            </p>
+                          ) : null}
                         </div>
                       ) : null}
 
@@ -610,7 +730,15 @@ export default function RegisterPage() {
                               type="number"
                               min={0}
                               value={leaveDeductionValue}
-                              onChange={(event) => setLeaveDeductionValue(Number(event.target.value || 0))}
+                              onChange={(event) => {
+                                const nextValue = event.target.value
+                                if (nextValue === "") {
+                                  setLeaveDeductionValue(0)
+                                  return
+                                }
+                                const parsedValue = Number(nextValue)
+                                setLeaveDeductionValue(Number.isFinite(parsedValue) ? parsedValue : 0)
+                              }}
                               className="border-white/10 bg-black/35 text-white"
                             />
                           </div>

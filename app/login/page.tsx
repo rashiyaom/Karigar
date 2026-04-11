@@ -3,9 +3,10 @@
 import { FormEvent, Suspense, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ArrowRight, Sparkles, Star } from "lucide-react"
+import { ArrowRight, Sparkles } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { BrandMark } from "@/components/brand-mark"
 
 function LoginForm() {
   const router = useRouter()
@@ -71,8 +72,7 @@ function LoginForm() {
       <div className="relative mx-auto flex w-full max-w-7xl flex-col px-4 pb-12 pt-6 sm:px-6 lg:px-8">
         <header className="mb-8 flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 backdrop-blur-xl sm:px-6">
           <Link href="/landing.html" className="flex items-center gap-2 text-sm font-medium tracking-wide text-white/90 transition hover:text-white">
-            <Star className="h-4 w-4 text-[#ff6a45]" />
-            Karigar Network
+            <BrandMark size="sm" showName nameClassName="text-white/90" />
           </Link>
           <div className="flex items-center gap-2">
             <Link

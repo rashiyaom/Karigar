@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { BrandMark } from "@/components/brand-mark"
 
 interface AdminUserRow {
   id: string
@@ -62,7 +63,10 @@ export default function AdminUsersPage() {
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Admin Console</p>
+            <div className="mb-1 flex items-center gap-2">
+              <BrandMark size="xs" />
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Admin Console</p>
+            </div>
             <h1 className="text-3xl font-semibold">User Workspaces</h1>
             <p className="text-sm text-muted-foreground">Inspect each account and verify isolated data ownership.</p>
           </div>

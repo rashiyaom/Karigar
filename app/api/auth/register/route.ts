@@ -5,6 +5,9 @@ import { sanitizeObjectKeys, hasDangerousPatterns } from '@/lib/input-sanitizer'
 import { checkApiRateLimit } from '@/lib/api-rate-limit'
 import { settingsSchema } from '@/lib/validation'
 import { mongoStore } from '@/lib/mongo-store'
+import { ZodError } from 'zod'
+
+const ROLE_COOKIE_MAX_AGE_SECONDS = 24 * 60 * 60
 
 function normalizeIdentifier(value: string): string {
   return value.trim().toLowerCase()
@@ -62,7 +65,20 @@ export async function POST(request: NextRequest) {
 
     const username = normalizeIdentifier(rawUsername)
 
-    const settingsPayload = rawSettings ? settingsSchema.parse(rawSettings) : null
+    let settingsPayload: ReturnType<typeof settingsSchema.parse> | null = null
+    if (rawSettings) {
+      const parsed = settingsSchema.safeParse(rawSettings)
+      if (!parsed.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: parsed.error.issues[0]?.message || 'Invalid settings payload.',
+          },
+          { status: 400 }
+        )
+      }
+      settingsPayload = parsed.data
+    }
     const emailFromSettings = settingsPayload?.companyEmail ? normalizeIdentifier(settingsPayload.companyEmail) : undefined
     const mobileFromSettings = settingsPayload?.companyPhone ? normalizeMobile(settingsPayload.companyPhone) : undefined
 
@@ -90,12 +106,31 @@ export async function POST(request: NextRequest) {
     await setAuthCookie(authResult.token)
     const csrfToken = await setCsrfToken()
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: authResult.user,
       csrfToken,
     })
+
+    response.cookies.set('user-role', authResult.user.role, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: ROLE_COOKIE_MAX_AGE_SECONDS,
+      path: '/',
+    })
+
+    return response
   } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: error.issues[0]?.message || 'Invalid request payload.',
+        },
+        { status: 400 }
+      )
+    }
     console.error('Register route error:', error)
     return NextResponse.json(
       { success: false, error: 'Registration failed due to a server error.' },

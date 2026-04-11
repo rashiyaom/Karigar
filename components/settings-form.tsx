@@ -16,6 +16,7 @@ import { useLanguage } from "@/components/language-provider"
 import { useSettings, useUpdateSettings } from "@/hooks/use-api"
 import { useToast } from "@/hooks/use-toast"
 import { Building2, Sparkles } from "lucide-react"
+import { BrandMark } from "@/components/brand-mark"
 
 interface SettingsFormProps {
   onClose: () => void
@@ -101,7 +102,14 @@ export function SettingsForm({ onClose }: SettingsFormProps) {
               <Building2 className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Karigar App</p>
+              <div className="mb-1">
+                <BrandMark
+                  size="xs"
+                  showName
+                  nameClassName="text-xs uppercase tracking-wider text-muted-foreground font-semibold"
+                  name="Karigar"
+                />
+              </div>
               <h3 className="text-base font-semibold">Brand and Operations Settings</h3>
               <p className="text-sm text-muted-foreground">These changes are applied live across your dashboard and modules.</p>
             </div>

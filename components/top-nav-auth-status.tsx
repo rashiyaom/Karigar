@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { BrandMark } from "@/components/brand-mark"
 
 type AuthUser = {
   id: string
@@ -102,6 +103,7 @@ export function TopNavAuthStatus() {
     <div className="sticky top-0 z-40 border-b border-border/60 bg-background/90 backdrop-blur">
       <div className="mx-auto flex h-11 w-full max-w-6xl items-center justify-between gap-3 px-4">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <BrandMark size="xs" />
           <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
           <span className="font-medium text-foreground">{user.username}</span>
           <span>Signed in</span>

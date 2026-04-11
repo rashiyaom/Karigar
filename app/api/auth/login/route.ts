@@ -5,6 +5,8 @@ import { hasDangerousPatterns } from '@/lib/input-sanitizer'
 import { checkApiRateLimit } from '@/lib/api-rate-limit'
 import { logSuccessfulLogin, logFailedLoginAttempt, logInjectionAttempt } from '@/lib/security-events'
 
+const ROLE_COOKIE_MAX_AGE_SECONDS = 24 * 60 * 60
+
 function normalizeIdentifier(value: string): string {
   return value.trim().toLowerCase()
 }
@@ -57,11 +59,21 @@ export async function POST(request: NextRequest) {
     const csrfToken = await setCsrfToken()
     await logSuccessfulLogin(authResult.user.username, request)
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: authResult.user,
       csrfToken,
     })
+
+    response.cookies.set('user-role', authResult.user.role, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: ROLE_COOKIE_MAX_AGE_SECONDS,
+      path: '/',
+    })
+
+    return response
   } catch (error) {
     console.error('Login route error:', error)
     return NextResponse.json(

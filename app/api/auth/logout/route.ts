@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     await clearCsrfToken()
 
     const response = NextResponse.json({ success: true })
+    response.cookies.set('user-role', '', { maxAge: 0, path: '/' })
     Object.entries(guard.rateLimitHeaders).forEach(([key, value]) => {
       response.headers.set(key, value)
     })

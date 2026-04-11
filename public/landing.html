@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Karigar - Workforce Operations Platform</title>
   <meta name="description" content="Karigar unifies attendance, tasks, credits, and workforce operations in one secure platform." />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="icon" type="image/svg+xml" href="/images/karigar-logo.svg" />
+  <link rel="apple-touch-icon" href="/images/karigar-logo.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -78,13 +82,13 @@
     }
 
     .nav-inner {
-      min-height: 74px;
+      min-height: 68px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 14px;
-      flex-wrap: wrap;
-      padding: 10px 0;
+      gap: 10px;
+      flex-wrap: nowrap;
+      padding: 8px 0;
     }
 
     .brand {
@@ -99,50 +103,50 @@
       width: 30px;
       height: 30px;
       border-radius: 10px;
-      border: 1px solid rgba(255, 90, 54, 0.4);
-      background: rgba(255, 90, 54, 0.12);
-      display: grid;
-      place-items: center;
-      color: var(--accent);
-      font-size: 16px;
-      font-weight: 800;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2px;
+      overflow: hidden;
     }
+
+    .brand-mark img { width: 100%; height: 100%; display: block; border-radius: 8px; }
 
     .brand-name {
       font-family: var(--font-head);
-      font-size: 20px;
-      font-weight: 700;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
     }
 
     .nav-links {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 5px;
-      border-radius: 12px;
-      border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.02);
+      gap: 6px;
+      padding: 4px;
+      border-radius: 11px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.015);
     }
 
     .nav-links a {
       text-decoration: none;
       color: var(--muted);
       font-size: 12px;
-      padding: 8px 12px;
+      padding: 7px 11px;
       border-radius: 8px;
       transition: all 0.2s var(--ease);
     }
 
     .nav-links a:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
 
-    .nav-actions { display: inline-flex; gap: 10px; align-items: center; }
+    .nav-actions { display: inline-flex; gap: 8px; align-items: center; }
 
     .btn {
       text-decoration: none;
       border-radius: 10px;
       font-size: 13px;
       font-weight: 600;
-      padding: 10px 14px;
+      padding: 9px 13px;
       transition: all 0.2s var(--ease);
       display: inline-flex;
       align-items: center;
@@ -289,7 +293,11 @@
       flex-wrap: wrap;
     }
 
-    .section { padding: 30px 0 16px; }
+    .section { padding: 56px 0 24px; }
+
+    .section + .section {
+      padding-top: 42px;
+    }
 
     .section-head {
       margin-bottom: 16px;
@@ -305,28 +313,45 @@
     .section-title em { color: var(--accent); font-style: normal; }
     .section-copy { color: var(--muted); max-width: 540px; font-size: 15px; line-height: 1.75; }
 
-    .feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 
     .feature-card {
+      position: relative;
       border-radius: 22px;
-      background: #11161d;
-      border: 1px solid rgba(199, 214, 223, 0.28);
+      background: linear-gradient(180deg, #101723 0%, #0b1320 100%);
+      border: 1px solid rgba(175, 196, 210, 0.28);
       overflow: hidden;
-      transition: transform 0.28s var(--ease), box-shadow 0.28s var(--ease), border-color 0.28s var(--ease);
-      box-shadow: 0 18px 30px rgba(0, 0, 0, 0.26);
+      transition: transform 0.32s var(--ease), box-shadow 0.32s var(--ease), border-color 0.32s var(--ease);
+      box-shadow: 0 20px 34px rgba(0, 0, 0, 0.34);
+    }
+
+    .feature-card::before {
+      content: "";
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      top: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+      opacity: 0.7;
+      pointer-events: none;
     }
 
     .feature-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(255, 90, 54, 0.45);
-      box-shadow: 0 24px 42px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 90, 54, 0.14) inset;
+      transform: translateY(-8px);
+      border-color: rgba(255, 90, 54, 0.55);
+      box-shadow: 0 28px 48px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 90, 54, 0.18) inset;
     }
 
     .feature-visual {
-      height: 190px;
-      background: #d8e2e6;
+      height: 174px;
+      background:
+        radial-gradient(circle at 78% 28%, rgba(255, 110, 73, 0.24), transparent 45%),
+        radial-gradient(circle at 18% 82%, rgba(86, 128, 146, 0.26), transparent 52%),
+        linear-gradient(145deg, #1c2733 0%, #121c27 52%, #0d151f 100%);
       position: relative;
       overflow: hidden;
+      border-bottom: 1px solid rgba(173, 193, 206, 0.18);
     }
 
     .feature-visual::before {
@@ -334,25 +359,332 @@
       position: absolute;
       width: 220px;
       height: 220px;
-      border: 1px solid rgba(30, 36, 44, 0.08);
+      border: 1px solid rgba(199, 214, 223, 0.18);
       border-radius: 999px;
       top: -80px;
       left: -60px;
+      animation: orbit 16s linear infinite;
     }
 
     .feature-visual::after {
       content: "";
       position: absolute;
-      width: 110px;
-      height: 40px;
+      width: 120px;
+      height: 42px;
       border-radius: 999px;
-      bottom: 20px;
+      bottom: 22px;
       left: 18px;
       background: var(--accent);
-      opacity: 0.92;
+      opacity: 0.96;
+      box-shadow: 0 10px 22px rgba(255, 90, 54, 0.34);
+      animation: pulseBar 2.7s ease-in-out infinite;
+    }
+
+    .feature-card:nth-child(2) .feature-visual {
+      background:
+        radial-gradient(circle at 78% 28%, rgba(120, 160, 255, 0.22), transparent 45%),
+        radial-gradient(circle at 24% 72%, rgba(109, 198, 190, 0.2), transparent 52%),
+        linear-gradient(145deg, #172231 0%, #101b29 52%, #0b1420 100%);
+    }
+
+    .feature-card:nth-child(3) .feature-visual {
+      background:
+        radial-gradient(circle at 72% 18%, rgba(255, 110, 73, 0.3), transparent 42%),
+        radial-gradient(circle at 24% 74%, rgba(131, 145, 220, 0.2), transparent 52%),
+        linear-gradient(145deg, #1a1f35 0%, #12182a 52%, #0b1220 100%);
+    }
+
+    .feature-visual .chip {
+      position: absolute;
+      right: 16px;
+      top: 16px;
+      padding: 6px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(229, 239, 246, 0.24);
+      background: rgba(8, 12, 18, 0.58);
+      color: #cfd9e0;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .feature-visual .bars {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      opacity: 0.9;
+    }
+
+    .feature-visual .bars span {
+      display: block;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(218, 229, 236, 0.22);
+      width: 100%;
+    }
+
+    .feature-visual .bars span:nth-child(2) { width: 72%; }
+    .feature-visual .bars span:nth-child(3) { width: 54%; }
+
+    .feature-card:nth-child(2) .feature-visual .bars span:nth-child(2) { width: 68%; }
+    .feature-card:nth-child(3) .feature-visual .bars span:nth-child(2) { width: 74%; }
+
+    .feature-meta {
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .feature-meta span {
+      color: rgba(233, 240, 246, 0.72);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .feature-index {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.03);
+      color: #e6edf3;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .story {
+      padding: 30px 0;
+    }
+
+    .story-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .story-panel {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(170deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.008));
+      padding: 20px;
+    }
+
+    .story-panel h3 {
+      font-family: var(--font-head);
+      font-size: clamp(24px, 3.6vw, 36px);
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
+
+    .story-panel p {
+      color: var(--muted);
+      line-height: 1.75;
+      max-width: 640px;
+    }
+
+    .story-list {
+      margin-top: 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .story-item {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 12px;
+    }
+
+    .story-item strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #e7eef4;
+      font-size: 14px;
+    }
+
+    .story-item span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 10px;
+    }
+
+    .timeline-step {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 14px;
+      background: rgba(8, 14, 24, 0.58);
+    }
+
+    .timeline-step small {
+      color: #ffad99;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      font-size: 10px;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .timeline-step h4 {
+      font-size: 17px;
+      margin-bottom: 4px;
+      color: #f2f5f7;
+    }
+
+    .timeline-step p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .metrics-band {
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric-tile {
+      border-radius: 12px;
+      padding: 10px;
+      background: rgba(5, 9, 15, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .metric-tile strong {
+      display: block;
+      font-family: var(--font-head);
+      font-size: 22px;
+      color: #f0f4f7;
+      margin-bottom: 2px;
+    }
+
+    .metric-tile span {
+      color: var(--dim);
+      font-size: 12px;
+    }
+
+    .faq {
+      padding: 18px 0 62px;
+    }
+
+    .faq-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .faq-item {
+      border: 1px solid rgba(173, 193, 206, 0.2);
+      border-radius: 18px;
+      background: linear-gradient(170deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.008));
+      padding: 0;
+      overflow: hidden;
+      transition: border-color 0.26s var(--ease), box-shadow 0.26s var(--ease), transform 0.26s var(--ease);
+    }
+
+    .faq-item:hover {
+      transform: translateY(-3px);
+      border-color: rgba(255, 90, 54, 0.42);
+      box-shadow: 0 18px 28px rgba(0, 0, 0, 0.26);
+    }
+
+    .faq-item summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 18px 20px;
+      position: relative;
+      padding-right: 54px;
+      color: #edf2f6;
+      font-family: var(--font-head);
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .faq-item summary::-webkit-details-marker { display: none; }
+
+    .faq-item summary::after {
+      content: "+";
+      position: absolute;
+      right: 18px;
+      top: 14px;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #dfe9f1;
+      font-size: 18px;
+      line-height: 1;
+      transition: transform 0.24s var(--ease), color 0.24s var(--ease), border-color 0.24s var(--ease);
+    }
+
+    .faq-item[open] {
+      border-color: rgba(255, 90, 54, 0.45);
+      box-shadow: 0 20px 34px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 90, 54, 0.14) inset;
+    }
+
+    .faq-item[open] summary::after {
+      transform: rotate(45deg);
+      color: #ffb29f;
+      border-color: rgba(255, 90, 54, 0.45);
+    }
+
+    .faq-answer {
+      padding: 0 20px 18px;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
+      margin-top: 0;
+      padding-top: 12px;
+    }
+
+    .faq-item p {
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 14px;
     }
 
     .feature-body { padding: 16px 14px 18px; }
+    .feature-subtitle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.03);
+      color: #ffb29f;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
     .feature-body h3 {
       font-size: 34px;
       font-family: var(--font-head);
@@ -360,27 +692,85 @@
       letter-spacing: -0.02em;
       color: #f0f2f5;
     }
-    .feature-body p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .feature-body p { color: var(--muted); font-size: 15px; line-height: 1.65; }
 
-    .partners { padding: 38px 0 84px; }
+    @keyframes orbit {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulseBar {
+      0%, 100% { transform: scaleX(1); }
+      50% { transform: scaleX(1.07); }
+    }
+
+    .partners { padding: 52px 0 52px; }
     .partner-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
 
     .partner {
       height: 126px;
-      border-radius: 999px;
+      border-radius: 24px;
       border: 1px solid var(--line);
-      display: grid;
-      place-items: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 4px;
       color: #d2dbe2;
       font-weight: 700;
       font-family: var(--font-head);
       background: rgba(255, 255, 255, 0.015);
-      font-size: 29px;
+      font-size: 20px;
       transition: all 0.25s var(--ease);
+      text-align: center;
+      padding: 14px;
     }
 
-    .partner:nth-child(4) { background: var(--accent); color: #151515; border-color: transparent; }
+    .partner span {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .partner:nth-child(3) { background: rgba(255, 90, 54, 0.16); color: #ffd2c5; border-color: rgba(255, 90, 54, 0.5); }
     .partner:hover { transform: translateY(-3px); border-color: rgba(255, 90, 54, 0.4); }
+
+    .testimonials {
+      padding: 28px 0 50px;
+    }
+
+    .testimonial-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .testimonial {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: linear-gradient(165deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.008));
+      padding: 16px;
+    }
+
+    .testimonial p {
+      color: #d9e2e9;
+      line-height: 1.7;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .testimonial strong {
+      display: block;
+      font-size: 14px;
+      color: #eef3f7;
+    }
+
+    .testimonial span {
+      color: var(--dim);
+      font-size: 12px;
+    }
 
     .footer {
       border-top: 1px solid var(--line);
@@ -401,6 +791,48 @@
     }
     .reveal.in { opacity: 1; transform: translateY(0); }
 
+    .scroll-float {
+      opacity: 0;
+      transform: translateY(34px) scale(0.985);
+      transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+      transition-delay: var(--stagger, 0ms);
+      will-change: transform, opacity;
+    }
+
+    .scroll-float.in {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .scroll-slide {
+      opacity: 0;
+      transform: translateX(var(--slide-from, 0px));
+      transition: opacity 0.72s var(--ease), transform 0.72s var(--ease);
+      transition-delay: var(--stagger, 0ms);
+    }
+
+    .scroll-slide.in {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .scroll-pop {
+      opacity: 0;
+      transform: translateY(22px) scale(0.96);
+      transition: opacity 0.64s var(--ease), transform 0.64s var(--ease);
+      transition-delay: var(--stagger, 0ms);
+    }
+
+    .scroll-pop.in {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .parallax-soft {
+      transform: translate3d(0, calc(var(--parallax, 0) * 1px), 0);
+      will-change: transform;
+    }
+
     @media (max-width: 1100px) {
       .hero-grid { grid-template-columns: 1fr; }
       .side-circle {
@@ -413,7 +845,9 @@
       }
       .metric { width: auto; }
       .metric strong { font-size: 28px; }
-      .feature-grid, .partner-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .story-grid { grid-template-columns: 1fr; }
+      .metrics-band { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .feature-grid, .partner-row, .testimonial-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
     @media (max-width: 760px) {
@@ -422,15 +856,25 @@
         width: 100%;
         justify-content: space-between;
       }
+      .nav-inner { flex-wrap: wrap; gap: 8px; }
       .hero { padding-top: 24px; }
       .hero-core { border-radius: 22px; padding: 24px 18px; }
-      .feature-grid, .partner-row { grid-template-columns: 1fr; }
+      .metrics-band,
+      .faq-grid { grid-template-columns: 1fr; }
+      .feature-grid, .partner-row, .testimonial-strip { grid-template-columns: 1fr; }
       .partner { border-radius: 20px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
       * { animation: none !important; transition: none !important; }
       .reveal { opacity: 1; transform: none; }
+      .scroll-float,
+      .scroll-slide,
+      .scroll-pop,
+      .parallax-soft {
+        opacity: 1 !important;
+        transform: none !important;
+      }
     }
   </style>
 </head>
@@ -441,8 +885,8 @@
   <nav class="nav">
     <div class="shell nav-inner">
       <a class="brand" href="/landing.html">
-        <span class="brand-mark">✶</span>
-        <span class="brand-name">Karigar Network</span>
+        <span class="brand-mark"><img src="/images/karigar-logo.svg" alt="Karigar Logo" /></span>
+        <span class="brand-name">Karigar</span>
       </a>
 
       <div class="nav-links">
@@ -462,39 +906,39 @@
   <main class="shell">
     <section class="hero reveal" id="about">
       <div class="hero-grid">
-        <aside class="side-circle">
-          <div class="metric">
-            <strong>93m+</strong>
-            <span>Total locked</span>
+        <aside class="side-circle scroll-slide" style="--slide-from:-24px" data-scroll data-stagger="40">
+          <div class="metric scroll-pop" data-scroll data-stagger="120">
+            <strong>4</strong>
+            <span>Core modules: attendance, tasks, credits, history</span>
           </div>
-          <div class="metric">
-            <strong>3.2b</strong>
-            <span>Market size</span>
+          <div class="metric scroll-pop" data-scroll data-stagger="200">
+            <strong>13</strong>
+            <span>API groups in this codebase</span>
           </div>
         </aside>
 
-        <article class="hero-core">
+        <article class="hero-core parallax-soft" data-parallax="0.08">
           <span class="pill"><span class="dot"></span>Workforce OS for growing teams</span>
-          <h1>Next level of <em>operations</em> and <em>fintech-grade</em> workforce control.</h1>
-          <p>Karigar helps you run attendance, task execution, salary advances, and team accountability from one secure command layer.</p>
+          <h1>One <em>operations workspace</em> for attendance, tasks, credits, and history.</h1>
+          <p>Karigar brings workforce records into a single app with dashboard views, role-based access, and API-backed workflows.</p>
           <div class="hero-cta">
             <a class="btn primary" href="/register">Start Free</a>
             <a class="btn ghost" href="/login">Sign In to Workspace</a>
           </div>
           <div class="ticker">
-            <span>The operations layer for fast-moving Indian businesses.</span>
-            <a class="btn ghost" style="padding:8px 12px" href="/register">Book Demo</a>
+            <span>Backed by Next.js + MongoDB with authenticated API routes and security checks.</span>
+            <a class="btn ghost" style="padding:8px 12px" href="/register">Create Workspace</a>
           </div>
         </article>
 
-        <aside class="side-circle">
-          <div class="metric">
-            <strong>1k+</strong>
-            <span>Awards</span>
+        <aside class="side-circle scroll-slide" style="--slide-from:24px" data-scroll data-stagger="80">
+          <div class="metric scroll-pop" data-scroll data-stagger="160">
+            <strong>CSRF</strong>
+            <span>Write routes use CSRF validation</span>
           </div>
-          <div class="metric">
-            <strong>221k</strong>
-            <span>Transactions</span>
+          <div class="metric scroll-pop" data-scroll data-stagger="240">
+            <strong>Pages</strong>
+            <span>Dashboard, attendance, tasks, credits, analytics, history</span>
           </div>
         </aside>
       </div>
@@ -510,51 +954,188 @@
       </div>
 
       <div class="feature-grid">
-        <article class="feature-card">
-          <div class="feature-visual"></div>
+        <article class="feature-card scroll-float" data-scroll data-stagger="20">
+          <div class="feature-visual">
+            <div class="bars"><span></span><span></span><span></span></div>
+            <span class="chip">Live</span>
+          </div>
           <div class="feature-body">
+            <span class="feature-subtitle">Attendance Intelligence</span>
             <h3>Constant Monitoring</h3>
-            <p>Track attendance, domains, tasks, and operational actions in one unified timeline.</p>
+            <p>Track attendance records, employee activity, and status updates from one interface.</p>
+            <div class="feature-meta">
+              <span>Daily workforce signals</span>
+              <span class="feature-index">01</span>
+            </div>
           </div>
         </article>
 
-        <article class="feature-card">
-          <div class="feature-visual" style="background:#dce5e8"></div>
+        <article class="feature-card scroll-float" data-scroll data-stagger="120">
+          <div class="feature-visual">
+            <div class="bars"><span></span><span></span><span></span></div>
+            <span class="chip">Security</span>
+          </div>
           <div class="feature-body">
-            <h3>AI-based Detection</h3>
-            <p>Detect delays, risky credit patterns, and workflow gaps before they become payroll disputes.</p>
+            <span class="feature-subtitle">Write Protection</span>
+            <h3>Route Guardrails</h3>
+            <p>Critical write operations are protected with validation, sanitization, and request checks.</p>
+            <div class="feature-meta">
+              <span>Safer API operations</span>
+              <span class="feature-index">02</span>
+            </div>
           </div>
         </article>
 
-        <article class="feature-card">
-          <div class="feature-visual" style="background:#d3dde2"></div>
+        <article class="feature-card scroll-float" data-scroll data-stagger="220">
+          <div class="feature-visual">
+            <div class="bars"><span></span><span></span><span></span></div>
+            <span class="chip">Smart Ops</span>
+          </div>
           <div class="feature-body">
+            <span class="feature-subtitle">Manager Actions</span>
             <h3>Automatic Triage</h3>
-            <p>Prioritize manager actions instantly with smart escalation and role-aware controls.</p>
+            <p>Manage approvals, task flow, and workforce changes with role-aware controls.</p>
+            <div class="feature-meta">
+              <span>Role-based control paths</span>
+              <span class="feature-index">03</span>
+            </div>
           </div>
         </article>
+      </div>
+    </section>
+
+    <section class="story reveal" id="workflow">
+      <div class="story-grid">
+        <article class="story-panel">
+          <p class="section-kicker">02 Workflow Overview</p>
+          <h3>How Karigar runs your operations day-to-day.</h3>
+          <p>From punch-in to payout preparation, records remain connected so admins and managers can review the same source of truth.</p>
+          <div class="story-list">
+            <div class="story-item scroll-pop" data-scroll data-stagger="60">
+              <strong>Attendance timeline that managers trust</strong>
+              <span>Shifts, delays, leaves, and exceptions stay attached to the same employee record.</span>
+            </div>
+            <div class="story-item scroll-pop" data-scroll data-stagger="130">
+              <strong>Task progress linked with accountability</strong>
+              <span>Task records include ownership and status updates for clearer follow-up.</span>
+            </div>
+            <div class="story-item scroll-pop" data-scroll data-stagger="200">
+              <strong>Credit and payroll behavior in one view</strong>
+              <span>Credit requests and history stay visible before closing payroll cycles.</span>
+            </div>
+          </div>
+        </article>
+
+        <aside class="story-panel">
+          <p class="section-kicker">Execution Flow</p>
+          <div class="timeline">
+            <div class="timeline-step scroll-pop" data-scroll data-stagger="70">
+              <small>Step 01</small>
+              <h4>Capture</h4>
+              <p>Collect attendance, task updates, and credit requests in real time.</p>
+            </div>
+            <div class="timeline-step scroll-pop" data-scroll data-stagger="140">
+              <small>Step 02</small>
+              <h4>Analyze</h4>
+              <p>Review records and identify pending items before salary processing.</p>
+            </div>
+            <div class="timeline-step scroll-pop" data-scroll data-stagger="210">
+              <small>Step 03</small>
+              <h4>Resolve</h4>
+              <p>Resolve exceptions with owner-based responsibility and admin controls.</p>
+            </div>
+            <div class="timeline-step scroll-pop" data-scroll data-stagger="280">
+              <small>Step 04</small>
+              <h4>Close</h4>
+              <p>Close monthly workflows with export-ready and auditable records.</p>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="metrics-band">
+        <div class="metric-tile scroll-pop" data-scroll data-stagger="40"><strong>Auth</strong><span>Protected user access and session handling</span></div>
+        <div class="metric-tile scroll-pop" data-scroll data-stagger="110"><strong>CSRF</strong><span>Write routes enforce CSRF checks</span></div>
+        <div class="metric-tile scroll-pop" data-scroll data-stagger="180"><strong>Rate Limit</strong><span>API guardrails are enabled</span></div>
+        <div class="metric-tile scroll-pop" data-scroll data-stagger="250"><strong>Pagination</strong><span>Heavy list endpoints support paging</span></div>
       </div>
     </section>
 
     <section class="partners reveal" id="partners">
       <div class="section-head">
         <div>
-          <p class="section-kicker">02 Trusted By Teams</p>
-          <h2 class="section-title">Investors and operators back the <em>Karigar</em> stack.</h2>
+          <p class="section-kicker">03 Included Modules</p>
+          <h2 class="section-title">What ships in the current <em>Karigar</em> project.</h2>
         </div>
       </div>
 
       <div class="partner-row" id="product">
-        <div class="partner">B</div>
-        <div class="partner">◎</div>
-        <div class="partner">K</div>
-        <div class="partner">₹</div>
-        <div class="partner">P</div>
+        <div class="partner scroll-float" data-scroll data-stagger="30">Attendance<span>Daily presence and status tracking</span></div>
+        <div class="partner scroll-float" data-scroll data-stagger="90">Tasks<span>Assignment, progress, and completion flow</span></div>
+        <div class="partner scroll-float" data-scroll data-stagger="150">Credits<span>Advance tracking and repayment visibility</span></div>
+        <div class="partner scroll-float" data-scroll data-stagger="210">History<span>Timeline of operational activity</span></div>
+        <div class="partner scroll-float" data-scroll data-stagger="270">Analytics<span>Overview pages for performance insights</span></div>
+      </div>
+    </section>
+
+    <section class="testimonials reveal">
+      <div class="section-head">
+        <div>
+          <p class="section-kicker">04 Project Facts</p>
+          <h2 class="section-title">Technical traits in this <em>repository</em>.</h2>
+        </div>
+        <p class="section-copy">These points reflect implementation details present in this codebase, not market estimates.</p>
+      </div>
+      <div class="testimonial-strip">
+        <article class="testimonial scroll-float" data-scroll data-stagger="40">
+          <p>Authentication and protected API routes are implemented, including guarded access to sensitive endpoints.</p>
+          <strong>Security Baseline</strong>
+          <span>Route-level access control</span>
+        </article>
+        <article class="testimonial scroll-float" data-scroll data-stagger="120">
+          <p>Attendance, tasks, credits, and history are available as dedicated sections with API integrations.</p>
+          <strong>Operational Coverage</strong>
+          <span>Core workforce modules</span>
+        </article>
+        <article class="testimonial scroll-float" data-scroll data-stagger="200">
+          <p>Validation, sanitization, and pagination support are integrated for safer and more scalable request handling.</p>
+          <strong>API Reliability</strong>
+          <span>Guardrails and paging support</span>
+        </article>
+      </div>
+    </section>
+
+    <section class="faq reveal" id="faq">
+      <div class="section-head">
+        <div>
+          <p class="section-kicker">05 Questions Teams Ask</p>
+          <h2 class="section-title">Everything you need before you <em>switch</em>.</h2>
+        </div>
+        <p class="section-copy">Built for owners, admins, and operations leads that want strong controls without heavy setup overhead.</p>
+      </div>
+
+      <div class="faq-grid">
+        <details class="faq-item scroll-float" open data-scroll data-stagger="40">
+          <summary>How quickly can we go live?</summary>
+          <div class="faq-answer">Setup time depends on your data readiness. The project includes pages and APIs for settings, employee records, and day-to-day operations.</div>
+        </details>
+        <details class="faq-item scroll-float" data-scroll data-stagger="100">
+          <summary>Can this work for multi-location teams?</summary>
+          <div class="faq-answer">Yes. Karigar supports distributed teams with centralized oversight and role-aware access for each location manager.</div>
+        </details>
+        <details class="faq-item scroll-float" data-scroll data-stagger="160">
+          <summary>Will this reduce payroll disputes?</summary>
+          <div class="faq-answer">The platform centralizes attendance, credits, and task records; impact depends on how consistently teams use those workflows.</div>
+        </details>
+        <details class="faq-item scroll-float" data-scroll data-stagger="220">
+          <summary>Do we need technical staff to operate it?</summary>
+          <div class="faq-answer">Day-to-day use is product-led, while deployment and maintenance still require standard web app operations support.</div>
+        </details>
       </div>
     </section>
 
     <section class="reveal" style="padding: 4px 0 24px;">
-      <div class="hero-core" style="padding:30px 24px;">
+      <div class="hero-core parallax-soft" data-parallax="0.06" style="padding:30px 24px;">
         <h2 class="section-title" style="font-size: clamp(28px, 4vw, 48px); margin-bottom: 8px;">Ready to switch from manual ops to <em>precision?</em></h2>
         <p class="section-copy" style="max-width: 640px; margin-bottom: 18px;">Launch a workspace in minutes. Keep your team aligned, your payouts accurate, and your history auditable.</p>
         <div class="hero-cta">
@@ -565,7 +1146,7 @@
     </section>
 
     <footer class="footer">
-      <span>© 2026 Karigar Network. All rights reserved.</span>
+      <span>© 2026 Karigar. All rights reserved.</span>
       <span>Built for modern workforce operations.</span>
     </footer>
   </main>
@@ -581,6 +1162,45 @@
     }, { threshold: 0.1 });
 
     document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+
+    const stagedObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const delay = entry.target.getAttribute('data-stagger') || '0';
+        entry.target.style.setProperty('--stagger', `${delay}ms`);
+        entry.target.classList.add('in');
+        stagedObserver.unobserve(entry.target);
+      });
+    }, { threshold: 0.16 });
+
+    document.querySelectorAll('[data-scroll]').forEach((el) => stagedObserver.observe(el));
+
+    const parallaxNodes = Array.from(document.querySelectorAll('[data-parallax]'));
+    let ticking = false;
+
+    const updateParallax = () => {
+      const viewportHeight = window.innerHeight || 1;
+      parallaxNodes.forEach((node) => {
+        const speed = Number(node.getAttribute('data-parallax') || 0.06);
+        const rect = node.getBoundingClientRect();
+        const distanceFromCenter = rect.top + rect.height / 2 - viewportHeight / 2;
+        const offset = -distanceFromCenter * speed * 0.22;
+        node.style.setProperty('--parallax', offset.toFixed(2));
+      });
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(updateParallax);
+    };
+
+    if (parallaxNodes.length > 0) {
+      updateParallax();
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+    }
   </script>
 </body>
 </html>

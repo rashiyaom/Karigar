@@ -201,36 +201,36 @@ export async function PATCH(request: NextRequest) {
       return applyCorsHeaders(response, origin)
     }
 
-    try {
-      const targetUser = await UserModel.findOne({ _id: currentUser.id }).lean()
-      if (!targetUser) {
-        throw new Error('User not found')
-      }
-
-      const deletedRecords = await executeUserDeletionTransaction(currentUser.id, currentUser.username)
-      await DeletionChallengeModel.deleteOne({ userId: currentUser.id })
-      await clearAuthCookie()
-
-      await logGdprEvent('DELETION_COMPLETED', currentUser.id, {
-        deletedAt: new Date().toISOString(),
-        ipAddress: extractRequestMetadata(request).ipAddress,
-        deletedRecords,
-      })
-
-      const response = NextResponse.json(
-        {
-          success: true,
-          message: 'User account permanently deleted',
-          deletedAt: new Date().toISOString(),
-        },
-        {
-          status: 200,
-          headers: guard.rateLimitHeaders,
-        }
-      )
-
-      return applyCorsHeaders(response, origin)
+    const targetUser = await UserModel.findOne({ _id: currentUser.id }).lean()
+    if (!targetUser) {
+      throw new Error('User not found')
     }
+
+    const deletedRecords = await executeUserDeletionTransaction(currentUser.id, currentUser.username)
+    await DeletionChallengeModel.deleteOne({ userId: currentUser.id })
+    await clearAuthCookie()
+
+    await logGdprEvent('DELETION_COMPLETED', currentUser.id, {
+      deletedAt: new Date().toISOString(),
+      ipAddress: extractRequestMetadata(request).ipAddress,
+      deletedRecords,
+    })
+
+    const response = NextResponse.json(
+      {
+        success: true,
+        message: 'User account permanently deleted',
+        deletedAt: new Date().toISOString(),
+      },
+      {
+        status: 200,
+        headers: guard.rateLimitHeaders,
+      }
+    )
+
+    response.cookies.set('user-role', '', { maxAge: 0, path: '/' })
+
+    return applyCorsHeaders(response, origin)
   } catch (error) {
     console.error('Deletion confirmation error:', error)
 

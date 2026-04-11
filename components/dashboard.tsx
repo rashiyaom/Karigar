@@ -46,6 +46,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useWebSocket } from "@/lib/websocket"
 import type { Employee } from "@/lib/types"
 import Link from "next/link"
+import { BrandMark } from "@/components/brand-mark"
 
 export function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -275,7 +276,14 @@ export function Dashboard() {
                             </div>
                           )}
                           <div>
-                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Karigar App</p>
+                            <div className="mb-1">
+                              <BrandMark
+                                size="xs"
+                                showName
+                                nameClassName="text-xs uppercase tracking-wider text-muted-foreground font-semibold"
+                                name="Karigar"
+                              />
+                            </div>
                             <DialogTitle className="text-xl">{t("common.settings")}</DialogTitle>
                           </div>
                         </div>

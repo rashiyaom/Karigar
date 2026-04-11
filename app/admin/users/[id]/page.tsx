@@ -6,6 +6,7 @@ import { useParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { BrandMark } from "@/components/brand-mark"
 
 interface DetailedUser {
   id: string
@@ -64,7 +65,10 @@ export default function AdminUserDetailPage() {
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Admin Console</p>
+            <div className="mb-1 flex items-center gap-2">
+              <BrandMark size="xs" />
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Admin Console</p>
+            </div>
             <h1 className="text-3xl font-semibold">User Details</h1>
           </div>
           <Button variant="outline" asChild>
