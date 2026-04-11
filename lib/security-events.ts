@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server'
 import { logAuditEvent, logFailedLogin } from './audit-logger'
 import { getCurrentUser } from './auth'
 
+type AuditDetails = Record<string, unknown>
+
 /**
  * Extract request metadata
  */
@@ -88,7 +90,7 @@ export async function logUserLogout(request: NextRequest) {
  * Log employee creation
  */
 export async function logEmployeeCreate(
-  employeeData: any,
+  employeeData: AuditDetails,
   request: NextRequest,
   employeeId?: string
 ) {
@@ -122,7 +124,7 @@ export async function logEmployeeCreate(
  */
 export async function logEmployeeUpdate(
   employeeId: string,
-  changes: any,
+  changes: AuditDetails,
   request: NextRequest
 ) {
   const user = await getCurrentUser()
@@ -177,7 +179,7 @@ export async function logEmployeDelete(employeeId: string, employeeName: string,
  */
 export async function logCreditOperation(
   operation: 'CREATE' | 'UPDATE' | 'DELETE',
-  creditData: any,
+  creditData: AuditDetails,
   request: NextRequest,
   creditId?: string
 ) {
@@ -212,7 +214,7 @@ export async function logCreditOperation(
  */
 export async function logTaskOperation(
   operation: 'CREATE' | 'UPDATE' | 'DELETE',
-  taskData: any,
+  taskData: AuditDetails,
   request: NextRequest,
   taskId?: string
 ) {
@@ -249,7 +251,7 @@ export async function logSecurityIncident(
   eventType: string,
   severity: 'WARNING' | 'ERROR' | 'CRITICAL',
   request: NextRequest,
-  details?: any
+  details?: AuditDetails
 ) {
   const { ipAddress, userAgent } = extractRequestMetadata(request)
   const user = await getCurrentUser()

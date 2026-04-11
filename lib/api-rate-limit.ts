@@ -12,6 +12,10 @@ interface RateLimitStore {
   [key: string]: RateLimitEntry
 }
 
+declare global {
+  var rateLimitCleanupStarted: boolean | undefined
+}
+
 // In-memory rate limit store
 const apiRateLimitStore: RateLimitStore = {}
 
@@ -22,8 +26,8 @@ const API_RATE_LIMIT_MAX_REQUESTS = 100 // requests per minute per user/IP
 
 // Start cleanup interval
 if (typeof global !== 'undefined') {
-  if (!(global as any).rateLimitCleanupStarted) {
-    (global as any).rateLimitCleanupStarted = true
+  if (!global.rateLimitCleanupStarted) {
+    global.rateLimitCleanupStarted = true
     
     setInterval(() => {
       const now = Date.now()

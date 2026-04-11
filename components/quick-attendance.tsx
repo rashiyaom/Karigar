@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Clock } from "lucide-react"
-import { useLanguage } from "@/components/language-provider"
 import { useEmployees, useCreateAttendance } from "@/hooks/use-api"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
@@ -18,13 +17,14 @@ const attendanceStatusConfig = {
   "paid-leave": { label: "Paid Leave", color: "bg-purple-500", variant: "outline" as const },
 }
 
+type AttendanceStatus = keyof typeof attendanceStatusConfig
+
 export function QuickAttendance() {
   const [today, setToday] = useState("")
   const [currentDate, setCurrentDate] = useState("")
-  const { t } = useLanguage()
   const { toast } = useToast()
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([])
-  const [attendanceStatus, setAttendanceStatus] = useState<string>("")
+  const [attendanceStatus, setAttendanceStatus] = useState<AttendanceStatus | "">("")
 
   const { data: employees = [] } = useEmployees()
   const createAttendanceMutation = useCreateAttendance()
@@ -67,7 +67,7 @@ export function QuickAttendance() {
           createAttendanceMutation.mutateAsync({
             employeeId,
             date: today,
-            status: attendanceStatus as any,
+            status: attendanceStatus as AttendanceStatus,
           }),
         ),
       )
@@ -79,7 +79,7 @@ export function QuickAttendance() {
 
       setSelectedEmployees([])
       setAttendanceStatus("")
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to mark attendance for some employees",
@@ -149,7 +149,7 @@ export function QuickAttendance() {
                 key={status}
                 variant={attendanceStatus === status ? "default" : "outline"}
                 className="h-auto min-h-20 rounded-xl p-3 flex flex-col gap-2"
-                onClick={() => setAttendanceStatus(status)}
+                onClick={() => setAttendanceStatus(status as AttendanceStatus)}
               >
                 <div className={`w-4 h-4 rounded-full ${config.color}`} />
                 <span className="text-sm">{config.label}</span>

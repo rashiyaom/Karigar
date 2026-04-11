@@ -8,13 +8,11 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CreditCard } from "lucide-react"
-import { useLanguage } from "@/components/language-provider"
 import { useEmployees, useCreateCredit } from "@/hooks/use-api"
 import { useToast } from "@/hooks/use-toast"
 import { format, addDays } from "date-fns"
 
 export function QuickCredit() {
-  const { t } = useLanguage()
   const { toast } = useToast()
   const [selectedEmployee, setSelectedEmployee] = useState<string>("")
   const [amount, setAmount] = useState<number>(0)
@@ -64,7 +62,7 @@ export function QuickCredit() {
       setSelectedEmployee("")
       setAmount(0)
       setPromiseDays(30)
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to create credit record",

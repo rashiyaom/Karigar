@@ -6,6 +6,8 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
+    "lint:ci": "eslint . --max-warnings 0",
+    "ci:check": "npm run lint:ci && npm run build",
     "start": "next start"
   },
   "dependencies": {

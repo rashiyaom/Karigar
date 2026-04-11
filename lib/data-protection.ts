@@ -14,10 +14,10 @@ interface UserDataExport {
     createdAt: string
     lastLogin?: string
   }
-  profile?: Record<string, any>
-  employees?: Record<string, any>[]
-  auditLogs?: Record<string, any>[]
-  activityLogs?: Record<string, any>[]
+  profile?: Record<string, unknown>
+  employees?: Record<string, unknown>[]
+  auditLogs?: Record<string, unknown>[]
+  activityLogs?: Record<string, unknown>[]
   exportedAt: string
   exportedBy: string
 }
@@ -171,7 +171,7 @@ export function createDeletionConfirmation(userId: string, deletedRecords: {
  * Sanitize user data before export
  * Remove sensitive operational data, keep only user data
  */
-export function sanitizeDataForExport(data: any): any {
+export function sanitizeDataForExport(data: Record<string, unknown>): Record<string, unknown> {
   const sanitized = { ...data }
 
   // Remove sensitive fields
@@ -272,7 +272,7 @@ export function generateGdprComplianceReport() {
 /**
  * Log GDPR-related events for compliance audit
  */
-export async function logGdprEvent(eventType: string, userId: string, details: any) {
+export async function logGdprEvent(eventType: string, userId: string, details: unknown) {
   const gdprEvent = {
     eventType,
     userId,

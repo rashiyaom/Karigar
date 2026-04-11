@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertCircle, Lock, LogOut, LogIn, Trash2, AlertTriangle, Shield } from 'lucide-react'
+import { AlertCircle, Lock, LogOut, LogIn, AlertTriangle, Shield } from 'lucide-react'
 
 interface AuditStats {
   totalAuditLogs: number

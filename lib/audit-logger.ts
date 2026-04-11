@@ -145,7 +145,7 @@ export async function logAuditEvent(data: {
   action?: string
   resourceType?: string
   resourceId?: string
-  details?: any
+  details?: unknown
   errorMessage?: string
   status?: 'SUCCESS' | 'FAILED'
 }) {
@@ -176,7 +176,7 @@ export async function logFailedLogin(data: {
   ipAddress: string
   userAgent?: string
   reason: 'INVALID_CREDENTIALS' | 'RATE_LIMITED' | 'ACCOUNT_LOCKED' | 'INJECTION_ATTEMPT'
-  details?: any
+  details?: unknown
 }) {
   try {
     await connectToDatabase()

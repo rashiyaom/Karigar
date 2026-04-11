@@ -49,7 +49,7 @@ export function sanitizeEmail(email: string): string {
 /**
  * Sanitize numeric input
  */
-export function sanitizeNumber(input: any): number | null {
+export function sanitizeNumber(input: unknown): number | null {
   const num = Number(input)
   
   if (isNaN(num) || !isFinite(num)) {
@@ -62,7 +62,7 @@ export function sanitizeNumber(input: any): number | null {
 /**
  * Sanitize boolean input
  */
-export function sanitizeBoolean(input: any): boolean {
+export function sanitizeBoolean(input: unknown): boolean {
   if (typeof input === 'boolean') {
     return input
   }
@@ -99,7 +99,7 @@ export function escapeHtml(text: string): string {
  * Sanitize object keys to prevent injection
  * Removes dangerous characters from object property names
  */
-export function sanitizeObjectKeys(obj: any): any {
+export function sanitizeObjectKeys(obj: unknown): unknown {
   if (typeof obj !== 'object' || obj === null) {
     return obj
   }
@@ -108,9 +108,9 @@ export function sanitizeObjectKeys(obj: any): any {
     return obj.map(item => sanitizeObjectKeys(item))
   }
 
-  const sanitized: any = {}
+  const sanitized: Record<string, unknown> = {}
 
-  for (const [key, value] of Object.entries(obj)) {
+  for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
     // Remove dangerous key patterns
     if (key.includes('$') || key.includes('.') || key.includes('\0')) {
       continue

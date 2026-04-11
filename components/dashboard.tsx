@@ -61,8 +61,8 @@ export function Dashboard() {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const router = useRouter()
 
-  const { theme, setTheme } = useTheme()
-  const { language, setLanguage, t } = useLanguage()
+  const { setTheme } = useTheme()
+  const { setLanguage, t } = useLanguage()
   const { toast } = useToast()
   // Added WebSocket connection for real-time updates
   useWebSocket()
@@ -89,7 +89,7 @@ export function Dashboard() {
           title: "Success",
           description: `${employee.name} has been deleted successfully.`,
         })
-      } catch (error) {
+      } catch {
         toast({
           title: "Error",
           description: "Failed to delete employee. Please try again.",
@@ -609,7 +609,7 @@ export function Dashboard() {
         <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] mx-2 overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Quick Attendance</DialogTitle>
-            <DialogDescription>Mark attendance for multiple employees quickly for today's date.</DialogDescription>
+            <DialogDescription>Mark attendance for multiple employees quickly for today&apos;s date.</DialogDescription>
           </DialogHeader>
           <QuickAttendance />
         </DialogContent>

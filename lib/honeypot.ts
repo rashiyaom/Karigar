@@ -100,7 +100,7 @@ export function generateHoneypotToken(): string {
  * Validate honeypot fields in form submission
  */
 export function validateHoneypotFields(
-  formData: Record<string, any>,
+  formData: Record<string, unknown>,
   config: Partial<HoneypotConfig> = {}
 ): HoneypotValidation {
   const finalConfig = { ...DEFAULT_HONEYPOT_CONFIG, ...config }
@@ -188,7 +188,7 @@ export function validateSubmissionTiming(
  * Combined honeypot validation
  */
 export function validateHoneypot(
-  formData: Record<string, any>,
+  formData: Record<string, unknown>,
   token: string,
   config: Partial<HoneypotConfig> = {}
 ): HoneypotValidation {
@@ -216,7 +216,7 @@ export function validateHoneypot(
  */
 export function detectBotBehavior(
   request: NextRequest,
-  formData: Record<string, any>
+  formData: Record<string, unknown>
 ): { isBotLikely: boolean; score: number; reasons: string[] } {
   let score = 0
   const reasons: string[] = []

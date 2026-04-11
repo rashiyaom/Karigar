@@ -14,7 +14,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, CheckSquare } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
-import { useLanguage } from "@/components/language-provider"
 import { useEmployees, useCreateTask } from "@/hooks/use-api"
 import { useToast } from "@/hooks/use-toast"
 
@@ -25,7 +24,6 @@ export function QuickTask() {
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium")
   const [deadline, setDeadline] = useState<Date | undefined>(undefined)
 
-  const { t } = useLanguage()
   const { toast } = useToast()
   const { data: employees = [] } = useEmployees()
   const createTaskMutation = useCreateTask()
@@ -63,7 +61,7 @@ export function QuickTask() {
       setAssignedTo("")
       setPriority("medium")
       setDeadline(undefined)
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to create task. Please try again.",

@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { User, Mail, Phone, MapPin, Calendar, CreditCard, FileText, Download, Printer, FileSpreadsheet } from "lucide-react"
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isValid, parseISO } from "date-fns"
-import { useLanguage } from "@/components/language-provider"
 import { useEmployeeTasks, useCredits, useAttendance } from "@/hooks/use-api"
 import { useToast } from "@/hooks/use-toast"
 import type { Employee } from "@/lib/types"
@@ -35,7 +34,7 @@ const safeFormatDate = (dateValue: string | Date | null | undefined, formatStrin
 
   try {
     return format(date, formatString)
-  } catch (error) {
+  } catch {
     return "Invalid Date"
   }
 }
@@ -56,7 +55,6 @@ const safeCreateDate = (dateValue: string | Date | null | undefined): Date | nul
 export function EmployeeReport({ employee, isOpen, onClose }: EmployeeReportProps) {
   const [currentDate, setCurrentDate] = useState("")
   const [currentDateObj, setCurrentDateObj] = useState<Date | null>(null)
-  const { t } = useLanguage()
   const { toast } = useToast()
 
   // Set current date on client-side only
@@ -181,7 +179,7 @@ export function EmployeeReport({ employee, isOpen, onClose }: EmployeeReportProp
         title: "Excel Downloaded",
         description: "Employee report has been exported successfully.",
       })
-    } catch (error) {
+    } catch {
       toast({
         title: "Export Failed",
         description: "Failed to export employee report to Excel.",
