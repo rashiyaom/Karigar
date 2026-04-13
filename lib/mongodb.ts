@@ -7,10 +7,12 @@ declare global {
   } | undefined
 }
 
-const MONGODB_URI = process.env.MONGODB_URI
-
-if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local')
+function getMongoUri(): string {
+  const uri = process.env.MONGODB_URI
+  if (!uri) {
+    throw new Error('Please define the MONGODB_URI environment variable inside .env.local')
+  }
+  return uri
 }
 
 const cached = global.mongoose ?? { conn: null, promise: null }
@@ -24,12 +26,13 @@ export async function connectToDatabase() {
   }
 
   if (!cached.promise) {
+    const mongoUri = getMongoUri()
     const opts = {
       bufferCommands: false,
     }
 
     cached.promise = mongoose
-      .connect(MONGODB_URI!, opts)
+      .connect(mongoUri, opts)
       .then((mongoose) => {
         console.log('✓ Connected to MongoDB')
         return mongoose
