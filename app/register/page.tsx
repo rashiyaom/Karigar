@@ -358,6 +358,11 @@ export default function RegisterPage() {
         return
       }
 
+      // Store CSRF token in sessionStorage for subsequent API calls
+      if (result?.csrfToken) {
+        sessionStorage.setItem('csrf-token', result.csrfToken)
+      }
+
       router.replace("/dashboard")
     } catch {
       setError("Unable to create account right now. Please try again.")

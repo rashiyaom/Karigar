@@ -34,6 +34,7 @@ import { useTheme } from "next-themes"
 import { useLanguage } from "@/components/language-provider"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useEmployees, useStats, useSettings, useDeleteEmployee } from "@/hooks/use-api"
+import { useInitializeCsrfToken } from "@/hooks/use-initialize-csrf-token"
 import { EmployeeForm } from "@/components/employee-form"
 import { EmployeeDetails } from "@/components/employee-details"
 import { EmployeeReport } from "@/components/employee-report"
@@ -61,6 +62,9 @@ export function Dashboard() {
   const [isQuickTaskOpen, setIsQuickTaskOpen] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const router = useRouter()
+
+  // Initialize CSRF token for API requests
+  useInitializeCsrfToken()
 
   const { setTheme } = useTheme()
   const { setLanguage, t } = useLanguage()

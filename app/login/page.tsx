@@ -45,6 +45,11 @@ function LoginForm() {
         return
       }
 
+      // Store CSRF token in sessionStorage for subsequent API calls
+      if (result?.csrfToken) {
+        sessionStorage.setItem('csrf-token', result.csrfToken)
+      }
+
       const role = result?.user?.role
       if (role === "admin") {
         router.replace("/admin/users")

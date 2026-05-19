@@ -5,13 +5,48 @@ import type { Employee, Attendance, Credit, Task, Settings, ApiResponse } from "
 
 const API_BASE = "/api"
 
+// Get CSRF token from sessionStorage or fetch if needed
+async function getCsrfTokenForRequest(): Promise<string | null> {
+  if (typeof window === 'undefined') return null
+  
+  // Try to get from sessionStorage first
+  let token = sessionStorage.getItem('csrf-token')
+  
+  // If not found, try to fetch it
+  if (!token) {
+    try {
+      const response = await fetch(`${API_BASE}/csrf-token`)
+      const data = await response.json()
+      if (data.success && data.csrfToken) {
+        token = data.csrfToken
+        // Store it for future use
+        sessionStorage.setItem('csrf-token', token)
+      }
+    } catch (error) {
+      console.error('Failed to fetch CSRF token:', error)
+    }
+  }
+  
+  return token
+}
+
 // Generic API function
 async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  // Get CSRF token from sessionStorage and add to headers for state-changing requests
+  const csrfToken = await getCsrfTokenForRequest()
+  const method = options?.method?.toUpperCase() || 'GET'
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...options?.headers,
+  } as Record<string, string>
+  
+  // Add CSRF token for POST, PUT, PATCH, DELETE requests
+  if (csrfToken && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+    headers['x-csrf-token'] = csrfToken
+  }
+
   const response = await fetch(`${API_BASE}${endpoint}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
+    headers,
     ...options,
   })
 

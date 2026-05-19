@@ -70,3 +70,12 @@ export async function clearCsrfToken(): Promise<void> {
   const cookieStore = await cookies()
   cookieStore.delete(CSRF_COOKIE_NAME)
 }
+
+/**
+ * Reset CSRF token - generate and set a new one
+ * Useful for re-initializing CSRF protection in middleware
+ */
+export async function resetCsrfToken(): Promise<string> {
+  await clearCsrfToken()
+  return await setCsrfToken()
+}

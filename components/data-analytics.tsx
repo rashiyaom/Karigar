@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCredits, useEmployees, useSettings, useTasks } from "@/hooks/use-api"
+import { useInitializeCsrfToken } from "@/hooks/use-initialize-csrf-token"
 import type { ApiResponse, Attendance } from "@/lib/types"
 
 const ATTENDANCE_COLORS: Record<Attendance["status"], string> = {
@@ -102,6 +103,9 @@ async function fetchAllAttendance() {
 export function DataAnalytics() {
   const monthOptions = useMemo(() => getMonthOptions(), [])
   const [selectedMonth, setSelectedMonth] = useState(monthOptions[0]?.value || format(new Date(), "yyyy-MM"))
+  // Initialize CSRF token for API requests
+  useInitializeCsrfToken()
+
 
   const { data: employees = [], isLoading: employeesLoading, refetch: refetchEmployees } = useEmployees()
   const { data: credits = [], isLoading: creditsLoading, refetch: refetchCredits } = useCredits()

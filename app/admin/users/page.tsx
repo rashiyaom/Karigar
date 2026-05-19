@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { BrandMark } from "@/components/brand-mark"
+import { useInitializeCsrfToken } from "@/hooks/use-initialize-csrf-token"
 
 interface AdminUserRow {
   id: string
@@ -26,6 +27,9 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUserRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Initialize CSRF token for API requests
+  useInitializeCsrfToken()
 
   const fetchUsers = async () => {
     setIsLoading(true)
