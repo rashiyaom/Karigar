@@ -37,8 +37,11 @@ export async function POST(request: NextRequest) {
         username,
         email,
         password: passwordHash,
-        role: 'admin',
+        role: 'user',
       })
+    } else {
+      user.role = 'user'
+      await user.save()
     }
 
     const ownerId: string = user._id.toString()
