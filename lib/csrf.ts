@@ -19,11 +19,13 @@ export async function setCsrfToken(): Promise<string> {
   const token = generateCsrfToken()
   const cookieStore = await cookies()
   
-  // Set HTTP-only, Secure, SameSite=Strict cookie
+  // Set non-httpOnly cookie so client JS can read it for the double-submit pattern.
+  // The CSRF protection comes from matching the cookie value against the header value,
+  // not from hiding the token — that's what the same-site cookie already handles.
   cookieStore.set(CSRF_COOKIE_NAME, token, {
-    httpOnly: true,
+    httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax',
     maxAge: 60 * 60 * 24, // 24 hours
     path: '/',
   })

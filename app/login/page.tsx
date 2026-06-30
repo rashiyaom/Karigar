@@ -45,10 +45,8 @@ function LoginForm() {
         return
       }
 
-      // Store CSRF token in sessionStorage for subsequent API calls
-      if (result?.csrfToken) {
-        sessionStorage.setItem('csrf-token', result.csrfToken)
-      }
+      // CSRF token is now set via Set-Cookie by the server on login.
+      // No need to store it in sessionStorage.
 
       const role = result?.user?.role
       if (role === "admin") {

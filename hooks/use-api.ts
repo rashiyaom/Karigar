@@ -5,35 +5,18 @@ import type { Employee, Attendance, Credit, Task, Settings, ApiResponse } from "
 
 const API_BASE = "/api"
 
-// Get CSRF token from sessionStorage or fetch if needed
-async function getCsrfTokenForRequest(): Promise<string | null> {
-  if (typeof window === 'undefined') return null
-  
-  // Try to get from sessionStorage first
-  let token = sessionStorage.getItem('csrf-token')
-  
-  // If not found, try to fetch it
-  if (!token) {
-    try {
-      const response = await fetch(`${API_BASE}/csrf-token`)
-      const data = await response.json()
-      if (data.success && data.csrfToken) {
-        token = data.csrfToken
-        // Store it for future use
-        sessionStorage.setItem('csrf-token', token)
-      }
-    } catch (error) {
-      console.error('Failed to fetch CSRF token:', error)
-    }
-  }
-  
-  return token
+// Read the CSRF token directly from document.cookie (synchronous, always fresh).
+// The CSRF cookie is non-httpOnly so the browser exposes it to JS.
+function getCsrfTokenForRequest(): string | null {
+  if (typeof document === 'undefined') return null
+  const match = document.cookie.match(/(?:^|;\s*)csrf-token=([^;]+)/)
+  return match ? decodeURIComponent(match[1]) : null
 }
 
 // Generic API function
 async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  // Get CSRF token from sessionStorage and add to headers for state-changing requests
-  const csrfToken = await getCsrfTokenForRequest()
+  // Get CSRF token from cookie and add to headers for state-changing requests
+  const csrfToken = getCsrfTokenForRequest()
   const method = options?.method?.toUpperCase() || 'GET'
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
