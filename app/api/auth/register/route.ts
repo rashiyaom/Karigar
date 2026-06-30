@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { registerUser, setAuthCookie } from '@/lib/auth'
-import { setCsrfToken } from '@/lib/csrf'
 import { sanitizeObjectKeys, hasDangerousPatterns } from '@/lib/input-sanitizer'
 import { checkApiRateLimit } from '@/lib/api-rate-limit'
 import { settingsSchema } from '@/lib/validation'
@@ -104,12 +103,10 @@ export async function POST(request: NextRequest) {
     }
 
     await setAuthCookie(authResult.token)
-    const csrfToken = await setCsrfToken()
 
     const response = NextResponse.json({
       success: true,
       user: authResult.user,
-      csrfToken,
     })
 
     response.cookies.set('user-role', authResult.user.role, {

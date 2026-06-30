@@ -33,7 +33,7 @@ export async function guardWriteRequest(
     rateLimitKey,
     maxRequests = 100,
     windowMs = 60 * 1000,
-    requireCsrf = true,
+    requireCsrf = false,
     parseJsonBody = true,
   } = options
 

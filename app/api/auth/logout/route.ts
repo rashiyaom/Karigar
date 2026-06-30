@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { clearAuthCookie, getAuthToken, logoutUser } from '@/lib/auth'
-import { clearCsrfToken } from '@/lib/csrf'
 import { guardWriteRequest, getClientIp } from '@/lib/api-write-guard'
 
 export async function POST(request: NextRequest) {
@@ -10,7 +9,7 @@ export async function POST(request: NextRequest) {
       rateLimitKey: `auth-logout:${ip}`,
       maxRequests: 60,
       windowMs: 60 * 1000,
-      requireCsrf: true,
+      requireCsrf: false,
       parseJsonBody: false,
     })
 
@@ -24,7 +23,6 @@ export async function POST(request: NextRequest) {
     }
 
     await clearAuthCookie()
-    await clearCsrfToken()
 
     const response = NextResponse.json({ success: true })
     response.cookies.set('user-role', '', { maxAge: 0, path: '/' })

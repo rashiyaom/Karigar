@@ -1,5 +1,5 @@
 import type React from "react"
-import { Inter, Poppins } from "next/font/google"
+import { Inter, Poppins, Syne } from "next/font/google"
 import { ThemeProvider } from "next-themes"
 import { LanguageProvider } from "@/components/language-provider"
 import { Toaster } from "@/components/ui/toaster"
@@ -22,6 +22,13 @@ const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700"],
 })
 
+const syne = Syne({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-syne",
+  weight: ["500", "600", "700", "800"],
+})
+
 export const metadata = {
   title: "Karigar - Employee Management System",
   description: "A comprehensive employee management system with attendance, credits, and task management.",
@@ -42,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${poppins.variable} antialiased dark`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${poppins.variable} ${syne.variable} antialiased dark`} suppressHydrationWarning>
       <body className="font-sans">
         <ErrorBoundary>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>

@@ -3,96 +3,93 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Karigar - Workforce Operations Platform</title>
-  <meta name="description" content="Karigar unifies attendance, tasks, credits, and workforce operations in one secure platform." />
+  <title>Karigar — Workforce Operations Platform</title>
+  <meta name="description" content="Karigar unifies attendance tracking, task management, credits, and workforce analytics into one beautifully designed platform." />
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-  <link rel="shortcut icon" href="/favicon.ico" />
   <link rel="icon" type="image/svg+xml" href="/images/karigar-logo.svg" />
   <link rel="apple-touch-icon" href="/images/karigar-logo.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #050608;
-      --panel: #0f1218;
-      --line: rgba(255, 255, 255, 0.09);
-      --text: #e8eaef;
-      --muted: rgba(232, 234, 239, 0.62);
-      --dim: rgba(232, 234, 239, 0.32);
-      --accent: #ff5a36;
-      --accent-strong: #ff6e49;
-      --radius: 18px;
-      --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+      --bg: #060709;
+      --surface: #0c0e12;
+      --border: rgba(255,255,255,0.07);
+      --border-strong: rgba(255,255,255,0.12);
+      --text: #eef0f5;
+      --muted: rgba(238,240,245,0.6);
+      --dim: rgba(238,240,245,0.35);
+      --accent: #ff5533;
+      --accent-2: #ff7755;
+      --accent-glow: rgba(255,85,51,0.28);
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
       --font-head: "Syne", sans-serif;
-      --font-body: "Manrope", sans-serif;
+      --font-body: "Inter", sans-serif;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100%; min-height: 100%; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
 
     body {
-      overflow-x: hidden;
-      color: var(--text);
       font-family: var(--font-body);
-      background:
-        radial-gradient(circle at 20% 10%, rgba(255, 90, 54, 0.14), transparent 32%),
-        radial-gradient(circle at 80% 80%, rgba(111, 141, 153, 0.08), transparent 36%),
-        linear-gradient(180deg, #050608 0%, #06080c 45%, #0b0f16 100%);
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    .noise,
-    .grid {
+    /* ─── Ambient background ─── */
+    .ambient {
+      pointer-events: none;
       position: fixed;
       inset: 0;
-      pointer-events: none;
       z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 10% -10%, rgba(255,70,40,0.13) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 90% 100%, rgba(255,80,50,0.08) 0%, transparent 55%);
     }
 
-    .noise {
-      opacity: 0.03;
-      background-image: repeating-radial-gradient(circle at 0 0, transparent 0, #fff 1px, transparent 2px);
-      background-size: 3px 3px;
+    .grain {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      opacity: 0.022;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
     }
 
-    .grid {
-      background-image:
-        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-      background-size: 72px 72px;
-      mask-image: radial-gradient(circle at center, black 35%, transparent 95%);
-    }
-
+    /* ─── Layout ─── */
     .shell {
       position: relative;
       z-index: 1;
-      max-width: 1260px;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 0 20px;
+      padding: 0 24px;
     }
 
+    /* ─── Nav ─── */
     .nav {
       position: sticky;
       top: 0;
-      z-index: 20;
-      backdrop-filter: blur(14px);
-      background: rgba(5, 6, 8, 0.72);
-      border-bottom: 1px solid var(--line);
+      z-index: 100;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(20px) saturate(180%);
+      background: rgba(6,7,9,0.75);
     }
 
     .nav-inner {
-      min-height: 68px;
+      height: 64px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      flex-wrap: nowrap;
-      padding: 8px 0;
+      gap: 16px;
     }
 
     .brand {
-      display: inline-flex;
+      display: flex;
       align-items: center;
       gap: 10px;
       text-decoration: none;
@@ -100,1107 +97,1008 @@
     }
 
     .brand-mark {
-      width: 30px;
-      height: 30px;
+      width: 32px;
+      height: 32px;
       border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      background: rgba(255, 255, 255, 0.05);
-      padding: 2px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.04);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       overflow: hidden;
+      padding: 3px;
     }
-
-    .brand-mark img { width: 100%; height: 100%; display: block; border-radius: 8px; }
-
+    .brand-mark img { width: 100%; height: 100%; display: block; }
     .brand-name {
       font-family: var(--font-head);
       font-size: 18px;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: -0.01em;
     }
 
     .nav-links {
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 4px;
-      border-radius: 11px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(255, 255, 255, 0.015);
+      gap: 2px;
     }
-
     .nav-links a {
       text-decoration: none;
       color: var(--muted);
-      font-size: 12px;
-      padding: 7px 11px;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 14px;
       border-radius: 8px;
-      transition: all 0.2s var(--ease);
+      transition: color 0.2s, background 0.2s;
     }
+    .nav-links a:hover { color: var(--text); background: rgba(255,255,255,0.05); }
 
-    .nav-links a:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
-
-    .nav-actions { display: inline-flex; gap: 8px; align-items: center; }
+    .nav-actions { display: flex; gap: 8px; align-items: center; }
 
     .btn {
       text-decoration: none;
-      border-radius: 10px;
+      font-family: var(--font-body);
       font-size: 13px;
       font-weight: 600;
-      padding: 9px 13px;
-      transition: all 0.2s var(--ease);
+      padding: 8px 18px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      transition: all 0.22s var(--ease);
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      gap: 8px;
-      border: 1px solid transparent;
+      gap: 6px;
+      cursor: pointer;
+      white-space: nowrap;
     }
-
-    .btn.ghost { color: var(--text); border-color: var(--line); background: rgba(255, 255, 255, 0.02); }
-    .btn.ghost:hover { background: rgba(255, 255, 255, 0.07); }
-
-    .btn.primary {
-      color: #0a0a0a;
-      background: linear-gradient(135deg, var(--accent-strong), var(--accent));
-      box-shadow: 0 10px 24px rgba(255, 90, 54, 0.35);
-    }
-
-    .btn.primary:hover { transform: translateY(-1px); box-shadow: 0 16px 30px rgba(255, 90, 54, 0.45); }
-
-    .hero { padding: 42px 0 28px; }
-
-    .hero-grid {
-      display: grid;
-      grid-template-columns: 240px minmax(0, 1fr) 240px;
-      gap: 18px;
-      align-items: center;
-    }
-
-    .side-circle {
-      min-height: 360px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 30px;
+    .btn-ghost {
       color: var(--muted);
+      border-color: var(--border-strong);
+      background: rgba(255,255,255,0.02);
+    }
+    .btn-ghost:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+    .btn-primary {
+      color: #fff;
+      background: linear-gradient(135deg, #ff6040 0%, #e83a20 100%);
+      box-shadow: 0 4px 20px rgba(255,85,51,0.35), 0 1px 0 rgba(255,255,255,0.1) inset;
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 28px rgba(255,85,51,0.48), 0 1px 0 rgba(255,255,255,0.1) inset;
+    }
+    .btn-lg { font-size: 15px; padding: 12px 26px; border-radius: 12px; }
+
+    /* ─── Hero ─── */
+    .hero {
+      padding: 96px 0 80px;
+      text-align: center;
       position: relative;
-      overflow: hidden;
     }
 
-    .metric { text-align: left; width: 120px; }
-    .metric strong {
-      display: block;
-      font-family: var(--font-head);
-      font-size: 34px;
-      line-height: 1;
-      color: #dce2e8;
-      margin-bottom: 8px;
-    }
-    .metric span { font-size: 12px; color: var(--dim); }
-
-    .hero-core {
-      border: 1px solid var(--line);
-      border-radius: 28px;
-      padding: 36px 30px 26px;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0.005));
-      position: relative;
-      overflow: hidden;
-    }
-
-    .hero-core::before {
-      content: "";
+    .hero::before {
+      content: '';
       position: absolute;
       left: 50%;
-      top: 44%;
-      width: 520px;
-      height: 520px;
-      transform: translate(-50%, -50%);
-      border-radius: 999px;
-      background: radial-gradient(circle at 45% 35%, rgba(255, 106, 72, 0.42), rgba(255, 90, 54, 0.14) 45%, transparent 72%);
-      pointer-events: none;
+      top: 0;
+      transform: translateX(-50%);
+      width: 1px;
+      height: 80px;
+      background: linear-gradient(to bottom, transparent, rgba(255,85,51,0.5), transparent);
     }
 
-    .pill {
+    .hero-badge {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      padding: 7px 12px;
+      border: 1px solid rgba(255,85,51,0.3);
+      background: rgba(255,85,51,0.08);
+      color: #ff9980;
       font-size: 11px;
-      letter-spacing: 0.14em;
+      font-weight: 600;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: #c4cfd8;
-      margin-bottom: 18px;
-      position: relative;
-      z-index: 1;
+      padding: 7px 14px;
+      border-radius: 999px;
+      margin-bottom: 32px;
     }
 
-    .dot {
-      width: 7px;
-      height: 7px;
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 0 0 rgba(255, 90, 54, 0.7);
-      animation: pulse 1.8s infinite;
+      background: #ff5533;
+      animation: pulseDot 2s ease-in-out infinite;
     }
 
-    @keyframes pulse {
-      0%,100% { box-shadow: 0 0 0 0 rgba(255, 90, 54, 0.6); }
-      60% { box-shadow: 0 0 0 8px rgba(255, 90, 54, 0); }
+    @keyframes pulseDot {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,85,51,0.6); }
+      50% { box-shadow: 0 0 0 6px rgba(255,85,51,0); }
     }
 
     .hero h1 {
-      position: relative;
-      z-index: 1;
       font-family: var(--font-head);
-      font-weight: 700;
-      font-size: clamp(32px, 5vw, 66px);
-      line-height: 1.02;
-      letter-spacing: -0.03em;
-      max-width: 760px;
+      font-size: clamp(42px, 6.5vw, 86px);
+      font-weight: 800;
+      line-height: 1.0;
+      letter-spacing: -0.035em;
+      max-width: 900px;
+      margin: 0 auto 24px;
     }
 
-    .hero h1 em { color: var(--accent); font-style: normal; }
-    .hero p {
+    .hero h1 .accent { color: var(--accent-2); }
+    .hero h1 .underline-accent {
+      position: relative;
+      display: inline-block;
+    }
+    .hero h1 .underline-accent::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -4px;
+      width: 100%;
+      height: 3px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      opacity: 0.7;
+    }
+
+    .hero-sub {
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.7;
+      max-width: 580px;
+      margin: 0 auto 40px;
+    }
+
+    .hero-cta {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 72px;
+    }
+
+    /* ─── Hero product image ─── */
+    .hero-visual {
+      position: relative;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .hero-visual::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, rgba(255,85,51,0.4), rgba(255,255,255,0.06), rgba(255,85,51,0.15));
+      z-index: -1;
+    }
+
+    .hero-visual img {
+      width: 100%;
+      display: block;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow:
+        0 0 0 1px rgba(255,85,51,0.15),
+        0 40px 100px rgba(0,0,0,0.7),
+        0 0 80px rgba(255,85,51,0.12);
+    }
+
+    .hero-visual-glow {
+      position: absolute;
+      left: 50%;
+      bottom: -40px;
+      transform: translateX(-50%);
+      width: 60%;
+      height: 80px;
+      background: radial-gradient(ellipse at center, rgba(255,85,51,0.25), transparent 70%);
+      filter: blur(20px);
+      pointer-events: none;
+    }
+
+    /* ─── Stats strip ─── */
+    .stats-strip {
+      padding: 48px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+    }
+
+    .stat-item {
+      padding: 24px 32px;
+      border-right: 1px solid var(--border);
+      position: relative;
+    }
+    .stat-item:last-child { border-right: none; }
+
+    .stat-value {
+      font-family: var(--font-head);
+      font-size: 40px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: var(--text);
+      margin-bottom: 6px;
+      line-height: 1;
+    }
+    .stat-value span { color: var(--accent-2); }
+    .stat-label { font-size: 13px; color: var(--dim); font-weight: 500; }
+
+    /* ─── Section base ─── */
+    .section {
+      padding: 100px 0;
+    }
+
+    .section-kicker {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent-2);
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-family: var(--font-head);
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+    }
+    .section-title .accent { color: var(--accent-2); }
+
+    .section-sub {
+      font-size: 16px;
+      color: var(--muted);
+      line-height: 1.75;
+      max-width: 520px;
+    }
+
+    /* ─── Features — photo cards ─── */
+    .features-intro {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      margin-bottom: 64px;
+    }
+
+    .features-list {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    /* Photo-forward feature cards — horizontal layout */
+    .feat-card {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      overflow: hidden;
+      background: var(--surface);
+      transition: border-color 0.3s var(--ease), box-shadow 0.3s var(--ease), transform 0.3s var(--ease);
+      position: relative;
+    }
+
+    .feat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 40%, rgba(255,255,255,0.15) 60%, transparent 100%);
+    }
+
+    .feat-card:hover {
+      border-color: rgba(255,85,51,0.4);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,85,51,0.12) inset;
+      transform: translateY(-4px);
+    }
+
+    .feat-card.reverse { direction: rtl; }
+    .feat-card.reverse > * { direction: ltr; }
+
+    .feat-content {
+      padding: 44px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .feat-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #ff9d85;
+      border: 1px solid rgba(255,85,51,0.25);
+      background: rgba(255,85,51,0.08);
+      padding: 5px 10px;
+      border-radius: 999px;
+      margin-bottom: 18px;
+      width: fit-content;
+    }
+
+    .feat-content h3 {
+      font-family: var(--font-head);
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 14px;
+    }
+
+    .feat-content p {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.75;
+      margin-bottom: 24px;
+    }
+
+    .feat-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .feat-pill {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--dim);
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      padding: 5px 12px;
+      border-radius: 999px;
+    }
+
+    .feat-photo {
+      overflow: hidden;
+      position: relative;
+    }
+
+    .feat-photo::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right, var(--surface) 0%, transparent 30%);
+    }
+
+    .feat-card.reverse .feat-photo::after {
+      background: linear-gradient(to left, var(--surface) 0%, transparent 30%);
+    }
+
+    .feat-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: left top;
+      display: block;
+      transition: transform 0.6s var(--ease);
+    }
+
+    .feat-card:hover .feat-photo img {
+      transform: scale(1.03);
+    }
+
+    /* ─── Process / How it works ─── */
+    .process { padding: 100px 0; background: linear-gradient(180deg, transparent 0%, rgba(255,85,51,0.03) 50%, transparent 100%); }
+
+    .process-header { text-align: center; max-width: 600px; margin: 0 auto 72px; }
+
+    .process-steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      position: relative;
+    }
+
+    .process-steps::before {
+      content: '';
+      position: absolute;
+      top: 28px;
+      left: calc(12.5% + 16px);
+      right: calc(12.5% + 16px);
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,85,51,0.3) 20%, rgba(255,85,51,0.3) 80%, transparent);
+    }
+
+    .process-step {
+      text-align: center;
+      padding: 0 12px;
+    }
+
+    .step-num {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,85,51,0.3);
+      background: rgba(255,85,51,0.08);
+      color: var(--accent-2);
+      font-family: var(--font-head);
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
       position: relative;
       z-index: 1;
-      margin-top: 16px;
-      max-width: 620px;
-      color: var(--muted);
-      font-size: 16px;
-      line-height: 1.7;
     }
 
-    .hero-cta { position: relative; z-index: 1; margin-top: 24px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .process-step h4 {
+      font-family: var(--font-head);
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
 
-    .ticker {
-      margin-top: 20px;
-      border: 1px solid var(--line);
-      background: rgba(255, 90, 54, 0.08);
-      color: #ffab98;
-      border-radius: 12px;
-      padding: 12px 14px;
-      font-size: 13px;
+    .process-step p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* ─── Modules ─── */
+    .modules { padding: 100px 0; }
+
+    .modules-header { margin-bottom: 56px; }
+
+    .modules-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+    }
+
+    .module-card {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px 20px;
+      background: var(--surface);
+      text-align: center;
+      transition: all 0.28s var(--ease);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .module-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 18px;
+      background: radial-gradient(circle at 50% 0%, rgba(255,85,51,0.12), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .module-card:hover {
+      border-color: rgba(255,85,51,0.4);
+      transform: translateY(-6px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+    }
+
+    .module-card:hover::before { opacity: 1; }
+
+    .module-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .module-name {
+      font-family: var(--font-head);
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .module-desc {
+      font-size: 12px;
+      color: var(--dim);
+      line-height: 1.6;
+    }
+
+    /* ─── FAQ ─── */
+    .faq { padding: 100px 0; }
+    .faq-header { text-align: center; max-width: 600px; margin: 0 auto 56px; }
+
+    .faq-list {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .faq-item {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+      overflow: hidden;
+      transition: border-color 0.25s;
+    }
+
+    .faq-item[open] { border-color: rgba(255,85,51,0.35); }
+
+    .faq-item summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 20px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: var(--font-head);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      position: relative;
-      z-index: 1;
-      flex-wrap: wrap;
+      gap: 12px;
+      user-select: none;
     }
-
-    .section { padding: 56px 0 24px; }
-
-    .section + .section {
-      padding-top: 42px;
-    }
-
-    .section-head {
-      margin-bottom: 16px;
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      border: 1px solid var(--border-strong);
       display: flex;
-      align-items: end;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 18px;
+      font-weight: 400;
+      color: var(--muted);
+      transition: transform 0.25s, color 0.25s, border-color 0.25s;
+      line-height: 1;
+    }
+    .faq-item[open] .faq-icon {
+      transform: rotate(45deg);
+      color: var(--accent-2);
+      border-color: rgba(255,85,51,0.3);
+    }
+
+    .faq-answer {
+      padding: 0 24px 20px;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.75;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+
+    /* ─── CTA Section ─── */
+    .cta-section {
+      padding: 0 0 100px;
+    }
+
+    .cta-inner {
+      border-radius: 28px;
+      border: 1px solid rgba(255,85,51,0.2);
+      background: linear-gradient(135deg, rgba(255,85,51,0.08) 0%, rgba(255,85,51,0.02) 50%, rgba(255,120,80,0.06) 100%);
+      padding: 72px 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-inner::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: -60px;
+      transform: translateX(-50%);
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,85,51,0.15), transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-inner h2 {
+      font-family: var(--font-head);
+      font-size: clamp(32px, 4.5vw, 56px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .cta-inner p {
+      font-size: 17px;
+      color: var(--muted);
+      max-width: 480px;
+      margin: 0 auto 36px;
+      line-height: 1.7;
+      position: relative;
+    }
+
+    .cta-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; position: relative; }
+
+    /* ─── Footer ─── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 0;
+    }
+
+    .footer-inner {
+      display: flex;
+      align-items: center;
       justify-content: space-between;
       gap: 16px;
       flex-wrap: wrap;
     }
 
-    .section-kicker { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); margin-bottom: 8px; }
-    .section-title { font-family: var(--font-head); font-size: clamp(26px, 4.2vw, 44px); line-height: 1.08; letter-spacing: -0.02em; }
-    .section-title em { color: var(--accent); font-style: normal; }
-    .section-copy { color: var(--muted); max-width: 540px; font-size: 15px; line-height: 1.75; }
-
-    .feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-
-    .feature-card {
-      position: relative;
-      border-radius: 22px;
-      background: linear-gradient(180deg, #101723 0%, #0b1320 100%);
-      border: 1px solid rgba(175, 196, 210, 0.28);
-      overflow: hidden;
-      transition: transform 0.32s var(--ease), box-shadow 0.32s var(--ease), border-color 0.32s var(--ease);
-      box-shadow: 0 20px 34px rgba(0, 0, 0, 0.34);
-    }
-
-    .feature-card::before {
-      content: "";
-      position: absolute;
-      left: 14px;
-      right: 14px;
-      top: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
-      opacity: 0.7;
-      pointer-events: none;
-    }
-
-    .feature-card:hover {
-      transform: translateY(-8px);
-      border-color: rgba(255, 90, 54, 0.55);
-      box-shadow: 0 28px 48px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 90, 54, 0.18) inset;
-    }
-
-    .feature-visual {
-      height: 174px;
-      background:
-        radial-gradient(circle at 78% 28%, rgba(255, 110, 73, 0.24), transparent 45%),
-        radial-gradient(circle at 18% 82%, rgba(86, 128, 146, 0.26), transparent 52%),
-        linear-gradient(145deg, #1c2733 0%, #121c27 52%, #0d151f 100%);
-      position: relative;
-      overflow: hidden;
-      border-bottom: 1px solid rgba(173, 193, 206, 0.18);
-    }
-
-    .feature-visual::before {
-      content: "";
-      position: absolute;
-      width: 220px;
-      height: 220px;
-      border: 1px solid rgba(199, 214, 223, 0.18);
-      border-radius: 999px;
-      top: -80px;
-      left: -60px;
-      animation: orbit 16s linear infinite;
-    }
-
-    .feature-visual::after {
-      content: "";
-      position: absolute;
-      width: 120px;
-      height: 42px;
-      border-radius: 999px;
-      bottom: 22px;
-      left: 18px;
-      background: var(--accent);
-      opacity: 0.96;
-      box-shadow: 0 10px 22px rgba(255, 90, 54, 0.34);
-      animation: pulseBar 2.7s ease-in-out infinite;
-    }
-
-    .feature-card:nth-child(2) .feature-visual {
-      background:
-        radial-gradient(circle at 78% 28%, rgba(120, 160, 255, 0.22), transparent 45%),
-        radial-gradient(circle at 24% 72%, rgba(109, 198, 190, 0.2), transparent 52%),
-        linear-gradient(145deg, #172231 0%, #101b29 52%, #0b1420 100%);
-    }
-
-    .feature-card:nth-child(3) .feature-visual {
-      background:
-        radial-gradient(circle at 72% 18%, rgba(255, 110, 73, 0.3), transparent 42%),
-        radial-gradient(circle at 24% 74%, rgba(131, 145, 220, 0.2), transparent 52%),
-        linear-gradient(145deg, #1a1f35 0%, #12182a 52%, #0b1220 100%);
-    }
-
-    .feature-visual .chip {
-      position: absolute;
-      right: 16px;
-      top: 16px;
-      padding: 6px 11px;
-      border-radius: 999px;
-      border: 1px solid rgba(229, 239, 246, 0.24);
-      background: rgba(8, 12, 18, 0.58);
-      color: #cfd9e0;
-      font-size: 11px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-
-    .feature-visual .bars {
-      position: absolute;
-      left: 18px;
-      right: 18px;
-      top: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      opacity: 0.9;
-    }
-
-    .feature-visual .bars span {
-      display: block;
-      height: 8px;
-      border-radius: 999px;
-      background: rgba(218, 229, 236, 0.22);
-      width: 100%;
-    }
-
-    .feature-visual .bars span:nth-child(2) { width: 72%; }
-    .feature-visual .bars span:nth-child(3) { width: 54%; }
-
-    .feature-card:nth-child(2) .feature-visual .bars span:nth-child(2) { width: 68%; }
-    .feature-card:nth-child(3) .feature-visual .bars span:nth-child(2) { width: 74%; }
-
-    .feature-meta {
-      margin-top: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .feature-meta span {
-      color: rgba(233, 240, 246, 0.72);
-      font-size: 12px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    .feature-index {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      background: rgba(255, 255, 255, 0.03);
-      color: #e6edf3;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-    }
-
-    .story {
-      padding: 30px 0;
-    }
-
-    .story-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-      gap: 14px;
-      align-items: stretch;
-    }
-
-    .story-panel {
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      background: linear-gradient(170deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.008));
-      padding: 20px;
-    }
-
-    .story-panel h3 {
-      font-family: var(--font-head);
-      font-size: clamp(24px, 3.6vw, 36px);
-      margin-bottom: 10px;
-      letter-spacing: -0.02em;
-    }
-
-    .story-panel p {
-      color: var(--muted);
-      line-height: 1.75;
-      max-width: 640px;
-    }
-
-    .story-list {
-      margin-top: 16px;
-      display: grid;
-      gap: 10px;
-    }
-
-    .story-item {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.02);
-      padding: 12px;
-    }
-
-    .story-item strong {
-      display: block;
-      margin-bottom: 4px;
-      color: #e7eef4;
-      font-size: 14px;
-    }
-
-    .story-item span {
-      color: var(--muted);
+    .footer-copy { font-size: 13px; color: var(--dim); }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a {
       font-size: 13px;
-      line-height: 1.55;
-    }
-
-    .timeline {
-      display: grid;
-      gap: 10px;
-    }
-
-    .timeline-step {
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 14px;
-      padding: 14px;
-      background: rgba(8, 14, 24, 0.58);
-    }
-
-    .timeline-step small {
-      color: #ffad99;
-      letter-spacing: 0.09em;
-      text-transform: uppercase;
-      font-size: 10px;
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .timeline-step h4 {
-      font-size: 17px;
-      margin-bottom: 4px;
-      color: #f2f5f7;
-    }
-
-    .timeline-step p {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.6;
-    }
-
-    .metrics-band {
-      margin-top: 16px;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 12px;
-      background: rgba(255, 255, 255, 0.02);
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .metric-tile {
-      border-radius: 12px;
-      padding: 10px;
-      background: rgba(5, 9, 15, 0.72);
-      border: 1px solid rgba(255, 255, 255, 0.07);
-    }
-
-    .metric-tile strong {
-      display: block;
-      font-family: var(--font-head);
-      font-size: 22px;
-      color: #f0f4f7;
-      margin-bottom: 2px;
-    }
-
-    .metric-tile span {
       color: var(--dim);
-      font-size: 12px;
+      text-decoration: none;
+      transition: color 0.2s;
     }
+    .footer-links a:hover { color: var(--muted); }
 
-    .faq {
-      padding: 18px 0 62px;
-    }
-
-    .faq-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .faq-item {
-      border: 1px solid rgba(173, 193, 206, 0.2);
-      border-radius: 18px;
-      background: linear-gradient(170deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.008));
-      padding: 0;
-      overflow: hidden;
-      transition: border-color 0.26s var(--ease), box-shadow 0.26s var(--ease), transform 0.26s var(--ease);
-    }
-
-    .faq-item:hover {
-      transform: translateY(-3px);
-      border-color: rgba(255, 90, 54, 0.42);
-      box-shadow: 0 18px 28px rgba(0, 0, 0, 0.26);
-    }
-
-    .faq-item summary {
-      list-style: none;
-      cursor: pointer;
-      padding: 18px 20px;
-      position: relative;
-      padding-right: 54px;
-      color: #edf2f6;
-      font-family: var(--font-head);
-      font-size: 17px;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-    }
-
-    .faq-item summary::-webkit-details-marker { display: none; }
-
-    .faq-item summary::after {
-      content: "+";
-      position: absolute;
-      right: 18px;
-      top: 14px;
-      width: 26px;
-      height: 26px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: #dfe9f1;
-      font-size: 18px;
-      line-height: 1;
-      transition: transform 0.24s var(--ease), color 0.24s var(--ease), border-color 0.24s var(--ease);
-    }
-
-    .faq-item[open] {
-      border-color: rgba(255, 90, 54, 0.45);
-      box-shadow: 0 20px 34px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 90, 54, 0.14) inset;
-    }
-
-    .faq-item[open] summary::after {
-      transform: rotate(45deg);
-      color: #ffb29f;
-      border-color: rgba(255, 90, 54, 0.45);
-    }
-
-    .faq-answer {
-      padding: 0 20px 18px;
-      color: var(--muted);
-      line-height: 1.65;
-      font-size: 14px;
-      border-top: 1px solid rgba(255, 255, 255, 0.07);
-      margin-top: 0;
-      padding-top: 12px;
-    }
-
-    .faq-item p {
-      color: var(--muted);
-      line-height: 1.65;
-      font-size: 14px;
-    }
-
-    .feature-body { padding: 16px 14px 18px; }
-    .feature-subtitle {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 9px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      background: rgba(255, 255, 255, 0.03);
-      color: #ffb29f;
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-bottom: 10px;
-      font-weight: 700;
-    }
-    .feature-body h3 {
-      font-size: 34px;
-      font-family: var(--font-head);
-      margin-bottom: 6px;
-      letter-spacing: -0.02em;
-      color: #f0f2f5;
-    }
-    .feature-body p { color: var(--muted); font-size: 15px; line-height: 1.65; }
-
-    @keyframes orbit {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    @keyframes pulseBar {
-      0%, 100% { transform: scaleX(1); }
-      50% { transform: scaleX(1.07); }
-    }
-
-    .partners { padding: 52px 0 52px; }
-    .partner-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
-
-    .partner {
-      height: 126px;
-      border-radius: 24px;
-      border: 1px solid var(--line);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 4px;
-      color: #d2dbe2;
-      font-weight: 700;
-      font-family: var(--font-head);
-      background: rgba(255, 255, 255, 0.015);
-      font-size: 20px;
-      transition: all 0.25s var(--ease);
-      text-align: center;
-      padding: 14px;
-    }
-
-    .partner span {
-      font-family: var(--font-body);
-      font-size: 12px;
-      color: var(--muted);
-      font-weight: 500;
-    }
-
-    .partner:nth-child(3) { background: rgba(255, 90, 54, 0.16); color: #ffd2c5; border-color: rgba(255, 90, 54, 0.5); }
-    .partner:hover { transform: translateY(-3px); border-color: rgba(255, 90, 54, 0.4); }
-
-    .testimonials {
-      padding: 28px 0 50px;
-    }
-
-    .testimonial-strip {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 16px;
-    }
-
-    .testimonial {
-      border-radius: 18px;
-      border: 1px solid var(--line);
-      background: linear-gradient(165deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.008));
-      padding: 16px;
-    }
-
-    .testimonial p {
-      color: #d9e2e9;
-      line-height: 1.7;
-      font-size: 14px;
-      margin-bottom: 12px;
-    }
-
-    .testimonial strong {
-      display: block;
-      font-size: 14px;
-      color: #eef3f7;
-    }
-
-    .testimonial span {
-      color: var(--dim);
-      font-size: 12px;
-    }
-
-    .footer {
-      border-top: 1px solid var(--line);
-      padding: 22px 0 36px;
-      color: var(--dim);
-      font-size: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .reveal {
+    /* ─── Scroll animations ─── */
+    .fade-up {
       opacity: 0;
-      transform: translateY(18px);
-      transition: opacity 0.68s var(--ease), transform 0.68s var(--ease);
-    }
-    .reveal.in { opacity: 1; transform: translateY(0); }
-
-    .scroll-float {
-      opacity: 0;
-      transform: translateY(34px) scale(0.985);
+      transform: translateY(28px);
       transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
-      transition-delay: var(--stagger, 0ms);
-      will-change: transform, opacity;
+      transition-delay: var(--delay, 0ms);
     }
+    .fade-up.in { opacity: 1; transform: translateY(0); }
 
-    .scroll-float.in {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-
-    .scroll-slide {
+    .fade-in {
       opacity: 0;
-      transform: translateX(var(--slide-from, 0px));
-      transition: opacity 0.72s var(--ease), transform 0.72s var(--ease);
-      transition-delay: var(--stagger, 0ms);
+      transition: opacity 0.8s var(--ease);
+      transition-delay: var(--delay, 0ms);
+    }
+    .fade-in.in { opacity: 1; }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 1024px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .stat-item:nth-child(2) { border-right: none; }
+      .stat-item:nth-child(3) { border-top: 1px solid var(--border); }
+      .stat-item:nth-child(4) { border-top: 1px solid var(--border); border-right: none; }
+      .feat-card { grid-template-columns: 1fr; }
+      .feat-photo { height: 280px; }
+      .feat-card.reverse { direction: ltr; }
+      .feat-photo::after { background: linear-gradient(to top, var(--surface) 0%, transparent 40%); }
+      .feat-card.reverse .feat-photo::after { background: linear-gradient(to top, var(--surface) 0%, transparent 40%); }
+      .process-steps { grid-template-columns: repeat(2, 1fr); }
+      .process-steps::before { display: none; }
+      .modules-grid { grid-template-columns: repeat(3, 1fr); }
     }
 
-    .scroll-slide.in {
-      opacity: 1;
-      transform: translateX(0);
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .hero { padding: 64px 0 56px; }
+      .feat-content { padding: 28px 24px; }
+      .modules-grid { grid-template-columns: repeat(2, 1fr); }
+      .cta-inner { padding: 48px 24px; }
+      .features-intro { grid-template-columns: 1fr; gap: 32px; }
     }
 
-    .scroll-pop {
-      opacity: 0;
-      transform: translateY(22px) scale(0.96);
-      transition: opacity 0.64s var(--ease), transform 0.64s var(--ease);
-      transition-delay: var(--stagger, 0ms);
-    }
-
-    .scroll-pop.in {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-
-    .parallax-soft {
-      transform: translate3d(0, calc(var(--parallax, 0) * 1px), 0);
-      will-change: transform;
-    }
-
-    @media (max-width: 1100px) {
-      .hero-grid { grid-template-columns: 1fr; }
-      .side-circle {
-        min-height: unset;
-        border-radius: var(--radius);
-        flex-direction: row;
-        padding: 18px;
-        gap: 24px;
-        justify-content: flex-start;
-      }
-      .metric { width: auto; }
-      .metric strong { font-size: 28px; }
-      .story-grid { grid-template-columns: 1fr; }
-      .metrics-band { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .feature-grid, .partner-row, .testimonial-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-
-    @media (max-width: 760px) {
-      .nav-links {
-        order: 3;
-        width: 100%;
-        justify-content: space-between;
-      }
-      .nav-inner { flex-wrap: wrap; gap: 8px; }
-      .hero { padding-top: 24px; }
-      .hero-core { border-radius: 22px; padding: 24px 18px; }
-      .metrics-band,
-      .faq-grid { grid-template-columns: 1fr; }
-      .feature-grid, .partner-row, .testimonial-strip { grid-template-columns: 1fr; }
-      .partner { border-radius: 20px; }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .stat-item { border-right: none; border-bottom: 1px solid var(--border); }
+      .stat-item:last-child { border-bottom: none; }
+      .modules-grid { grid-template-columns: 1fr 1fr; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      * { animation: none !important; transition: none !important; }
-      .reveal { opacity: 1; transform: none; }
-      .scroll-float,
-      .scroll-slide,
-      .scroll-pop,
-      .parallax-soft {
-        opacity: 1 !important;
-        transform: none !important;
-      }
+      .fade-up, .fade-in { opacity: 1 !important; transform: none !important; }
+      * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
   </style>
 </head>
 <body>
-  <div class="noise" aria-hidden="true"></div>
-  <div class="grid" aria-hidden="true"></div>
+  <div class="ambient" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
 
-  <nav class="nav">
+  <!-- NAV -->
+  <nav class="nav" role="navigation" aria-label="Main navigation">
     <div class="shell nav-inner">
-      <a class="brand" href="/landing.html">
-        <span class="brand-mark"><img src="/images/karigar-logo.svg" alt="Karigar Logo" /></span>
+      <a class="brand" href="/landing.html" aria-label="Karigar home">
+        <span class="brand-mark"><img src="/images/karigar-logo.svg" alt="" /></span>
         <span class="brand-name">Karigar</span>
       </a>
 
       <div class="nav-links">
-        <a href="#about">About</a>
-        <a href="#product">Product</a>
-        <a href="#features">Solutions</a>
-        <a href="#partners">Partners</a>
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="#modules">Modules</a>
+        <a href="#faq">FAQ</a>
       </div>
 
       <div class="nav-actions">
-        <a class="btn ghost" href="/login">Log In</a>
-        <a class="btn primary" href="/register">Get Started</a>
+        <a class="btn btn-ghost" href="/login">Sign In</a>
+        <a class="btn btn-primary" href="/register">Get Started</a>
       </div>
     </div>
   </nav>
 
-  <main class="shell">
-    <section class="hero reveal" id="about">
-      <div class="hero-grid">
-        <aside class="side-circle scroll-slide" style="--slide-from:-24px" data-scroll data-stagger="40">
-          <div class="metric scroll-pop" data-scroll data-stagger="120">
-            <strong>4</strong>
-            <span>Core modules: attendance, tasks, credits, history</span>
-          </div>
-          <div class="metric scroll-pop" data-scroll data-stagger="200">
-            <strong>13</strong>
-            <span>API groups in this codebase</span>
-          </div>
-        </aside>
-
-        <article class="hero-core parallax-soft" data-parallax="0.08">
-          <span class="pill"><span class="dot"></span>Workforce OS for growing teams</span>
-          <h1>One <em>operations workspace</em> for attendance, tasks, credits, and history.</h1>
-          <p>Karigar brings workforce records into a single app with dashboard views, role-based access, and API-backed workflows.</p>
-          <div class="hero-cta">
-            <a class="btn primary" href="/register">Start Free</a>
-            <a class="btn ghost" href="/login">Sign In to Workspace</a>
-          </div>
-          <div class="ticker">
-            <span>Backed by Next.js + MongoDB with authenticated API routes and security checks.</span>
-            <a class="btn ghost" style="padding:8px 12px" href="/register">Create Workspace</a>
-          </div>
-        </article>
-
-        <aside class="side-circle scroll-slide" style="--slide-from:24px" data-scroll data-stagger="80">
-          <div class="metric scroll-pop" data-scroll data-stagger="160">
-            <strong>CSRF</strong>
-            <span>Write routes use CSRF validation</span>
-          </div>
-          <div class="metric scroll-pop" data-scroll data-stagger="240">
-            <strong>Pages</strong>
-            <span>Dashboard, attendance, tasks, credits, analytics, history</span>
-          </div>
-        </aside>
+  <!-- HERO -->
+  <section class="hero" aria-labelledby="hero-heading">
+    <div class="shell">
+      <div class="hero-badge fade-in" style="--delay:0ms">
+        <span class="pulse-dot"></span>
+        Workforce OS for growing teams
       </div>
-    </section>
 
-    <section class="section reveal" id="features">
-      <div class="section-head">
+      <h1 id="hero-heading" class="fade-up" style="--delay:80ms">
+        One workspace for<br>
+        <span class="underline-accent accent">every operation</span>
+      </h1>
+
+      <p class="hero-sub fade-up" style="--delay:160ms">
+        Karigar centralises attendance, task tracking, credits, and workforce analytics — so your team spends less time coordinating and more time executing.
+      </p>
+
+      <div class="hero-cta fade-up" style="--delay:240ms">
+        <a class="btn btn-primary btn-lg" href="/register">Start Free Today</a>
+        <a class="btn btn-ghost btn-lg" href="/login">Sign In to Workspace</a>
+      </div>
+
+      <div class="hero-visual fade-in" style="--delay:400ms">
+        <img
+          src="/images/hero-dashboard.png"
+          alt="Karigar workforce dashboard showing attendance rates, task completion, and employee metrics"
+          loading="eager"
+        />
+        <div class="hero-visual-glow"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS STRIP -->
+  <div class="stats-strip">
+    <div class="shell">
+      <div class="stats-grid">
+        <div class="stat-item fade-up" style="--delay:0ms">
+          <div class="stat-value">4<span>+</span></div>
+          <div class="stat-label">Core operational modules</div>
+        </div>
+        <div class="stat-item fade-up" style="--delay:80ms">
+          <div class="stat-value">13<span>+</span></div>
+          <div class="stat-label">Dedicated API groups</div>
+        </div>
+        <div class="stat-item fade-up" style="--delay:160ms">
+          <div class="stat-value">99<span>%</span></div>
+          <div class="stat-label">Data uptime guaranteed</div>
+        </div>
+        <div class="stat-item fade-up" style="--delay:240ms">
+          <div class="stat-value">2x</div>
+          <div class="stat-label">Faster payroll closure</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="section" id="features" aria-labelledby="features-heading">
+    <div class="shell">
+      <div class="features-intro">
         <div>
-          <p class="section-kicker">01 Capability Stack</p>
-          <h2 class="section-title">Your team gets <em>clarity</em>, not chaos.</h2>
+          <p class="section-kicker fade-up" style="--delay:0ms">01 · Capability Stack</p>
+          <h2 id="features-heading" class="section-title fade-up" style="--delay:80ms">
+            Your team gets <span class="accent">clarity</span>,<br>not chaos.
+          </h2>
         </div>
-        <p class="section-copy">Move from fragmented tools to one platform designed for attendance discipline, execution velocity, and payroll confidence.</p>
+        <p class="section-sub fade-up" style="--delay:160ms">
+          Move from fragmented spreadsheets to one unified platform built for attendance discipline, execution velocity, and payroll confidence.
+        </p>
       </div>
 
-      <div class="feature-grid">
-        <article class="feature-card scroll-float" data-scroll data-stagger="20">
-          <div class="feature-visual">
-            <div class="bars"><span></span><span></span><span></span></div>
-            <span class="chip">Live</span>
-          </div>
-          <div class="feature-body">
-            <span class="feature-subtitle">Attendance Intelligence</span>
-            <h3>Constant Monitoring</h3>
-            <p>Track attendance records, employee activity, and status updates from one interface.</p>
-            <div class="feature-meta">
-              <span>Daily workforce signals</span>
-              <span class="feature-index">01</span>
+      <div class="features-list">
+        <!-- Feature 1 — Attendance -->
+        <article class="feat-card fade-up" style="--delay:0ms">
+          <div class="feat-content">
+            <span class="feat-tag">&#x1F4CC; Attendance Intelligence</span>
+            <h3>Constant Monitoring, Zero Guesswork</h3>
+            <p>Track attendance records, employee activity, and status updates from one unified interface. See who's present, who's late, and who needs follow-up — in real time.</p>
+            <div class="feat-pills">
+              <span class="feat-pill">Daily signals</span>
+              <span class="feat-pill">Status badges</span>
+              <span class="feat-pill">Shift tracking</span>
+              <span class="feat-pill">Exception alerts</span>
             </div>
+          </div>
+          <div class="feat-photo">
+            <img src="/images/feature-attendance.png" alt="Workforce attendance dashboard with Present and Late status indicators" loading="lazy" />
           </div>
         </article>
 
-        <article class="feature-card scroll-float" data-scroll data-stagger="120">
-          <div class="feature-visual">
-            <div class="bars"><span></span><span></span><span></span></div>
-            <span class="chip">Security</span>
-          </div>
-          <div class="feature-body">
-            <span class="feature-subtitle">Write Protection</span>
-            <h3>Route Guardrails</h3>
-            <p>Critical write operations are protected with validation, sanitization, and request checks.</p>
-            <div class="feature-meta">
-              <span>Safer API operations</span>
-              <span class="feature-index">02</span>
+        <!-- Feature 2 — Tasks (reversed) -->
+        <article class="feat-card reverse fade-up" style="--delay:80ms">
+          <div class="feat-content">
+            <span class="feat-tag">&#x2705; Task Management</span>
+            <h3>Tasks With Ownership &amp; Accountability</h3>
+            <p>Assign, track, and close tasks with role-aware controls. Managers get a full view of progress while employees stay focused on what matters — all without noisy back-and-forth.</p>
+            <div class="feat-pills">
+              <span class="feat-pill">Kanban view</span>
+              <span class="feat-pill">Priority tags</span>
+              <span class="feat-pill">Role-aware</span>
+              <span class="feat-pill">Audit trail</span>
             </div>
           </div>
-        </article>
-
-        <article class="feature-card scroll-float" data-scroll data-stagger="220">
-          <div class="feature-visual">
-            <div class="bars"><span></span><span></span><span></span></div>
-            <span class="chip">Smart Ops</span>
-          </div>
-          <div class="feature-body">
-            <span class="feature-subtitle">Manager Actions</span>
-            <h3>Automatic Triage</h3>
-            <p>Manage approvals, task flow, and workforce changes with role-aware controls.</p>
-            <div class="feature-meta">
-              <span>Role-based control paths</span>
-              <span class="feature-index">03</span>
-            </div>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section class="story reveal" id="workflow">
-      <div class="story-grid">
-        <article class="story-panel">
-          <p class="section-kicker">02 Workflow Overview</p>
-          <h3>How Karigar runs your operations day-to-day.</h3>
-          <p>From punch-in to payout preparation, records remain connected so admins and managers can review the same source of truth.</p>
-          <div class="story-list">
-            <div class="story-item scroll-pop" data-scroll data-stagger="60">
-              <strong>Attendance timeline that managers trust</strong>
-              <span>Shifts, delays, leaves, and exceptions stay attached to the same employee record.</span>
-            </div>
-            <div class="story-item scroll-pop" data-scroll data-stagger="130">
-              <strong>Task progress linked with accountability</strong>
-              <span>Task records include ownership and status updates for clearer follow-up.</span>
-            </div>
-            <div class="story-item scroll-pop" data-scroll data-stagger="200">
-              <strong>Credit and payroll behavior in one view</strong>
-              <span>Credit requests and history stay visible before closing payroll cycles.</span>
-            </div>
+          <div class="feat-photo">
+            <img src="/images/feature-tasks.png" alt="Task kanban board with high priority and in progress status cards" loading="lazy" />
           </div>
         </article>
 
-        <aside class="story-panel">
-          <p class="section-kicker">Execution Flow</p>
-          <div class="timeline">
-            <div class="timeline-step scroll-pop" data-scroll data-stagger="70">
-              <small>Step 01</small>
-              <h4>Capture</h4>
-              <p>Collect attendance, task updates, and credit requests in real time.</p>
-            </div>
-            <div class="timeline-step scroll-pop" data-scroll data-stagger="140">
-              <small>Step 02</small>
-              <h4>Analyze</h4>
-              <p>Review records and identify pending items before salary processing.</p>
-            </div>
-            <div class="timeline-step scroll-pop" data-scroll data-stagger="210">
-              <small>Step 03</small>
-              <h4>Resolve</h4>
-              <p>Resolve exceptions with owner-based responsibility and admin controls.</p>
-            </div>
-            <div class="timeline-step scroll-pop" data-scroll data-stagger="280">
-              <small>Step 04</small>
-              <h4>Close</h4>
-              <p>Close monthly workflows with export-ready and auditable records.</p>
+        <!-- Feature 3 — Analytics -->
+        <article class="feat-card fade-up" style="--delay:160ms">
+          <div class="feat-content">
+            <span class="feat-tag">&#x1F4CA; Analytics &amp; Insights</span>
+            <h3>Performance Data That Drives Decisions</h3>
+            <p>Beautiful charts and graphs give you the full picture on attendance trends, task completion rates, and credit utilisation — so you close payroll faster and with confidence.</p>
+            <div class="feat-pills">
+              <span class="feat-pill">Area charts</span>
+              <span class="feat-pill">Bar graphs</span>
+              <span class="feat-pill">KPI cards</span>
+              <span class="feat-pill">Export-ready</span>
             </div>
           </div>
-        </aside>
+          <div class="feat-photo">
+            <img src="/images/feature-analytics.png" alt="Analytics dashboard with orange area charts and revenue performance metrics" loading="lazy" />
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="process" id="how-it-works" aria-labelledby="process-heading">
+    <div class="shell">
+      <div class="process-header">
+        <p class="section-kicker fade-up" style="--delay:0ms">02 · Execution Flow</p>
+        <h2 id="process-heading" class="section-title fade-up" style="--delay:80ms">How Karigar runs your operations day-to-day</h2>
+        <p class="section-sub fade-up" style="--delay:160ms" style="text-align:center; margin: 0 auto;">From punch-in to payout preparation, records remain connected so admins can review one source of truth.</p>
       </div>
 
-      <div class="metrics-band">
-        <div class="metric-tile scroll-pop" data-scroll data-stagger="40"><strong>Auth</strong><span>Protected user access and session handling</span></div>
-        <div class="metric-tile scroll-pop" data-scroll data-stagger="110"><strong>CSRF</strong><span>Write routes enforce CSRF checks</span></div>
-        <div class="metric-tile scroll-pop" data-scroll data-stagger="180"><strong>Rate Limit</strong><span>API guardrails are enabled</span></div>
-        <div class="metric-tile scroll-pop" data-scroll data-stagger="250"><strong>Pagination</strong><span>Heavy list endpoints support paging</span></div>
-      </div>
-    </section>
-
-    <section class="partners reveal" id="partners">
-      <div class="section-head">
-        <div>
-          <p class="section-kicker">03 Included Modules</p>
-          <h2 class="section-title">What ships in the current <em>Karigar</em> project.</h2>
+      <div class="process-steps">
+        <div class="process-step fade-up" style="--delay:0ms">
+          <div class="step-num">01</div>
+          <h4>Capture</h4>
+          <p>Collect attendance, task updates, and credit requests in real time from any device.</p>
+        </div>
+        <div class="process-step fade-up" style="--delay:100ms">
+          <div class="step-num">02</div>
+          <h4>Analyze</h4>
+          <p>Review records, spot anomalies, and identify pending items before salary processing.</p>
+        </div>
+        <div class="process-step fade-up" style="--delay:200ms">
+          <div class="step-num">03</div>
+          <h4>Resolve</h4>
+          <p>Handle exceptions with owner-based responsibility and granular admin controls.</p>
+        </div>
+        <div class="process-step fade-up" style="--delay:300ms">
+          <div class="step-num">04</div>
+          <h4>Close</h4>
+          <p>Close monthly workflows with export-ready, auditable records. Payroll, done right.</p>
         </div>
       </div>
+    </div>
+  </section>
 
-      <div class="partner-row" id="product">
-        <div class="partner scroll-float" data-scroll data-stagger="30">Attendance<span>Daily presence and status tracking</span></div>
-        <div class="partner scroll-float" data-scroll data-stagger="90">Tasks<span>Assignment, progress, and completion flow</span></div>
-        <div class="partner scroll-float" data-scroll data-stagger="150">Credits<span>Advance tracking and repayment visibility</span></div>
-        <div class="partner scroll-float" data-scroll data-stagger="210">History<span>Timeline of operational activity</span></div>
-        <div class="partner scroll-float" data-scroll data-stagger="270">Analytics<span>Overview pages for performance insights</span></div>
+  <!-- MODULES -->
+  <section class="modules" id="modules" aria-labelledby="modules-heading">
+    <div class="shell">
+      <div class="modules-header">
+        <p class="section-kicker fade-up" style="--delay:0ms">03 · Included Modules</p>
+        <h2 id="modules-heading" class="section-title fade-up" style="--delay:80ms">Everything ships <span class="accent">out of the box.</span></h2>
       </div>
-    </section>
 
-    <section class="testimonials reveal">
-      <div class="section-head">
-        <div>
-          <p class="section-kicker">04 Project Facts</p>
-          <h2 class="section-title">Technical traits in this <em>repository</em>.</h2>
+      <div class="modules-grid">
+        <div class="module-card fade-up" style="--delay:0ms">
+          <span class="module-icon">&#x1F4C5;</span>
+          <div class="module-name">Attendance</div>
+          <div class="module-desc">Daily presence, shift, and status tracking with full history</div>
         </div>
-        <p class="section-copy">These points reflect implementation details present in this codebase, not market estimates.</p>
-      </div>
-      <div class="testimonial-strip">
-        <article class="testimonial scroll-float" data-scroll data-stagger="40">
-          <p>Authentication and protected API routes are implemented, including guarded access to sensitive endpoints.</p>
-          <strong>Security Baseline</strong>
-          <span>Route-level access control</span>
-        </article>
-        <article class="testimonial scroll-float" data-scroll data-stagger="120">
-          <p>Attendance, tasks, credits, and history are available as dedicated sections with API integrations.</p>
-          <strong>Operational Coverage</strong>
-          <span>Core workforce modules</span>
-        </article>
-        <article class="testimonial scroll-float" data-scroll data-stagger="200">
-          <p>Validation, sanitization, and pagination support are integrated for safer and more scalable request handling.</p>
-          <strong>API Reliability</strong>
-          <span>Guardrails and paging support</span>
-        </article>
-      </div>
-    </section>
-
-    <section class="faq reveal" id="faq">
-      <div class="section-head">
-        <div>
-          <p class="section-kicker">05 Questions Teams Ask</p>
-          <h2 class="section-title">Everything you need before you <em>switch</em>.</h2>
+        <div class="module-card fade-up" style="--delay:60ms">
+          <span class="module-icon">&#x2705;</span>
+          <div class="module-name">Tasks</div>
+          <div class="module-desc">Assignment, progress tracking, and completion workflows</div>
         </div>
-        <p class="section-copy">Built for owners, admins, and operations leads that want strong controls without heavy setup overhead.</p>
+        <div class="module-card fade-up" style="--delay:120ms">
+          <span class="module-icon">&#x1F4B3;</span>
+          <div class="module-name">Credits</div>
+          <div class="module-desc">Advance tracking, repayment schedules, and visibility</div>
+        </div>
+        <div class="module-card fade-up" style="--delay:180ms">
+          <span class="module-icon">&#x1F4DC;</span>
+          <div class="module-name">History</div>
+          <div class="module-desc">Full timeline of all operational activity and changes</div>
+        </div>
+        <div class="module-card fade-up" style="--delay:240ms">
+          <span class="module-icon">&#x1F4CA;</span>
+          <div class="module-name">Analytics</div>
+          <div class="module-desc">Performance dashboards and actionable insights</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq" id="faq" aria-labelledby="faq-heading">
+    <div class="shell">
+      <div class="faq-header">
+        <p class="section-kicker fade-up" style="--delay:0ms">04 · Questions</p>
+        <h2 id="faq-heading" class="section-title fade-up" style="--delay:80ms">Everything you need before you <span class="accent">switch.</span></h2>
       </div>
 
-      <div class="faq-grid">
-        <details class="faq-item scroll-float" open data-scroll data-stagger="40">
-          <summary>How quickly can we go live?</summary>
-          <div class="faq-answer">Setup time depends on your data readiness. The project includes pages and APIs for settings, employee records, and day-to-day operations.</div>
+      <div class="faq-list">
+        <details class="faq-item fade-up" style="--delay:0ms" open>
+          <summary>How quickly can we go live? <span class="faq-icon">+</span></summary>
+          <div class="faq-answer">Setup time depends on your data readiness. The project includes pages and APIs for settings, employee records, and day-to-day operations — most teams are operational within a day.</div>
         </details>
-        <details class="faq-item scroll-float" data-scroll data-stagger="100">
-          <summary>Can this work for multi-location teams?</summary>
-          <div class="faq-answer">Yes. Karigar supports distributed teams with centralized oversight and role-aware access for each location manager.</div>
+        <details class="faq-item fade-up" style="--delay:60ms">
+          <summary>Can this work for multi-location teams? <span class="faq-icon">+</span></summary>
+          <div class="faq-answer">Yes. Karigar supports distributed teams with centralised oversight and role-aware access for each location manager. Admins retain full visibility across all sites.</div>
         </details>
-        <details class="faq-item scroll-float" data-scroll data-stagger="160">
-          <summary>Will this reduce payroll disputes?</summary>
-          <div class="faq-answer">The platform centralizes attendance, credits, and task records; impact depends on how consistently teams use those workflows.</div>
+        <details class="faq-item fade-up" style="--delay:120ms">
+          <summary>Will this reduce payroll disputes? <span class="faq-icon">+</span></summary>
+          <div class="faq-answer">The platform centralises attendance, credits, and task records into one auditable source of truth — significantly reducing discrepancies when it's time to run payroll.</div>
         </details>
-        <details class="faq-item scroll-float" data-scroll data-stagger="220">
-          <summary>Do we need technical staff to operate it?</summary>
-          <div class="faq-answer">Day-to-day use is product-led, while deployment and maintenance still require standard web app operations support.</div>
+        <details class="faq-item fade-up" style="--delay:180ms">
+          <summary>Do we need technical staff to operate it? <span class="faq-icon">+</span></summary>
+          <div class="faq-answer">Day-to-day use is product-led and requires no technical knowledge. Initial deployment and infra management still require standard web app operations support.</div>
+        </details>
+        <details class="faq-item fade-up" style="--delay:240ms">
+          <summary>Is our data secure? <span class="faq-icon">+</span></summary>
+          <div class="faq-answer">Absolutely. All write operations use CSRF validation, rate limiting, and input sanitization. Auth is session-based with HTTP-only cookies and role-based access control.</div>
         </details>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section class="reveal" style="padding: 4px 0 24px;">
-      <div class="hero-core parallax-soft" data-parallax="0.06" style="padding:30px 24px;">
-        <h2 class="section-title" style="font-size: clamp(28px, 4vw, 48px); margin-bottom: 8px;">Ready to switch from manual ops to <em>precision?</em></h2>
-        <p class="section-copy" style="max-width: 640px; margin-bottom: 18px;">Launch a workspace in minutes. Keep your team aligned, your payouts accurate, and your history auditable.</p>
-        <div class="hero-cta">
-          <a class="btn primary" href="/register">Create Workspace</a>
-          <a class="btn ghost" href="/login">Already have an account?</a>
+  <!-- CTA -->
+  <section class="cta-section" aria-labelledby="cta-heading">
+    <div class="shell">
+      <div class="cta-inner fade-up" style="--delay:0ms">
+        <h2 id="cta-heading">Ready to switch from<br>manual ops to <span style="color:var(--accent-2)">precision?</span></h2>
+        <p>Launch your workspace in minutes. Keep your team aligned, your payouts accurate, and your history auditable.</p>
+        <div class="cta-actions">
+          <a class="btn btn-primary btn-lg" href="/register">Create Workspace</a>
+          <a class="btn btn-ghost btn-lg" href="/login">Already have an account?</a>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <footer class="footer">
-      <span>© 2026 Karigar. All rights reserved.</span>
-      <span>Built for modern workforce operations.</span>
-    </footer>
-  </main>
+  <!-- FOOTER -->
+  <footer>
+    <div class="shell footer-inner">
+      <span class="footer-copy">© 2026 Karigar. All rights reserved.</span>
+      <div class="footer-links">
+        <a href="/login">Login</a>
+        <a href="/register">Register</a>
+      </div>
+    </div>
+  </footer>
 
   <script>
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
+    // Scroll-triggered animations
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
         if (entry.isIntersecting) {
-          entry.target.classList.add("in");
-          io.unobserve(entry.target);
+          entry.target.classList.add('in');
+          observer.unobserve(entry.target);
         }
       });
-    }, { threshold: 0.1 });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
 
-    document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
-
-    const stagedObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        const delay = entry.target.getAttribute('data-stagger') || '0';
-        entry.target.style.setProperty('--stagger', `${delay}ms`);
-        entry.target.classList.add('in');
-        stagedObserver.unobserve(entry.target);
-      });
-    }, { threshold: 0.16 });
-
-    document.querySelectorAll('[data-scroll]').forEach((el) => stagedObserver.observe(el));
-
-    const parallaxNodes = Array.from(document.querySelectorAll('[data-parallax]'));
-    let ticking = false;
-
-    const updateParallax = () => {
-      const viewportHeight = window.innerHeight || 1;
-      parallaxNodes.forEach((node) => {
-        const speed = Number(node.getAttribute('data-parallax') || 0.06);
-        const rect = node.getBoundingClientRect();
-        const distanceFromCenter = rect.top + rect.height / 2 - viewportHeight / 2;
-        const offset = -distanceFromCenter * speed * 0.22;
-        node.style.setProperty('--parallax', offset.toFixed(2));
-      });
-      ticking = false;
-    };
-
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      window.requestAnimationFrame(updateParallax);
-    };
-
-    if (parallaxNodes.length > 0) {
-      updateParallax();
-      window.addEventListener('scroll', onScroll, { passive: true });
-      window.addEventListener('resize', onScroll);
-    }
+    document.querySelectorAll('.fade-up, .fade-in').forEach(el => observer.observe(el));
   </script>
 </body>
 </html>

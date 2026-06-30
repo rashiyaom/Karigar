@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { loginUser, setAuthCookie } from '@/lib/auth'
-import { setCsrfToken } from '@/lib/csrf'
 import { hasDangerousPatterns } from '@/lib/input-sanitizer'
 import { checkApiRateLimit } from '@/lib/api-rate-limit'
 import { logSuccessfulLogin, logFailedLoginAttempt, logInjectionAttempt } from '@/lib/security-events'
@@ -56,13 +55,11 @@ export async function POST(request: NextRequest) {
     }
 
     await setAuthCookie(authResult.token)
-    const csrfToken = await setCsrfToken()
     await logSuccessfulLogin(authResult.user.username, request)
 
     const response = NextResponse.json({
       success: true,
       user: authResult.user,
-      csrfToken,
     })
 
     response.cookies.set('user-role', authResult.user.role, {

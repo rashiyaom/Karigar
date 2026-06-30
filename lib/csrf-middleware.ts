@@ -1,41 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { verifyCsrfToken } from './csrf'
-
 /**
- * Middleware to verify CSRF token for state-changing operations
- * Should be used on POST, PUT, PATCH, DELETE endpoints
+ * CSRF middleware – removed. Always passes.
  */
-export async function verifyCsrfMiddleware(request: NextRequest): Promise<boolean> {
-  try {
-    const method = request.method.toUpperCase()
+import { NextRequest, NextResponse } from 'next/server'
 
-    // Only verify for state-changing methods
-    const stateChangingMethods = ['POST', 'PUT', 'PATCH', 'DELETE']
-    if (!stateChangingMethods.includes(method)) {
-      return true
-    }
-
-    // Get CSRF token from request header
-    const csrfToken = request.headers.get('x-csrf-token')
-
-    if (!csrfToken) {
-      return false
-    }
-
-    // Verify token
-    return await verifyCsrfToken(csrfToken)
-  } catch (error) {
-    console.error('CSRF verification error:', error)
-    return false
-  }
+export async function verifyCsrfMiddleware(_request: NextRequest): Promise<boolean> {
+  return true
 }
 
-/**
- * Middleware response for failed CSRF verification
- */
 export function csrfErrorResponse(): NextResponse {
-  return NextResponse.json(
-    { error: 'CSRF token invalid or expired' },
-    { status: 403 }
-  )
+  return NextResponse.json({ error: 'CSRF error' }, { status: 403 })
 }

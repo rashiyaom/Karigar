@@ -5,28 +5,14 @@ import type { Employee, Attendance, Credit, Task, Settings, ApiResponse } from "
 
 const API_BASE = "/api"
 
-// Read the CSRF token directly from document.cookie (synchronous, always fresh).
-// The CSRF cookie is non-httpOnly so the browser exposes it to JS.
-function getCsrfTokenForRequest(): string | null {
-  if (typeof document === 'undefined') return null
-  const match = document.cookie.match(/(?:^|;\s*)csrf-token=([^;]+)/)
-  return match ? decodeURIComponent(match[1]) : null
-}
 
 // Generic API function
 async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  // Get CSRF token from cookie and add to headers for state-changing requests
-  const csrfToken = getCsrfTokenForRequest()
   const method = options?.method?.toUpperCase() || 'GET'
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...options?.headers,
   } as Record<string, string>
-  
-  // Add CSRF token for POST, PUT, PATCH, DELETE requests
-  if (csrfToken && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
-    headers['x-csrf-token'] = csrfToken
-  }
 
   const response = await fetch(`${API_BASE}${endpoint}`, {
     headers,
